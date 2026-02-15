@@ -1,27 +1,9 @@
 {
   "profile": {
-    "tipo": "MEI",
-    "nome": "NOME DO USUARIO EXEMPLO",
-    "doc": "12.345.678/0001-99"
+    "nome": "Usuário Exemplo",
+    "doc": "000.000.000-00",
+    "theme": "#2563eb",
+    "photo": ""
   },
-  "entries": [
-    {
-      "id": 1700000000000,
-      "data": "2026-02-15",
-      "tipo": "Entrada",
-      "dest": "Empresarial",
-      "categoria": "Vendas",
-      "valor": 1500.50,
-      "obs": "Venda de consultoria técnica"
-    },
-    {
-      "id": 1700000000001,
-      "data": "2026-02-14",
-      "tipo": "Saída",
-      "dest": "Pessoal",
-      "categoria": "Alimentação",
-      "valor": 85.90,
-      "obs": "Jantar restaurante"
-    }
-  ]
+  "entries": []
 }
