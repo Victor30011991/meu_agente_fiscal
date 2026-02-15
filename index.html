@@ -3,71 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGF - Sistema de Gestão Financeira MEI/CPF</title>
+    <title>FluxoPro Brasil - Gestão Financeira</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
     <header>
-        <div id="logo-container">
-            <img id="user-logo" src="#" alt="Logo" style="display:none; max-height: 50px;">
-            <h1 id="app-title">FluxoPro Brasil</h1>
+        <div class="header-content">
+            <div id="logo-area">
+                <img id="display-logo" src="" alt="" style="display:none; max-height: 50px;">
+                <h1 id="brand-name">FluxoPro Brasil</h1>
+            </div>
+            <nav>
+                <button onclick="showTab('dash')" class="nav-btn">Dashboard</button>
+                <button onclick="showTab('entries')" class="nav-btn">Lançamentos</button>
+                <button onclick="showTab('fiscal')" class="nav-btn">Configurações/Fiscal</button>
+            </nav>
         </div>
-        <nav>
-            <button onclick="switchTab('dash')">Dashboard</button>
-            <button onclick="switchTab('entries')">Lançamentos</button>
-            <button onclick="switchTab('config')">Configurações/Fiscal</button>
-        </nav>
     </header>
 
-    <main id="main-content">
-        <section id="tab-dash" class="tab-content">
-            <div class="kpi-container">
-                <div class="card">Saldo Geral: <span id="kpi-saldo">R$ 0,00</span></div>
-                <div class="card warning" id="mei-alert">Limite MEI: <span id="mei-percent">0%</span></div>
-            </div>
-            <canvas id="chartGeral"></canvas>
-        </section>
-
-        <section id="tab-entries" class="tab-content" style="display:none;">
-            <button onclick="openModal()">+ Novo Lançamento</button>
-            <div class="filters">
-                <select id="filter-destinacao">
-                    <option value="todos">Todos</option>
-                    <option value="Pessoal">Pessoal (PF)</option>
-                    <option value="Empresarial">Empresarial (PJ)</option>
+    <main>
+        <section id="tab-dash" class="tab-content active">
+            <div class="filter-bar">
+                <input type="month" id="filter-month" onchange="updateDashboard()">
+                <select id="filter-dest" onchange="updateDashboard()">
+                    <option value="todos">Todos (PF+PJ)</option>
+                    <option value="pessoal">Pessoal (PF)</option>
+                    <option value="empresarial">Empresarial (PJ)</option>
                 </select>
+                <button onclick="clearFilters()" class="btn-secondary">Limpar Filtros</button>
             </div>
-            <table id="table-entries">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Descrição</th>
-                        <th>Destinação</th>
-                        <th>Valor</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="entries-body"></tbody>
-            </table>
+
+            <div class="kpi-grid">
+                <div class="card"><h3>Saldo Geral</h3><p id="kpi-total">R$ 0,00</p></div>
+                <div class="card income"><h3>Entradas</h3><p id="kpi-in">R$ 0,00</p></div>
+                <div class="card expense"><h3>Saídas</h3><p id="kpi-out">R$ 0,00</p></div>
+                <div class="card warning" id="mei-card" style="display:none;">
+                    <h3>Limite MEI</h3>
+                    <div class="progress-bar"><div id="mei-progress-fill"></div></div>
+                    <p id="mei-status">Calculando...</p>
+                </div>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-box"><canvas id="chartCategorias"></canvas></div>
+                <div class="chart-box"><canvas id="chartMensal"></canvas></div>
+            </div>
         </section>
 
-        <section id="tab-config" class="tab-content" style="display:none;">
-            <h2>Perfil Fiscal</h2>
-            <input type="text" id="user-name" placeholder="Nome/Razão Social">
-            <select id="user-type" onchange="toggleCnpjField()">
-                <option value="PF">Pessoa Física</option>
-                <option value="MEI">MEI</option>
-                <option value="PJ">PJ (Outros)</option>
-            </select>
-            <input type="text" id="user-id" placeholder="CPF/CNPJ">
-            <hr>
-            <label>Upload Logo: <input type="file" id="logo-input" accept="image/*"></label>
-            <button onclick="saveProfile()">Salvar Perfil</button>
-            <button onclick="exportData()">Exportar JSON</button>
+        <section id="tab-entries" class="tab-content">
+            <div class="action-bar">
+                <button onclick="openModal()" class="btn-primary">+ Novo Lançamento</button>
+                <div class="export-btns">
+                    <button onclick="exportToExcel()" class="btn-success">Exportar Excel</button>
+                    <button onclick="exportToPDF()" class="btn-danger">Exportar PDF</button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table id="main-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Tipo</th>
+                            <th>Destinação</th>
+                            <th>Categoria</th>
+                            <th>Valor</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="entries-list"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="tab-fiscal" class="tab-content">
+            <div class="config-grid">
+                <div class="card">
+                    <h2>Perfil do Usuário</h2>
+                    <label>Logo da Empresa</label>
+                    <input type="file" id="input-logo" accept="image/*" onchange="uploadLogo(event)">
+                    
+                    <label>Tipo de Pessoa</label>
+                    <select id="user-type" onchange="toggleFiscalFields()">
+                        <option value="PF">Pessoa Física (CPF)</option>
+                        <option value="MEI">MEI (Microempreendedor)</option>
+                        <option value="PJ">Pessoa Jurídica (CNPJ)</option>
+                    </select>
+
+                    <input type="text" id="user-name" placeholder="Nome Completo / Razão Social">
+                    <input type="text" id="user-id" placeholder="CPF ou CNPJ">
+                    <button onclick="saveProfile()" class="btn-primary">Salvar Perfil</button>
+                </div>
+                
+                <div class="card">
+                    <h2>Backup e Dados</h2>
+                    <p>Importar dados (arquivo JSON):</p>
+                    <input type="file" id="import-json" accept=".json" onchange="importData(event)">
+                    <button onclick="downloadJSON()" class="btn-secondary">Exportar Backup JSON</button>
+                </div>
+            </div>
         </section>
     </main>
+
+    <div id="modal-entry" class="modal">
+        <div class="modal-content">
+            <h2 id="modal-title">Novo Lançamento</h2>
+            <form id="entry-form">
+                <input type="hidden" id="entry-id">
+                <div class="form-group">
+                    <label>Data *</label>
+                    <input type="date" id="field-date" required>
+                </div>
+                <div class="form-group">
+                    <label>Tipo *</label>
+                    <select id="field-type" required>
+                        <option value="Entrada">Entrada (Receita)</option>
+                        <option value="Saída">Saída (Despesa)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Destinação *</label>
+                    <select id="field-dest" required>
+                        <option value="Pessoal">Pessoal (PF)</option>
+                        <option value="Empresarial">Empresarial (PJ)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Categoria *</label>
+                    <select id="field-cat" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Valor (R$) *</label>
+                    <input type="number" id="field-val" step="0.01" min="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Observação</label>
+                    <textarea id="field-obs"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" onclick="closeModal()" class="btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script src="app.js"></script>
 </body>
