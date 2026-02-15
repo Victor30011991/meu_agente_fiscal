@@ -4,153 +4,298 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FluxoPro Brasil - Gestão Financeira</title>
-    <link rel="stylesheet" href="styles.css">
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* DESIGN MODERNO - AGENTE UX/UI */
+        :root {
+            --primary: #2563eb; --secondary: #64748b; --success: #16a34a;
+            --danger: #dc2626; --warning: #ca8a04; --bg: #f8fafc; --text: #1e293b;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
+        header { background: white; border-bottom: 1px solid #e2e8f0; padding: 1rem 2rem; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: auto; }
+        
+        nav { display: flex; gap: 10px; }
+        .nav-btn { background: #f1f5f9; border: none; padding: 10px 18px; cursor: pointer; font-weight: 600; border-radius: 8px; transition: 0.3s; }
+        .nav-btn.active { background: var(--primary); color: white; }
+
+        main { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Cartões do Dashboard */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .card { background: white; padding: 25px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .card h3 { margin: 0; font-size: 0.85rem; color: var(--secondary); text-transform: uppercase; }
+        .card p { margin: 10px 0 0; font-size: 1.8rem; font-weight: 700; }
+        .income p { color: var(--success); }
+        .expense p { color: var(--danger); }
+        
+        /* Barra de Progresso MEI */
+        .progress-container { background: #f1f5f9; height: 12px; border-radius: 6px; margin: 15px 0; overflow: hidden; }
+        #mei-bar { background: var(--primary); height: 100%; width: 0%; transition: width 0.5s ease; }
+
+        /* Estilo da Tabela */
+        .table-container { background: white; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8fafc; padding: 15px; text-align: left; font-size: 0.9rem; color: var(--secondary); border-bottom: 1px solid #e2e8f0; }
+        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 0.95rem; }
+        
+        /* Botões */
+        .btn { padding: 12px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; }
+    </style>
 </head>
 <body>
-    <header>
-        <div class="header-content">
-            <div id="logo-area">
-                <img id="display-logo" src="" alt="" style="display:none; max-height: 50px;">
-                <h1 id="brand-name">FluxoPro Brasil</h1>
+
+<header>
+    <div class="header-content">
+        <h1 style="font-size: 1.5rem; margin: 0;">FluxoPro <span style="color:var(--primary)">Brasil</span></h1>
+        <nav>
+            <button onclick="switchTab('dash')" id="btn-dash" class="nav-btn active">Dashboard</button>
+            <button onclick="switchTab('list')" id="btn-list" class="nav-btn">Lançamentos</button>
+            <button onclick="switchTab('config')" id="btn-config" class="nav-btn">Configurações</button>
+        </nav>
+    </div>
+</header>
+
+<main>
+    <section id="tab-dash" class="tab-content active">
+        <div class="kpi-grid">
+            <div class="card"><h3>Saldo Geral</h3><p id="total-saldo">R$ 0,00</p></div>
+            <div class="card income"><h3>Entradas</h3><p id="total-entradas">R$ 0,00</p></div>
+            <div class="card expense"><h3>Saídas</h3><p id="total-saidas">R$ 0,00</p></div>
+            <div class="card warning" id="mei-card" style="display:none; border-left: 5px solid var(--warning);">
+                <h3>Limite MEI Anual</h3>
+                <div class="progress-container"><div id="mei-bar"></div></div>
+                <small id="mei-desc">Carregando...</small>
             </div>
-            <nav>
-                <button onclick="showTab('dash')" class="nav-btn">Dashboard</button>
-                <button onclick="showTab('entries')" class="nav-btn">Lançamentos</button>
-                <button onclick="showTab('fiscal')" class="nav-btn">Configurações/Fiscal</button>
-            </nav>
         </div>
-    </header>
+        <div class="card">
+            <h3>Faturamento por Categoria</h3>
+            <canvas id="ctxCategorias" height="100"></canvas>
+        </div>
+    </section>
 
-    <main>
-        <section id="tab-dash" class="tab-content active">
-            <div class="filter-bar">
-                <input type="month" id="filter-month" onchange="updateDashboard()">
-                <select id="filter-dest" onchange="updateDashboard()">
-                    <option value="todos">Todos (PF+PJ)</option>
-                    <option value="pessoal">Pessoal (PF)</option>
-                    <option value="empresarial">Empresarial (PJ)</option>
+    <section id="tab-list" class="tab-content">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <button onclick="openModal()" class="btn btn-primary">+ Novo Lançamento</button>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="exportExcel()" class="btn btn-success">Excel</button>
+                <button onclick="exportPDF()" class="btn btn-danger">PDF</button>
+            </div>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Tipo</th>
+                        <th>Destinação</th>
+                        <th>Categoria</th>
+                        <th>Valor</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="lista-corpo"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="tab-config" class="tab-content">
+        <div class="card" style="max-width: 500px; margin: auto;">
+            <h2>Perfil Fiscal</h2>
+            <div class="form-group">
+                <label>Tipo de Pessoa</label>
+                <select id="conf-tipo" onchange="toggleMEI()">
+                    <option value="PF">Pessoa Física (CPF)</option>
+                    <option value="MEI">MEI (Brasil)</option>
+                    <option value="PJ">Outra Empresa (PJ)</option>
                 </select>
-                <button onclick="clearFilters()" class="btn-secondary">Limpar Filtros</button>
             </div>
-
-            <div class="kpi-grid">
-                <div class="card"><h3>Saldo Geral</h3><p id="kpi-total">R$ 0,00</p></div>
-                <div class="card income"><h3>Entradas</h3><p id="kpi-in">R$ 0,00</p></div>
-                <div class="card expense"><h3>Saídas</h3><p id="kpi-out">R$ 0,00</p></div>
-                <div class="card warning" id="mei-card" style="display:none;">
-                    <h3>Limite MEI</h3>
-                    <div class="progress-bar"><div id="mei-progress-fill"></div></div>
-                    <p id="mei-status">Calculando...</p>
-                </div>
+            <div class="form-group">
+                <label>Nome / Razão Social</label>
+                <input type="text" id="conf-nome" placeholder="Digite seu nome">
             </div>
+            <button onclick="saveConfig()" class="btn btn-primary" style="width: 100%;">Salvar Perfil</button>
+        </div>
+    </section>
+</main>
 
-            <div class="charts-container">
-                <div class="chart-box"><canvas id="chartCategorias"></canvas></div>
-                <div class="chart-box"><canvas id="chartMensal"></canvas></div>
+<div id="modal-entry" class="modal">
+    <div class="modal-content">
+        <h2>Novo Lançamento</h2>
+        <form id="form-transacao">
+            <div class="form-group">
+                <label>Data</label>
+                <input type="date" id="f-data" required>
             </div>
-        </section>
-
-        <section id="tab-entries" class="tab-content">
-            <div class="action-bar">
-                <button onclick="openModal()" class="btn-primary">+ Novo Lançamento</button>
-                <div class="export-btns">
-                    <button onclick="exportToExcel()" class="btn-success">Exportar Excel</button>
-                    <button onclick="exportToPDF()" class="btn-danger">Exportar PDF</button>
-                </div>
-            </div>
-            <div class="table-wrapper">
-                <table id="main-table">
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Tipo</th>
-                            <th>Destinação</th>
-                            <th>Categoria</th>
-                            <th>Valor</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="entries-list"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <section id="tab-fiscal" class="tab-content">
-            <div class="config-grid">
-                <div class="card">
-                    <h2>Perfil do Usuário</h2>
-                    <label>Logo da Empresa</label>
-                    <input type="file" id="input-logo" accept="image/*" onchange="uploadLogo(event)">
-                    
-                    <label>Tipo de Pessoa</label>
-                    <select id="user-type" onchange="toggleFiscalFields()">
-                        <option value="PF">Pessoa Física (CPF)</option>
-                        <option value="MEI">MEI (Microempreendedor)</option>
-                        <option value="PJ">Pessoa Jurídica (CNPJ)</option>
-                    </select>
-
-                    <input type="text" id="user-name" placeholder="Nome Completo / Razão Social">
-                    <input type="text" id="user-id" placeholder="CPF ou CNPJ">
-                    <button onclick="saveProfile()" class="btn-primary">Salvar Perfil</button>
-                </div>
-                
-                <div class="card">
-                    <h2>Backup e Dados</h2>
-                    <p>Importar dados (arquivo JSON):</p>
-                    <input type="file" id="import-json" accept=".json" onchange="importData(event)">
-                    <button onclick="downloadJSON()" class="btn-secondary">Exportar Backup JSON</button>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <div id="modal-entry" class="modal">
-        <div class="modal-content">
-            <h2 id="modal-title">Novo Lançamento</h2>
-            <form id="entry-form">
-                <input type="hidden" id="entry-id">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div class="form-group">
-                    <label>Data *</label>
-                    <input type="date" id="field-date" required>
-                </div>
-                <div class="form-group">
-                    <label>Tipo *</label>
-                    <select id="field-type" required>
-                        <option value="Entrada">Entrada (Receita)</option>
-                        <option value="Saída">Saída (Despesa)</option>
+                    <label>Tipo</label>
+                    <select id="f-tipo">
+                        <option value="Entrada">Entrada</option>
+                        <option value="Saída">Saída</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Destinação *</label>
-                    <select id="field-dest" required>
+                    <label>Destinação</label>
+                    <select id="f-dest">
                         <option value="Pessoal">Pessoal (PF)</option>
                         <option value="Empresarial">Empresarial (PJ)</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Categoria *</label>
-                    <select id="field-cat" required></select>
-                </div>
-                <div class="form-group">
-                    <label>Valor (R$) *</label>
-                    <input type="number" id="field-val" step="0.01" min="0.01" required>
-                </div>
-                <div class="form-group">
-                    <label>Observação</label>
-                    <textarea id="field-obs"></textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" onclick="closeModal()" class="btn-secondary">Cancelar</button>
-                    <button type="submit" class="btn-primary">Salvar</button>
-                </div>
-            </form>
-        </div>
+            </div>
+            <div class="form-group">
+                <label>Categoria</label>
+                <select id="f-cat">
+                    <option>Alimentação</option><option>Aluguel</option><option>DAS (MEI)</option>
+                    <option>Impostos</option><option>Marketing</option><option>Equipamentos</option>
+                    <option>Outros</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Valor (R$)</label>
+                <input type="number" id="f-valor" step="0.01" required>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="button" onclick="closeModal()" class="btn" style="background:#e2e8f0; flex:1">Cancelar</button>
+                <button type="submit" class="btn btn-primary" style="flex:2">Salvar</button>
+            </div>
+        </form>
     </div>
+</div>
 
-    <script src="app.js"></script>
+<script>
+    /* LÓGICA DO SISTEMA - AGENTE FINANCEIRO */
+    const LIMITE_MEI = 81000;
+    let db = JSON.parse(localStorage.getItem('fluxopro_db')) || { profile: {tipo: 'PF'}, entries: [] };
+    let chartInstance = null;
+
+    function save() { 
+        localStorage.setItem('fluxopro_db', JSON.stringify(db)); 
+        renderTable(); 
+        updateDashboard(); 
+    }
+
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+        document.getElementById('btn-' + tab).classList.add('active');
+    }
+
+    function openModal() { document.getElementById('modal-entry').style.display = 'flex'; }
+    function closeModal() { document.getElementById('modal-entry').style.display = 'none'; }
+
+    document.getElementById('form-transacao').onsubmit = (e) => {
+        e.preventDefault();
+        db.entries.push({
+            id: Date.now(),
+            data: document.getElementById('f-data').value,
+            tipo: document.getElementById('f-tipo').value,
+            dest: document.getElementById('f-dest').value,
+            categoria: document.getElementById('f-cat').value,
+            valor: parseFloat(document.getElementById('f-valor').value)
+        });
+        save(); closeModal();
+    };
+
+    function renderTable() {
+        const corpo = document.getElementById('lista-corpo');
+        corpo.innerHTML = db.entries.map(e => `
+            <tr>
+                <td>${e.data}</td>
+                <td style="color:${e.tipo === 'Entrada' ? 'green' : 'red'}"><b>${e.tipo}</b></td>
+                <td>${e.dest}</td>
+                <td>${e.categoria}</td>
+                <td>R$ ${e.valor.toFixed(2)}</td>
+                <td><button onclick="deleteEntry(${e.id})" style="border:none; background:none; cursor:pointer">🗑️</button></td>
+            </tr>
+        `).join('');
+    }
+
+    function deleteEntry(id) {
+        db.entries = db.entries.filter(e => e.id !== id);
+        save();
+    }
+
+    function updateDashboard() {
+        const entradas = db.entries.filter(e => e.tipo === 'Entrada').reduce((a, b) => a + b.valor, 0);
+        const saidas = db.entries.filter(e => e.tipo === 'Saída').reduce((a, b) => a + b.valor, 0);
+        document.getElementById('total-entradas').innerText = `R$ ${entradas.toFixed(2)}`;
+        document.getElementById('total-saidas').innerText = `R$ ${saidas.toFixed(2)}`;
+        document.getElementById('total-saldo').innerText = `R$ ${(entradas - saidas).toFixed(2)}`;
+
+        // Fiscal MEI
+        if(db.profile.tipo === 'MEI') {
+            document.getElementById('mei-card').style.display = 'block';
+            const fatMEI = db.entries.filter(e => e.dest === 'Empresarial' && e.tipo === 'Entrada').reduce((a, b) => a + b.valor, 0);
+            const perc = (fatMEI / LIMITE_MEI) * 100;
+            document.getElementById('mei-bar').style.width = Math.min(perc, 100) + '%';
+            document.getElementById('mei-desc').innerText = `Faturado R$ ${fatMEI.toFixed(2)} de R$ 81.000,00`;
+        } else {
+            document.getElementById('mei-card').style.display = 'none';
+        }
+        updateChart();
+    }
+
+    function saveConfig() {
+        db.profile.tipo = document.getElementById('conf-tipo').value;
+        db.profile.nome = document.getElementById('conf-nome').value;
+        save(); alert("Perfil Salvo!");
+    }
+
+    function toggleMEI() { updateDashboard(); }
+
+    function updateChart() {
+        const ctx = document.getElementById('ctxCategorias').getContext('2d');
+        const labels = [...new Set(db.entries.map(e => e.categoria))];
+        const vals = labels.map(l => db.entries.filter(e => e.categoria === l).reduce((a, b) => a + b.valor, 0));
+
+        if(chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: { labels, datasets: [{ label: 'Total R$', data: vals, backgroundColor: '#2563eb' }] },
+            options: { responsive: true }
+        });
+    }
+
+    // Exportação
+    function exportExcel() {
+        const ws = XLSX.utils.json_to_sheet(db.entries);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Lançamentos");
+        XLSX.writeFile(wb, "FluxoPro_Export.xlsx");
+    }
+
+    function exportPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.text("Relatório Financeiro FluxoPro", 14, 15);
+        const rows = db.entries.map(e => [e.data, e.tipo, e.categoria, e.valor.toFixed(2)]);
+        doc.autoTable({ head: [['Data', 'Tipo', 'Categoria', 'Valor']], body: rows, startY: 20 });
+        doc.save("Relatorio_Financeiro.pdf");
+    }
+
+    // Iniciar
+    renderTable(); updateDashboard();
+</script>
 </body>
 </html>
