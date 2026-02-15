@@ -1,4 +1,3 @@
-// BANCO DE DADOS LOCAL
 let db = JSON.parse(localStorage.getItem('fluxopro_db')) || { 
     profile: {nome: '', doc: '', theme: '#2563eb', photo: ''}, 
     entries: [] 
@@ -6,41 +5,34 @@ let db = JSON.parse(localStorage.getItem('fluxopro_db')) || {
 
 let myChart = null;
 
-// INICIALIZAÇÃO
 document.addEventListener('DOMContentLoaded', () => {
     initThemeSelector();
+    initImportListener();
     loadProfile();
     renderTable();
-    initImportListener();
 });
 
-// ESC PARA FECHAR MODAL
+// Suporte ao ESC para fechar janelas
 document.addEventListener('keydown', (e) => {
     if (e.key === "Escape") closeModal();
 });
 
-// LÓGICA DE IMPORTAÇÃO DE ARQUIVO
 function initImportListener() {
     const importInput = document.getElementById('import-db-input');
     if (importInput) {
         importInput.onchange = (e) => {
             const file = e.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = (event) => {
                 try {
                     const data = JSON.parse(event.target.result);
-                    if (data.entries || data.profile) {
-                        db.profile = data.profile || db.profile;
-                        db.entries = data.entries || db.entries;
-                        save();
-                        loadProfile();
-                        alert("Dados importados com sucesso! Verifique a aba de Lançamentos.");
-                    }
-                } catch (err) {
-                    alert("Erro ao ler o arquivo JSON.");
-                }
+                    db.profile = data.profile || db.profile;
+                    db.entries = data.entries || db.entries;
+                    save();
+                    loadProfile();
+                    alert("Sistema alimentado com sucesso!");
+                } catch (err) { alert("Erro ao ler o arquivo."); }
             };
             reader.readAsText(file);
         };
@@ -48,10 +40,8 @@ function initImportListener() {
 }
 
 function loadProfile() {
-    // Evita o erro 'undefined' nos campos
     document.getElementById('conf-nome').value = db.profile.nome || '';
     document.getElementById('conf-doc').value = db.profile.doc || '';
-    
     if(db.profile.photo) {
         const img = document.getElementById('user-photo-preview');
         img.src = db.profile.photo;
@@ -93,7 +83,7 @@ function saveConfig() {
     db.profile.nome = document.getElementById('conf-nome').value;
     db.profile.doc = document.getElementById('conf-doc').value;
     save();
-    alert("Perfil Atualizado!");
+    alert("Configurações salvas!");
 }
 
 function save() {
@@ -103,15 +93,14 @@ function save() {
 
 document.getElementById('form-transacao').onsubmit = (e) => {
     e.preventDefault();
-    const entry = {
+    db.entries.push({
         id: Date.now(),
         data: document.getElementById('f-data').value,
         tipo: document.getElementById('f-tipo').value,
         valor: parseFloat(document.getElementById('f-valor').value),
         categoria: document.getElementById('f-cat').value,
         obs: document.getElementById('f-obs').value || ''
-    };
-    db.entries.push(entry);
+    });
     save();
     closeModal();
     e.target.reset();
@@ -120,18 +109,32 @@ document.getElementById('form-transacao').onsubmit = (e) => {
 function renderTable() {
     const corpo = document.getElementById('lista-corpo');
     if(!corpo) return;
-    corpo.innerHTML = db.entries.sort((a,b) => b.id - a.id).map(e => `
-        <tr>
-            <td>${e.data.split('-').reverse().join('/')}</td>
-            <td style="color:${e.tipo === 'Entrada' ? '#16a34a' : '#dc2626'}"><strong>${e.tipo}</strong></td>
-            <td>${e.categoria}</td>
-            <td>R$ ${e.valor.toFixed(2)}</td>
-            <td style="color:#64748b; font-size:0.85rem;">${e.obs || '-'}</td>
-            <td>
-                <button onclick="deleteEntry(${e.id})" style="border:none; background:none; cursor:pointer;">🗑️</button>
-            </td>
-        </tr>
-    `).join('');
+
+    let totalIn = 0;
+    let totalOut = 0;
+
+    corpo.innerHTML = db.entries.sort((a,b) => new Date(b.data) - new Date(a.data)).map(e => {
+        if(e.tipo === 'Entrada') totalIn += e.valor;
+        else totalOut += e.valor;
+
+        return `
+            <tr>
+                <td>${e.data.split('-').reverse().join('/')}</td>
+                <td style="color:${e.tipo === 'Entrada' ? '#16a34a' : '#dc2626'}"><strong>${e.tipo}</strong></td>
+                <td>${e.categoria}</td>
+                <td>R$ ${e.valor.toFixed(2)}</td>
+                <td style="color:#64748b; font-size:0.85rem;">${e.obs || '-'}</td>
+                <td><button onclick="deleteEntry(${e.id})" style="border:none; background:none; cursor:pointer;">🗑️</button></td>
+            </tr>
+        `;
+    }).join('');
+
+    // Atualiza a Barra de Totais da Tela de Lançamentos
+    document.getElementById('mini-entradas').innerText = `R$ ${totalIn.toFixed(2)}`;
+    document.getElementById('mini-saidas').innerText = `R$ ${totalOut.toFixed(2)}`;
+    document.getElementById('mini-balanco').innerText = `R$ ${(totalIn - totalOut).toFixed(2)}`;
+    
+    updateDashboard();
 }
 
 function deleteEntry(id) {
@@ -145,37 +148,37 @@ function updateDashboard() {
     const receitas = db.entries.filter(e => e.tipo === 'Entrada').reduce((a, b) => a + b.valor, 0);
     const despesas = db.entries.filter(e => e.tipo === 'Saída').reduce((a, b) => a + b.valor, 0);
     
-    document.getElementById('total-entradas').innerText = `R$ ${receitas.toFixed(2)}`;
-    document.getElementById('total-saidas').innerText = `R$ ${despesas.toFixed(2)}`;
-    document.getElementById('total-saldo').innerText = `R$ ${(receitas - despesas).toFixed(2)}`;
+    if(document.getElementById('total-entradas')) {
+        document.getElementById('total-entradas').innerText = `R$ ${receitas.toFixed(2)}`;
+        document.getElementById('total-saidas').innerText = `R$ ${despesas.toFixed(2)}`;
+        document.getElementById('total-saldo').innerText = `R$ ${(receitas - despesas).toFixed(2)}`;
+    }
 
-    const ctx = document.getElementById('ctxCategorias').getContext('2d');
+    const canvas = document.getElementById('ctxCategorias');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
     const cats = [...new Set(db.entries.map(e => e.categoria))];
     const vals = cats.map(c => db.entries.filter(e => e.categoria === c).reduce((a, b) => a + b.valor, 0));
 
     if(myChart) myChart.destroy();
     myChart = new Chart(ctx, {
         type: 'bar',
-        data: {
-            labels: cats,
-            datasets: [{ label: 'Total R$', data: vals, backgroundColor: db.profile.theme || '#2563eb' }]
-        },
+        data: { labels: cats, datasets: [{ label: 'Total R$', data: vals, backgroundColor: db.profile.theme }] },
         options: { responsive: true, maintainAspectRatio: false }
     });
 }
 
-// EXPORTAÇÕES
 function exportExcel() {
     const ws = XLSX.utils.json_to_sheet(db.entries);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Lancamentos");
-    XLSX.writeFile(wb, "Relatorio_FluxoPro.xlsx");
+    XLSX.utils.book_append_sheet(wb, ws, "Dados");
+    XLSX.writeFile(wb, "Relatorio.xlsx");
 }
 
 function exportPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    doc.text("FluxoPro Brasil - Relatório", 14, 15);
+    doc.text("FluxoPro - Relatório", 14, 15);
     const rows = db.entries.map(e => [e.data, e.tipo, e.categoria, e.valor.toFixed(2), e.obs]);
     doc.autoTable({ head: [['Data', 'Tipo', 'Categoria', 'Valor', 'Obs']], body: rows, startY: 25 });
     doc.save("Relatorio.pdf");
