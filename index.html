@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGF - Sistema de Gestão Financeira MEI/CPF</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <header>
+        <div id="logo-container">
+            <img id="user-logo" src="#" alt="Logo" style="display:none; max-height: 50px;">
+            <h1 id="app-title">FluxoPro Brasil</h1>
+        </div>
+        <nav>
+            <button onclick="switchTab('dash')">Dashboard</button>
+            <button onclick="switchTab('entries')">Lançamentos</button>
+            <button onclick="switchTab('config')">Configurações/Fiscal</button>
+        </nav>
+    </header>
+
+    <main id="main-content">
+        <section id="tab-dash" class="tab-content">
+            <div class="kpi-container">
+                <div class="card">Saldo Geral: <span id="kpi-saldo">R$ 0,00</span></div>
+                <div class="card warning" id="mei-alert">Limite MEI: <span id="mei-percent">0%</span></div>
+            </div>
+            <canvas id="chartGeral"></canvas>
+        </section>
+
+        <section id="tab-entries" class="tab-content" style="display:none;">
+            <button onclick="openModal()">+ Novo Lançamento</button>
+            <div class="filters">
+                <select id="filter-destinacao">
+                    <option value="todos">Todos</option>
+                    <option value="Pessoal">Pessoal (PF)</option>
+                    <option value="Empresarial">Empresarial (PJ)</option>
+                </select>
+            </div>
+            <table id="table-entries">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Descrição</th>
+                        <th>Destinação</th>
+                        <th>Valor</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="entries-body"></tbody>
+            </table>
+        </section>
+
+        <section id="tab-config" class="tab-content" style="display:none;">
+            <h2>Perfil Fiscal</h2>
+            <input type="text" id="user-name" placeholder="Nome/Razão Social">
+            <select id="user-type" onchange="toggleCnpjField()">
+                <option value="PF">Pessoa Física</option>
+                <option value="MEI">MEI</option>
+                <option value="PJ">PJ (Outros)</option>
+            </select>
+            <input type="text" id="user-id" placeholder="CPF/CNPJ">
+            <hr>
+            <label>Upload Logo: <input type="file" id="logo-input" accept="image/*"></label>
+            <button onclick="saveProfile()">Salvar Perfil</button>
+            <button onclick="exportData()">Exportar JSON</button>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
