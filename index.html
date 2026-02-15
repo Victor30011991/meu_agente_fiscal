@@ -3,15 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FluxoPro Brasil</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    
+    <title>FluxoPro Brasil - Gestão Financeira</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -39,17 +33,16 @@
             </div>
             <div class="form-group">
                 <label>Cor do Tema</label>
-                <div class="color-picker-grid" id="theme-selector">
-                    </div>
+                <div class="color-picker-grid" id="theme-selector"></div>
             </div>
             <hr>
             <div class="form-group">
                 <label>Nome / Razão Social</label>
-                <input type="text" id="conf-nome">
+                <input type="text" id="conf-nome" placeholder="Seu nome">
             </div>
             <div class="form-group">
                 <label>CPF / CNPJ / MEI</label>
-                <input type="text" id="conf-doc">
+                <input type="text" id="conf-doc" placeholder="000.000.000-00">
             </div>
             <button onclick="saveConfig()" class="btn btn-primary">Salvar Alterações</button>
         </div>
@@ -57,7 +50,7 @@
 
     <section id="tab-list" class="tab-content">
         <div class="action-bar">
-            <button onclick="openModal()" class="btn btn-primary">+ Novo</button>
+            <button onclick="openModal()" class="btn btn-primary">+ Novo Lançamento</button>
             <div class="export-btns">
                 <button onclick="exportExcel()" class="btn btn-sec">Excel</button>
                 <button onclick="exportPDF()" class="btn btn-sec">PDF</button>
@@ -94,11 +87,17 @@
 
 <div id="modal-entry" class="modal">
     <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
         <h3>Novo Registro</h3>
         <form id="form-transacao">
             <div class="form-group"><label>Data</label><input type="date" id="f-data" required></div>
             <div class="form-row">
-                <div class="form-group"><label>Tipo</label><select id="f-tipo"><option value="Entrada">Receita</option><option value="Saída">Despesa</option></select></div>
+                <div class="form-group"><label>Tipo</label>
+                    <select id="f-tipo">
+                        <option value="Entrada">Receita</option>
+                        <option value="Saída">Despesa</option>
+                    </select>
+                </div>
                 <div class="form-group"><label>Valor</label><input type="number" id="f-valor" step="0.01" required></div>
             </div>
             <div class="form-group">
@@ -109,10 +108,15 @@
                 </select>
             </div>
             <div class="form-group"><label>Observação</label><textarea id="f-obs"></textarea></div>
-            <button type="submit" class="btn btn-primary full-width">Confirmar</button>
+            <button type="submit" class="btn btn-primary">Confirmar</button>
         </form>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
 <script src="app.js"></script>
 </body>
