@@ -3,36 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FluxoPro Brasil | Enterprise v3.0</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>FluxoPro Brasil | Enterprise Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header class="navbar">
-    <div class="container flex-nav">
-        <div class="logo">FluxoPro <span>Brasil</span></div>
-        <nav>
-            <button onclick="switchTab('list')" class="nav-item active" id="btn-list">Lançamentos</button>
-            <button onclick="switchTab('dash')" class="nav-item" id="btn-dash">Analytics</button>
-            <button onclick="switchTab('config')" class="nav-item" id="btn-config">Sistema</button>
+<header class="app-header">
+    <div class="container header-content">
+        <div class="brand">
+            <div id="logo-placeholder"></div>
+            <h1>FluxoPro <span>Brasil</span></h1>
+        </div>
+        <nav class="nav-menu">
+            <button onclick="switchTab('list')" id="btn-list" class="nav-link active">Lançamentos</button>
+            <button onclick="switchTab('dash')" id="btn-dash" class="nav-link">Analytics</button>
+            <button onclick="switchTab('config')" id="btn-config" class="nav-link">Definições</button>
         </nav>
     </div>
 </header>
 
-<main class="container">
+<main class="container main-content">
     <section id="tab-list" class="tab-pane active">
-        <div class="toolbar">
-            <button class="btn btn-main" onclick="openModal('entry-modal')">+ Lançar Manual</button>
-            <div class="upload-zone" id="drop-zone">
-                <span>Arraste ou clique para importar (JSON/Excel/Save)</span>
-                <input type="file" id="file-input" hidden accept=".json,.xlsx">
+        <div class="action-grid">
+            <div class="upload-box" id="drop-zone">
+                <p>📤 Arraste ficheiros (JSON, Excel, PDF) ou clique aqui</p>
+                <input type="file" id="file-input" hidden accept=".json,.xlsx,.xls,.pdf">
             </div>
+            <button class="btn btn-primary" onclick="openModal('entry-modal')">+ Lançamento Manual</button>
         </div>
-        <div class="table-card">
-            <table id="data-table">
+
+        <div class="card table-wrapper">
+            <table id="main-table">
                 <thead>
-                    <tr><th>Data</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Ação</th></tr>
+                    <tr>
+                        <th>Data</th>
+                        <th>Categoria</th>
+                        <th>Tipo</th>
+                        <th>Valor</th>
+                        <th style="text-align:right">Ações</th>
+                    </tr>
                 </thead>
                 <tbody id="table-body"></tbody>
             </table>
@@ -40,53 +50,64 @@
     </section>
 
     <section id="tab-dash" class="tab-pane">
-        <div class="dashboard-container">
-            <div class="chart-box">
-                <header><h3>Distribuição de Gastos</h3><small>(Pizza)</small></header>
-                <div class="canvas-wrapper"><canvas id="chartPie"></canvas></div>
+        <div class="dashboard-grid">
+            <div class="card chart-container">
+                <header><h3>Distribuição de Gastos</h3></header>
+                <div class="canvas-holder"><canvas id="chartPie"></canvas></div>
             </div>
-            <div class="chart-box">
-                <header><h3>Desempenho de Ganhos</h3><small>(Réguas Mensais)</small></header>
-                <div class="canvas-wrapper"><canvas id="chartBars"></canvas></div>
+            <div class="card chart-container">
+                <header><h3>Ganhos Mensais (Réguas)</h3></header>
+                <div class="canvas-holder"><canvas id="chartBars"></canvas></div>
             </div>
-            <div class="chart-box">
-                <header><h3>Ranking de Despesas %</h3><small>(Top Categorias)</small></header>
-                <div class="canvas-wrapper"><canvas id="chartRanking"></canvas></div>
+            <div class="card chart-container">
+                <header><h3>Top Despesas (%)</h3></header>
+                <div class="canvas-holder"><canvas id="chartRanking"></canvas></div>
             </div>
         </div>
     </section>
 
     <section id="tab-config" class="tab-pane">
-        <div class="config-grid">
+        <div class="settings-grid">
             <div class="card">
-                <h3>Exportar Dados (Save Game)</h3>
-                <p>Descarregue o ficheiro para alimentar o sistema futuramente.</p>
-                <button class="btn btn-sec" onclick="exportData('json')">Download .JSON (Save)</button>
-                <button class="btn btn-sec" onclick="exportData('xlsx')">Download .XLSX</button>
+                <h3>Exportar Dados (Backup/Save)</h3>
+                <p>Baixe os dados atuais para alimentar o sistema no futuro.</p>
+                <div class="btn-group">
+                    <button class="btn btn-outline" onclick="exportFile('json')">Exportar JSON</button>
+                    <button class="btn btn-outline" onclick="exportFile('xlsx')">Exportar Excel</button>
+                </div>
             </div>
             <div class="card">
-                <h3>Configurações de Exibição</h3>
-                <label>Moeda</label>
-                <select><option>BRL (R$)</option></select>
+                <h3>Personalização</h3>
+                <div class="input-group">
+                    <label>Tema do Sistema</label>
+                    <select onchange="applyTheme(this.value)" id="theme-selector">
+                        <option value="light">Claro Profissional</option>
+                        <option value="dark">Dark Enterprise</option>
+                        <option value="emerald">Emerald Business</option>
+                    </select>
+                </div>
+                <button class="btn btn-danger" onclick="resetSystem()">Resetar Sistema</button>
             </div>
         </div>
     </section>
 </main>
 
-<div class="modal" id="entry-modal">
-    <div class="modal-body">
-        <h3>Novo Lançamento</h3>
+<div class="modal-overlay" id="entry-modal">
+    <div class="modal-card">
+        <h3>Novo Registro</h3>
         <form id="form-entry">
-            <input type="date" id="date" required>
-            <input type="text" id="cat" placeholder="Categoria (Ex: Marketing)" required>
-            <select id="type">
-                <option value="Entrada">Ganhos (+)</option>
-                <option value="Saída">Gastos (-)</option>
-            </select>
-            <input type="number" id="val" step="0.01" placeholder="Valor R$" required>
-            <div class="modal-footer">
+            <div class="input-group"><input type="date" id="f-date" required></div>
+            <div class="input-group"><input type="text" id="f-cat" placeholder="Categoria" required></div>
+            <div class="input-group">
+                <select id="f-tipo">
+                    <option value="Entrada">Entrada (+)</option>
+                    <option value="Saída">Saída (-)</option>
+                </select>
+            </div>
+            <div class="input-group"><input type="number" id="f-val" step="0.01" placeholder="Valor R$" required></div>
+            <div class="modal-actions">
                 <button type="button" class="btn" onclick="closeModal('entry-modal')">Cancelar</button>
-                <button type="submit" class="btn btn-main">Confirmar</button>
+                <button type="submit" class="btn btn-primary">Gravar</button>
             </div>
         </form>
     </div>
