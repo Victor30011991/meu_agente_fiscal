@@ -4,147 +4,59 @@
 <meta charset="UTF-8">
 <title>FluxoPro – Importação</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 <style>
-body{
-  font-family:Inter,system-ui;
-  background:#f5f7fb;
-  margin:0;
-  color:#1f2937;
-}
-
-.container{
-  max-width:1000px;
-  margin:auto;
-  padding:30px;
-}
-
-.card{
-  background:#fff;
-  border-radius:16px;
-  padding:20px;
-  box-shadow:0 10px 20px rgba(0,0,0,.05);
-}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:15px;
-  font-size:14px;
-}
-
-th{
-  background:#eef2ff;
-  padding:8px;
-  text-align:left;
-}
-
-td{
-  padding:8px;
-  border-bottom:1px solid #ddd;
-}
-
-button{
-  padding:10px 14px;
-  border:0;
-  border-radius:10px;
-  font-weight:700;
-  cursor:pointer;
-  background:#4f46e5;
-  color:#fff;
-}
+body{font-family:Inter;background:#f5f7fb;margin:0}
+.container{max-width:900px;margin:auto;padding:30px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px;border-bottom:1px solid #ddd}
+button{padding:10px 14px;border:0;border-radius:8px;font-weight:700}
 </style>
 </head>
 <body>
 
 <div class="container">
+<h2>Importação assistida</h2>
+<input type="file" id="file"><br><br>
+<button onclick="confirmar()">Importar no perfil ativo</button>
 
-  <div class="card">
-
-    <h2>Importação assistida</h2>
-
-    <input type="file" id="file">
-
-    <br><br>
-
-    <button onclick="confirmar()">Importar no perfil ativo</button>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Data</th>
-          <th>Categoria</th>
-          <th>Tipo</th>
-          <th>Valor</th>
-          <th>Observação</th>
-        </tr>
-      </thead>
-      <tbody id="tb"></tbody>
-    </table>
-
-  </div>
-
+<table>
+<thead>
+<tr>
+<th>Data</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Observação</th>
+</tr>
+</thead>
+<tbody id="tb"></tbody>
+</table>
 </div>
 
 <script>
 const KEY="fluxopro_v11";
 let buffer=[];
 
-function loadDB(){
-  return JSON.parse(localStorage.getItem(KEY));
-}
-
 function normalizeValue(v){
-  if(typeof v==="number") return v;
-
-  let s=String(v||"").trim().replace(/[^\d.,-]/g,"");
-  if(!s) return null;
-
-  if(s.includes(",") && s.includes(".")){
-    if(s.lastIndexOf(",")>s.lastIndexOf(".")){
-      s=s.replace(/\./g,"").replace(",",".");
-    }else{
-      s=s.replace(/,/g,"");
-    }
-  }else{
-    s=s.replace(",",".");
-  }
-
-  const n=parseFloat(s);
+  let s=String(v||"").replace(/[^\d.,-]/g,"").replace(",",".");
+  let n=parseFloat(s);
   return isNaN(n)?null:n;
 }
 
 file.onchange=()=>{
-  const f=file.files[0];
-  if(!f) return;
-
   const r=new FileReader();
-
   r.onload=e=>{
     const wb=XLSX.read(e.target.result,{type:"binary"});
     const data=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
 
-    buffer=data.map(l=>{
-
-      const tipo=(l.Tipo||l.tipo||"Entrada").toString().trim();
-
-      return{
-        data:l.Data||l.data||"",
-        cat:l.Categoria||l.categoria||"",
-        tipo:(tipo==="Saída"||tipo==="Entrada")?tipo:"Entrada",
-        valor:normalizeValue(l.Valor||l.valor),
-        obs:l.Observacao||l.Observação||l.obs||""
-      }
-
-    }).filter(l=>l.valor!==null);
+    buffer=data.map(l=>({
+      data:l.Data||"",
+      cat:l.Categoria||"",
+      tipo:l.Tipo||"Entrada",
+      valor:normalizeValue(l.Valor),
+      obs:l.Observacao||l.Observação||""
+    })).filter(l=>l.valor!==null);
 
     render();
   };
-
-  r.readAsBinaryString(f);
+  r.readAsBinaryString(file.files[0]);
 };
 
 function render(){
@@ -155,31 +67,18 @@ function render(){
 <td>${l.tipo}</td>
 <td>${l.valor}</td>
 <td>${l.obs}</td>
-</tr>
-`).join("");
+</tr>`).join("");
 }
 
 function confirmar(){
-
-  const db=loadDB();
-  if(!db || !db.profiles || !db.active){
-    alert("Base não encontrada.");
-    return;
-  }
-
+  const db=JSON.parse(localStorage.getItem(KEY));
   buffer.forEach(l=>{
-    db.profiles[db.active].push({
-      id:crypto.randomUUID(),
-      ...l
-    });
+    db.profiles[db.active].push({id:crypto.randomUUID(),...l});
   });
-
   localStorage.setItem(KEY,JSON.stringify(db));
-
-  alert("Importação concluída com sucesso.");
+  alert("Importação concluída.");
   window.close();
 }
 </script>
-
 </body>
 </html>
