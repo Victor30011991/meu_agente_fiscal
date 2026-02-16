@@ -4,123 +4,135 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FluxoPro Brasil | Gestão & Auditoria</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header>
-    <div class="header-content container">
-        <div class="brand">
-            <div id="logo-placeholder"></div>
-            <h1>FluxoPro <span>Brasil</span></h1>
+    <header class="main-header">
+        <div class="container header-flex">
+            <div class="brand">
+                <div id="logo-placeholder" class="logo-box"></div>
+                <h1>FluxoPro <span>Brasil</span></h1>
+            </div>
+            <nav class="main-nav">
+                <button onclick="switchTab('config')" id="btn-config" class="nav-btn active">Configurações</button>
+                <button onclick="switchTab('list')" id="btn-list" class="nav-btn">Lançamentos</button>
+                <button onclick="switchTab('dash')" id="btn-dash" class="nav-btn">Dashboards</button>
+            </nav>
         </div>
-        <nav>
-            <button onclick="switchTab('config')" id="btn-config" class="nav-btn active">Configurações</button>
-            <button onclick="switchTab('list')" id="btn-list" class="nav-btn">Lançamentos</button>
-            <button onclick="switchTab('dash')" id="btn-dash" class="nav-btn">Dashboards</button>
-        </nav>
+    </header>
+
+    <main class="container content-area">
+        <section id="tab-config" class="tab-content active">
+            <div class="card card-centered">
+                <header class="card-header">
+                    <h2>Perfil Fiscal & Personalização</h2>
+                </header>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="logo-input">Logo da Empresa</label>
+                        <input type="file" id="logo-input" accept="image/*">
+                    </div>
+                    <div class="form-group">
+                        <label for="conf-nome">Razão Social / Nome</label>
+                        <input type="text" id="conf-nome" placeholder="Ex: Nome da Empresa LTDA">
+                    </div>
+                    <div class="form-group">
+                        <label for="conf-doc">CPF / CNPJ</label>
+                        <input type="text" id="conf-doc" placeholder="00.000.000/0001-00">
+                    </div>
+                    <div class="form-group">
+                        <label for="import-db">Restaurar Backup (JSON)</label>
+                        <input type="file" id="import-db" accept=".json">
+                    </div>
+                    <button onclick="saveConfig()" class="btn btn-primary btn-block">Salvar Perfil</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-list" class="tab-content">
+            <div class="action-bar">
+                <button onclick="openModal('modal-entry')" class="btn btn-primary">+ Novo Registro</button>
+                <button onclick="openExportModal()" class="btn btn-secondary">Gerar Relatório</button>
+            </div>
+            
+            <div class="card table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Destinação</th>
+                            <th>Categoria</th>
+                            <th>Valor</th>
+                            <th>Obs</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-corpo">
+                        </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="tab-dash" class="tab-content">
+            <div class="dash-grid">
+                <div class="card chart-card">
+                    <h3>Fluxo de Caixa</h3>
+                    <div class="chart-container">
+                        <canvas id="chartGeral"></canvas>
+                    </div>
+                </div>
+                <div class="card chart-card">
+                    <h3>Limite MEI Fiscal</h3>
+                    <div id="mei-status" class="alert-area"></div>
+                    <div class="chart-container">
+                        <canvas id="chartMei"></canvas>
+                    </div>
+                </div>
+                <div class="card chart-card">
+                    <h3>Gastos por Categoria</h3>
+                    <div class="chart-container">
+                        <canvas id="chartCategorias"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="modal-entry" class="modal-overlay">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal('modal-entry')">&times;</button>
+            <h3>Novo Registro Financeiro</h3>
+            <form id="form-entry" class="styled-form">
+                <div class="form-row">
+                    <input type="date" id="f-data" required title="Data do lançamento">
+                    <select id="f-tipo">
+                        <option value="Entrada">Receita (+)</option>
+                        <option value="Saída">Despesa (-)</option>
+                    </select>
+                </div>
+                <select id="f-dest">
+                    <option value="Pessoal">Pessoal (CPF)</option>
+                    <option value="Empresa">Empresarial (CNPJ)</option>
+                </select>
+                <input type="number" id="f-valor" step="0.01" placeholder="Valor (Ex: 150,00)" required>
+                <input type="text" id="f-cat" placeholder="Categoria (Ex: Aluguel, Venda)">
+                <textarea id="f-obs" rows="3" placeholder="Observações adicionais..."></textarea>
+                <button type="submit" class="btn btn-primary btn-block">Confirmar Lançamento</button>
+            </form>
+        </div>
     </div>
-</header>
 
-<main class="container">
-    <section id="tab-config" class="tab-content active">
-        <div class="card card-center">
-            <h2>Perfil Fiscal & Personalização</h2>
-            <div class="form-group">
-                <label>Logo da Empresa (Upload)</label>
-                <input type="file" id="logo-input" accept="image/*">
-            </div>
-            <div class="form-group">
-                <label>Nome / Razão Social</label>
-                <input type="text" id="conf-nome" placeholder="Ex: Nome da Empresa LTDA">
-            </div>
-            <div class="form-group">
-                <label>CPF / CNPJ</label>
-                <input type="text" id="conf-doc" placeholder="00.000.000/0001-00">
-            </div>
-            <div class="form-group">
-                <label>Importar Backup (JSON)</label>
-                <input type="file" id="import-db" accept=".json">
-            </div>
-            <button onclick="saveConfig()" class="btn btn-primary">Salvar Perfil</button>
-        </div>
-    </section>
-
-    <section id="tab-list" class="tab-content">
-        <div class="action-bar">
-            <button onclick="openModal('modal-entry')" class="btn btn-primary">+ Novo Lançamento</button>
-            <button onclick="openExportModal()" class="btn btn-sec">Gerar Relatório</button>
-        </div>
-        <div class="table-wrapper card">
-            <table>
-                <thead>
-                    <tr><th>Data</th><th>Destinação</th><th>Categoria</th><th>Valor</th><th>Obs</th><th>Ações</th></tr>
-                </thead>
-                <tbody id="lista-corpo"></tbody>
-            </table>
-        </div>
-    </section>
-
-    <section id="tab-dash" class="tab-content">
-        <div class="dash-grid">
-            <div class="card chart-box">
-                <h3>1. Visão Geral (Fluxo de Caixa)</h3>
-                <canvas id="chartGeral"></canvas>
-            </div>
-            <div class="card chart-box">
-                <h3>2. Visão Fiscal (Limite MEI)</h3>
-                <div id="mei-status"></div>
-                <canvas id="chartMei"></canvas>
-            </div>
-            <div class="card chart-box">
-                <h3>3. Análise de Despesas (Categorias)</h3>
-                <canvas id="chartCategorias"></canvas>
-            </div>
-        </div>
-    </section>
-</main>
-
-<div id="modal-entry" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeModal('modal-entry')">&times;</span>
-        <h3>Novo Registro</h3>
-        <form id="form-entry">
-            <input type="date" id="f-data" required>
-            <select id="f-tipo"><option value="Entrada">Receita</option><option value="Saída">Despesa</option></select>
-            <select id="f-dest"><option value="Pessoal">Pessoal (CPF)</option><option value="Empresa">Empresarial (CNPJ)</option></select>
-            <input type="number" id="f-valor" step="0.01" placeholder="Valor R$" required>
-            <input type="text" id="f-cat" placeholder="Categoria">
-            <textarea id="f-obs" placeholder="Observações"></textarea>
-            <button type="submit" class="btn btn-primary">Salvar</button>
-        </form>
-    </div>
-</div>
-
-<div id="modal-export" class="modal">
-    <div class="modal-content">
-        <h3>Configurar Relatório Profissional</h3>
-        <p>Escolha os filtros para o documento final:</p>
-        <div class="form-group">
-            <label>Tipo de Filtro</label>
-            <select id="exp-filtro">
-                <option value="Tudo">Relatório Consolidado (Tudo)</option>
-                <option value="Empresa">Apenas Empresarial (MEI)</option>
-                <option value="Pessoal">Apenas Pessoal (CPF)</option>
-            </select>
-        </div>
-        <div class="export-actions">
-            <button onclick="generateExport('pdf')" class="btn btn-primary">Exportar PDF com Dashboards</button>
-            <button onclick="generateExport('excel')" class="btn btn-sec">Exportar Excel Estruturado</button>
-        </div>
-        <button onclick="closeModal('modal-export')" class="btn-cancel">Cancelar</button>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-<script src="app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    
+    <script src="app.js"></script>
 </body>
 </html>
