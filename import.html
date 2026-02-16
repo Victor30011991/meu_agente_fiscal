@@ -3,138 +3,152 @@
 <head>
 <meta charset="UTF-8">
 <title>FluxoPro – Importação</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-body{font-family:Inter,system-ui;background:#f5f7fb;margin:0}
-.container{max-width:900px;margin:auto;padding:30px}
-table{width:100%;border-collapse:collapse}
-th,td{padding:8px;border-bottom:1px solid #ddd}
-button{padding:10px 14px;border:0;border-radius:8px;font-weight:700;cursor:pointer}
-.bad{color:#ef4444;font-weight:700}
+body{font-family:Inter,system-ui;background:#f1f5f9;padding:20px}
+.card{
+  background:#fff;
+  max-width:900px;
+  margin:auto;
+  padding:20px;
+  border-radius:12px;
+}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:6px;border-bottom:1px solid #e5e7eb}
+th{background:#2563eb;color:#fff}
+button{padding:10px;border:0;border-radius:8px;background:#2563eb;color:#fff}
 </style>
 </head>
 <body>
 
-<div class="container">
+<div class="card">
+<h2>Importar dados</h2>
 
-<h2>Importação assistida</h2>
+<input type="file" id="file" accept=".xlsx,.json">
 
-<input type="file" id="file">
-
-<br><br>
-
-<button onclick="confirmar()">Importar no perfil ativo</button>
-
-<br><br>
+<div style="margin:15px 0">
+<button onclick="confirmar()">Confirmar importação</button>
+</div>
 
 <table>
 <thead>
 <tr>
-<th>Data</th>
-<th>Categoria</th>
-<th>Tipo</th>
-<th>Valor</th>
-<th>Observação</th>
+<th>Data</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Obs</th>
 </tr>
 </thead>
-<tbody id="tb"></tbody>
+<tbody id="tbody"></tbody>
 </table>
-
 </div>
 
 <script>
-const KEY="fluxopro_v11";
-let buffer=[];
+const params = new URLSearchParams(location.search);
+const perfil = params.get("perfil");
 
-function loadDB(){
-  return JSON.parse(localStorage.getItem(KEY));
-}
+let buffer = [];
 
-function normalizeValue(v){
-  if(typeof v==="number") return v;
-  let s=String(v||"").trim().replace(/[^\d.,-]/g,"");
-  if(!s) return null;
+document.getElementById("file").addEventListener("change",load);
 
-  if(s.includes(",") && s.includes(".")){
-    if(s.lastIndexOf(",")>s.lastIndexOf(".")){
-      s=s.replace(/\./g,"").replace(",",".");
-    }else{
-      s=s.replace(/,/g,"");
-    }
+function load(e){
+
+  const file = e.target.files[0];
+  if(!file) return;
+
+  if(file.name.endsWith(".json")){
+    const r = new FileReader();
+    r.onload = ev=>{
+      const data = JSON.parse(ev.target.result);
+      preparar(data);
+    };
+    r.readAsText(file);
   }else{
-    s=s.replace(",",".");
+    const r = new FileReader();
+    r.onload = ev=>{
+      const wb = XLSX.read(ev.target.result,{type:"binary"});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws,{defval:""});
+      preparar(data);
+    };
+    r.readAsBinaryString(file);
   }
-
-  const n=parseFloat(s);
-  return isNaN(n)?null:n;
 }
 
-file.onchange=()=>{
-  const f=file.files[0];
-  if(!f) return;
+function preparar(rows){
 
-  const r=new FileReader();
+  buffer = rows.map(r=>{
 
-  r.onload=e=>{
-    const wb=XLSX.read(e.target.result,{type:"binary"});
-    const sheet=wb.Sheets[wb.SheetNames[0]];
+    return {
+      data: r.Data || r.data || "",
+      cat: r.Categoria || r.categoria || "",
+      tipo: normalizarTipo(r.Tipo || r.tipo || ""),
+      valor: normalizarValor(r.Valor || r.valor || 0),
+      obs: r.Observação || r.obs || r.observacao || ""
+    };
 
-    const data=XLSX.utils.sheet_to_json(sheet,{defval:""});
+  });
 
-    buffer=data.map(l=>{
-      return{
-        data:l.Data || l.data || "",
-        cat:l.Categoria || l.categoria || "",
-        tipo:(l.Tipo || l.tipo || "Entrada"),
-        valor:normalizeValue(l.Valor || l.valor),
-        obs:l.Observacao || l.Observação || l.obs || ""
-      }
-    }).filter(l=>l.valor!==null);
-
-    render();
-  };
-
-  r.readAsBinaryString(f);
-};
+  render();
+}
 
 function render(){
-  tb.innerHTML=buffer.map(l=>`
-<tr>
-<td>${l.data}</td>
-<td>${l.cat}</td>
-<td>${l.tipo}</td>
-<td>${l.valor}</td>
-<td>${l.obs}</td>
-</tr>
-`).join("");
+
+  const tb=document.getElementById("tbody");
+  tb.innerHTML="";
+
+  buffer.forEach(l=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td>${l.data}</td>
+      <td>${l.cat}</td>
+      <td>${l.tipo}</td>
+      <td>${l.valor}</td>
+      <td>${l.obs}</td>
+    `;
+    tb.appendChild(tr);
+  });
+
 }
 
 function confirmar(){
 
-  const db=loadDB();
+  const db = JSON.parse(localStorage.getItem("fluxopro_db")||"{}");
 
-  if(!db || !db.profiles || !db.profiles[db.active]){
-    alert("Perfil ativo não encontrado.");
+  if(!db.profiles) db.profiles={};
+  if(!db.profiles[perfil]){
+    alert("Perfil não encontrado.");
     return;
   }
 
-  buffer.forEach(l=>{
-    db.profiles[db.active].push({
-      id:crypto.randomUUID(),
-      ...l
-    });
-  });
+  db.profiles[perfil].lancamentos.push(...buffer);
 
-  localStorage.setItem(KEY,JSON.stringify(db));
+  localStorage.setItem("fluxopro_db",JSON.stringify(db));
 
-  alert("Importação concluída com sucesso.");
-
+  alert("Importação concluída.");
   window.close();
 }
-</script>
 
+/* -------- utilidades -------- */
+
+function normalizarValor(v){
+
+  if(typeof v==="number") return v;
+
+  let s = String(v)
+    .replace(/\s/g,"")
+    .replace("R$","")
+    .replace(/\./g,"")
+    .replace(",",".");
+  const n = parseFloat(s);
+  return isNaN(n)?0:n;
+}
+
+function normalizarTipo(t){
+  t=String(t||"").toLowerCase();
+  if(t.includes("ent")) return "Entrada";
+  if(t.includes("sai")) return "Saída";
+  return "";
+}
+</script>
 </body>
 </html>
