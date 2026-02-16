@@ -3,103 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FluxoPro Brasil | Enterprise Final</title>
+    <title>FluxoPro Brasil | Inteligência de Dados</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-    
     <style>
-        /* --- CSS DESIGN SYSTEM (MINIMALISTA) --- */
         :root {
-            --primary: #4f46e5;
-            --success: #10b981;
-            --danger: #ef4444;
-            --bg: #f9fafb;
-            --card: #ffffff;
-            --text: #1f2937;
-            --border: #e5e7eb;
-            --radius: 12px;
+            --primary: #4f46e5; --success: #10b981; --danger: #ef4444;
+            --bg: #f9fafb; --card: #ffffff; --text: #1f2937; --border: #e5e7eb;
         }
-
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background: var(--bg); 
-            color: var(--text); 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column; 
-            height: 100vh;
-        }
-
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; }
         .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; width: 100%; }
-
-        /* HEADER */
-        header { 
-            background: var(--card); 
-            border-bottom: 1px solid var(--border); 
-            padding: 15px 0; 
-            flex-shrink: 0;
-        }
+        header { background: var(--card); border-bottom: 1px solid var(--border); padding: 15px 0; flex-shrink: 0; }
         .nav-flex { display: flex; justify-content: space-between; align-items: center; }
         .logo { font-weight: 800; font-size: 1.4rem; letter-spacing: -1px; }
         .logo span { color: var(--primary); }
-
-        nav button { 
-            background: none; border: none; padding: 10px 20px; 
-            font-weight: 600; cursor: pointer; color: #6b7280; 
-            transition: 0.2s; border-bottom: 2px solid transparent;
-        }
+        nav button { background: none; border: none; padding: 10px 20px; font-weight: 600; cursor: pointer; color: #6b7280; border-bottom: 2px solid transparent; }
         nav button.active { color: var(--primary); border-bottom-color: var(--primary); }
-
-        /* CONTEÚDO */
         main { flex-grow: 1; overflow-y: auto; padding: 30px 0; }
         .tab-content { display: none; animation: fadeIn 0.4s ease; }
         .tab-content.active { display: block; }
-
-        /* CARDS & GRIDS */
-        .card { 
-            background: var(--card); 
-            border-radius: var(--radius); 
-            padding: 24px; 
-            border: 1px solid var(--border); 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
-            margin-bottom: 20px;
-        }
-
-        .grid-dash { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
-            gap: 20px; 
-        }
-
-        /* GRÁFICOS (REGRAS RÍGIDAS) */
+        .card { background: var(--card); border-radius: 12px; padding: 24px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .grid-dash { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
         .chart-box { height: 300px; width: 100%; position: relative; }
-
-        /* TABELA PROFISSIONAL */
         .table-container { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
         table { width: 100%; border-collapse: collapse; background: white; }
         th { background: #f9fafb; text-align: left; padding: 14px; font-size: 12px; color: #6b7280; text-transform: uppercase; }
         td { padding: 14px; border-bottom: 1px solid var(--border); font-size: 14px; }
-
-        /* BOTÕES */
-        .btn { 
-            padding: 12px 24px; border-radius: 8px; font-weight: 700; 
-            cursor: pointer; border: none; transition: 0.2s; display: inline-flex; align-items: center;
-        }
+        .btn { padding: 12px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; }
         .btn-main { background: var(--primary); color: white; }
-        .btn-main:hover { opacity: 0.9; transform: translateY(-1px); }
         .btn-sec { background: #e5e7eb; color: #374151; }
-        .btn-danger { background: #fee2e2; color: var(--danger); }
-
-        /* MODAL */
-        .modal { 
-            display: none; position: fixed; inset: 0; 
-            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
-            align-items: center; justify-content: center; z-index: 1000; 
-        }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 1000; }
         .modal-content { background: white; padding: 32px; border-radius: 20px; width: 420px; }
         .form-group { margin-bottom: 18px; }
-        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #4b5563; }
-        input, select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; }
-
+        input, select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; box-sizing: border-box; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
@@ -111,7 +46,7 @@
         <nav>
             <button onclick="mudarAba('list')" id="nav-list" class="active">Lançamentos</button>
             <button onclick="mudarAba('dash')" id="nav-dash">Dashboards</button>
-            <button onclick="mudarAba('config')" id="nav-config">Configurações</button>
+            <button onclick="mudarAba('config')" id="nav-config">Importar/Exportar</button>
         </nav>
     </div>
 </header>
@@ -119,20 +54,14 @@
 <main class="container">
     <section id="aba-list" class="tab-content active">
         <div style="display: flex; justify-content: space-between; margin-bottom: 24px;">
-            <button class="btn btn-main" onclick="abrirModal()">+ Novo Registro</button>
-            <button class="btn btn-sec" onclick="exportarExcel()">📥 Exportar para Excel</button>
+            <button class="btn btn-main" onclick="abrirModal()">+ Novo Lançamento Manual</button>
+            <button class="btn btn-sec" onclick="exportarExcel()">📥 Baixar Relatório Excel</button>
         </div>
         <div class="card" style="padding:0; overflow:hidden;">
             <div class="table-container">
                 <table>
                     <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Categoria</th>
-                            <th>Tipo</th>
-                            <th>Valor (R$)</th>
-                            <th style="text-align:right">Ações</th>
-                        </tr>
+                        <tr><th>Data</th><th>Categoria</th><th>Tipo</th><th>Valor (R$)</th><th style="text-align:right">Ação</th></tr>
                     </thead>
                     <tbody id="corpo-tabela"></tbody>
                 </table>
@@ -142,44 +71,26 @@
 
     <section id="aba-dash" class="tab-content">
         <div class="grid-dash">
-            <div class="card">
-                <h3 style="margin-top:0">Gastos por Categoria (%)</h3>
-                <div class="chart-box"><canvas id="chartPizza"></canvas></div>
-            </div>
-            <div class="card">
-                <h3 style="margin-top:0">Ganhos Mensais (Réguas)</h3>
-                <div class="chart-box"><canvas id="chartBarras"></canvas></div>
-            </div>
-            <div class="card">
-                <h3 style="margin-top:0">Maiores Gastos</h3>
-                <div class="chart-box"><canvas id="chartTop"></canvas></div>
-            </div>
+            <div class="card"><h3>Gastos por Categoria (%)</h3><div class="chart-box"><canvas id="chartPizza"></canvas></div></div>
+            <div class="card"><h3>Ganhos Mensais (Réguas)</h3><div class="chart-box"><canvas id="chartBarras"></canvas></div></div>
+            <div class="card"><h3>Top Despesas</h3><div class="chart-box"><canvas id="chartTop"></canvas></div></div>
         </div>
     </section>
 
     <section id="aba-config" class="tab-content">
         <div class="grid-dash">
             <div class="card">
-                <h3>📦 Gestão de Dados (Save/Load)</h3>
-                <p style="color: #6b7280; font-size: 14px;">Baixe o arquivo de backup para alimentar o sistema no futuro.</p>
-                <div style="display:flex; gap:10px; margin-top:20px;">
-                    <button class="btn btn-main" onclick="baixarSave()">Exportar JSON</button>
-                    <label class="btn btn-sec" style="cursor:pointer">
-                        Importar JSON <input type="file" id="input-importar" hidden accept=".json">
-                    </label>
-                </div>
+                <h3>📥 Alimentar Sistema (Arquivo)</h3>
+                <p style="color: #6b7280; font-size: 14px; margin-bottom: 20px;">
+                    Selecione um arquivo <b>Excel (.xlsx)</b> ou <b>JSON</b> para importar dados de gastos e ganhos.
+                </p>
+                <input type="file" id="input-arquivo" accept=".json, .xlsx, .xls, .csv" style="margin-bottom: 15px;">
+                <button class="btn btn-main" style="width: 100%;" onclick="processarArquivo()">Processar e Alimentar</button>
             </div>
             <div class="card">
-                <h3>🎨 Personalização</h3>
-                <div class="form-group">
-                    <label>Esquema Visual</label>
-                    <select onchange="trocarTema(this.value)">
-                        <option value="light">Original Light</option>
-                        <option value="dark">Enterprise Dark</option>
-                        <option value="emerald">Business Emerald</option>
-                    </select>
-                </div>
-                <button class="btn btn-danger" onclick="resetTotal()" style="width:100%">Resetar Todos os Dados</button>
+                <h3>📤 Salvar Backup</h3>
+                <p style="color: #6b7280; font-size: 14px;">Gere um arquivo de segurança com todas as informações atuais.</p>
+                <button class="btn btn-sec" style="width: 100%;" onclick="baixarSave()">Exportar Backup JSON</button>
             </div>
         </div>
     </section>
@@ -187,30 +98,15 @@
 
 <div class="modal" id="meuModal">
     <div class="modal-content">
-        <h2 style="margin-top:0; letter-spacing: -1px;">Novo Lançamento</h2>
+        <h2 style="margin-top:0">Novo Registro</h2>
         <form id="form-registro">
-            <div class="form-group">
-                <label>Data</label>
-                <input type="date" id="m-data" required>
-            </div>
-            <div class="form-group">
-                <label>Categoria</label>
-                <input type="text" id="m-cat" placeholder="Ex: Marketing, Salários..." required>
-            </div>
-            <div class="form-group">
-                <label>Tipo de Fluxo</label>
-                <select id="m-tipo">
-                    <option value="Entrada">Entrada (Ganho)</option>
-                    <option value="Saída">Saída (Gasto)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Valor (R$)</label>
-                <input type="number" id="m-valor" step="0.01" placeholder="0,00" required>
-            </div>
+            <div class="form-group"><label>Data</label><input type="date" id="m-data" required></div>
+            <div class="form-group"><label>Categoria</label><input type="text" id="m-cat" placeholder="Ex: Mercado, Salário..." required></div>
+            <div class="form-group"><label>Tipo</label><select id="m-tipo"><option value="Entrada">Ganhos (+)</option><option value="Saída">Gastos (-)</option></select></div>
+            <div class="form-group"><label>Valor (R$)</label><input type="number" id="m-valor" step="0.01" required></div>
             <div style="display: flex; gap: 10px; margin-top: 24px;">
-                <button type="button" class="btn btn-sec" style="flex:1" onclick="fecharModal()">Cancelar</button>
-                <button type="submit" class="btn btn-main" style="flex:1">Gravar Dados</button>
+                <button type="button" class="btn btn-sec" style="flex:1" onclick="fecharModal()">Voltar</button>
+                <button type="submit" class="btn btn-main" style="flex:1">Gravar</button>
             </div>
         </form>
     </div>
@@ -220,11 +116,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
-    // 🏦 BANCO DE DADOS LOCAL
-    let db = JSON.parse(localStorage.getItem('fluxopro_master_v3')) || [];
-    let graficosAtivos = {};
+    let db = JSON.parse(localStorage.getItem('fluxopro_enterprise_v4')) || [];
+    let charts = {};
 
-    // 🔄 NAVEGAÇÃO
     function mudarAba(id) {
         document.querySelectorAll('.tab-content, nav button').forEach(el => el.classList.remove('active'));
         document.getElementById('aba-' + id).classList.add('active');
@@ -232,158 +126,118 @@
         if(id === 'dash') renderCharts();
     }
 
-    // 📝 GESTÃO DE REGISTROS
     function abrirModal() { document.getElementById('meuModal').style.display = 'flex'; }
     function fecharModal() { document.getElementById('meuModal').style.display = 'none'; }
 
-    document.getElementById('form-registro').addEventListener('submit', function(e) {
+    // ALIMENTAÇÃO MANUAL
+    document.getElementById('form-registro').onsubmit = function(e) {
         e.preventDefault();
-        const novoItem = {
+        db.push({
             id: Date.now(),
             data: document.getElementById('m-data').value,
             cat: document.getElementById('m-cat').value,
             tipo: document.getElementById('m-tipo').value,
             valor: parseFloat(document.getElementById('m-valor').value)
+        });
+        sync(); fecharModal(); this.reset();
+    };
+
+    // ALIMENTAÇÃO POR ARQUIVO (Excel/JSON)
+    function processarArquivo() {
+        const fileInput = document.getElementById('input-arquivo');
+        if (!fileInput.files[0]) return alert("Selecione um arquivo primeiro.");
+        
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            if (file.name.endsWith('.json')) {
+                db = JSON.parse(e.target.result);
+            } else {
+                const workbook = XLSX.read(e.target.result, {type: 'binary'});
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(sheet);
+                
+                // MAPEAMENTO INTELIGENTE (Detecta colunas comuns de gastos/ganhos)
+                const novosDados = rows.map(r => ({
+                    id: Math.random(),
+                    data: r.Data || r.date || new Date().toISOString().split('T')[0],
+                    cat: r.Categoria || r.category || 'Outros',
+                    tipo: (r.Tipo || r.type || 'Saída').includes('Entrada') || (r.Tipo || r.type || '').includes('Ganho') ? 'Entrada' : 'Saída',
+                    valor: parseFloat(r.Valor || r.value || r.valor || 0)
+                }));
+                db = [...db, ...novosDados];
+            }
+            sync();
+            alert("Sistema alimentado com sucesso!");
+            mudarAba('list');
         };
-        db.push(novoItem);
-        sync();
-        fecharModal();
-        this.reset();
-    });
+
+        if (file.name.endsWith('.json')) reader.readAsText(file);
+        else reader.readAsBinaryString(file);
+    }
 
     function sync() {
-        localStorage.setItem('fluxopro_master_v3', JSON.stringify(db));
+        localStorage.setItem('fluxopro_enterprise_v4', JSON.stringify(db));
         renderTabela();
     }
 
     function renderTabela() {
         const corpo = document.getElementById('corpo-tabela');
-        if(db.length === 0) {
-            corpo.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; color:#9ca3af;">Nenhum registo encontrado. Lançe manualmente ou importe um ficheiro.</td></tr>';
-            return;
-        }
         corpo.innerHTML = db.sort((a,b) => new Date(b.data) - new Date(a.data)).map(item => `
             <tr>
-                <td style="font-weight:600">${item.data.split('-').reverse().join('/')}</td>
+                <td>${item.data.split('-').reverse().join('/')}</td>
                 <td>${item.cat}</td>
-                <td style="color:${item.tipo === 'Entrada' ? 'var(--success)' : 'var(--danger)'}; font-weight:700">
-                    ${item.tipo === 'Entrada' ? '↑' : '↓'} ${item.tipo}
-                </td>
-                <td style="font-weight:700">R$ ${item.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                <td style="text-align:right">
-                    <button onclick="removerItem(${item.id})" style="background:none; border:none; cursor:pointer; font-size:18px;">🗑️</button>
-                </td>
+                <td style="color:${item.tipo === 'Entrada' ? 'var(--success)' : 'var(--danger)'}; font-weight:700">${item.tipo}</td>
+                <td>R$ ${item.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                <td style="text-align:right"><button onclick="remover(${item.id})" style="border:none; background:none; cursor:pointer">🗑️</button></td>
             </tr>
-        `).join('');
+        `).join('') || '<tr><td colspan="5" style="text-align:center; padding:30px;">Sem dados.</td></tr>';
     }
 
-    function removerItem(id) {
-        if(confirm("Deseja eliminar este registo?")) {
-            db = db.filter(i => i.id !== id);
-            sync();
-        }
-    }
-
-    // 📊 MOTOR DE DASHBOARDS (O pedido do Pizza, Réguas e Ranking)
     function renderCharts() {
         const gastos = db.filter(i => i.tipo === 'Saída');
         const ganhos = db.filter(i => i.tipo === 'Entrada');
 
-        // 1. Pizza (Gastos por Categoria)
-        const catMap = {};
-        gastos.forEach(g => catMap[g.cat] = (catMap[g.cat] || 0) + g.valor);
-        criarChart('chartPizza', 'pie', Object.keys(catMap), Object.values(catMap));
+        // Pizza
+        const cats = {};
+        gastos.forEach(g => cats[g.cat] = (cats[g.cat] || 0) + g.valor);
+        initChart('chartPizza', 'pie', Object.keys(cats), Object.values(cats));
 
-        // 2. Réguas (Ganhos Mensais)
-        const ganhosMensais = Array(12).fill(0);
-        ganhos.forEach(g => {
-            const mes = new Date(g.data).getUTCMonth();
-            ganhosMensais[mes] += g.valor;
-        });
-        criarChart('chartBarras', 'bar', ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'], ganhosMensais);
+        // Réguas
+        const ganhosMes = Array(12).fill(0);
+        ganhos.forEach(g => { ganhosMes[new Date(g.data).getUTCMonth()] += g.valor; });
+        initChart('chartBarras', 'bar', ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'], ganhosMes);
 
-        // 3. Ranking de Percentagem (Doughnut)
-        const totalGasto = gastos.reduce((a,b) => a + b.valor, 0);
-        const rankingLabels = Object.keys(catMap);
-        const rankingValues = rankingLabels.map(l => ((catMap[l] / totalGasto) * 100).toFixed(1));
-        criarChart('chartTop', 'doughnut', rankingLabels, rankingValues);
+        // Ranking
+        const ranking = Object.keys(cats).sort((a,b) => cats[b] - cats[a]).slice(0, 5);
+        initChart('chartTop', 'doughnut', ranking, ranking.map(r => cats[r]));
     }
 
-    function criarChart(id, tipo, labels, data) {
-        if(graficosAtivos[id]) graficosAtivos[id].destroy();
-        const ctx = document.getElementById(id).getContext('2d');
-        graficosAtivos[id] = new Chart(ctx, {
-            type: tipo,
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: data,
-                    backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899'],
-                    borderWidth: 0
-                }]
-            },
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, usePointStyle: true } } }
-            }
+    function initChart(id, type, labels, data) {
+        if(charts[id]) charts[id].destroy();
+        charts[id] = new Chart(document.getElementById(id), {
+            type: type,
+            data: { labels, datasets: [{ data, backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] }]},
+            options: { responsive: true, maintainAspectRatio: false }
         });
     }
 
-    // 📁 IMPORT/EXPORT (SAVE GAME)
     function baixarSave() {
-        const blob = new Blob([JSON.stringify(db, null, 2)], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
+        const blob = new Blob([JSON.stringify(db)], {type: 'application/json'});
         const a = document.createElement('a');
-        a.href = url; a.download = 'backup_fluxopro.json'; a.click();
+        a.href = URL.createObjectURL(blob); a.download = 'backup_fluxopro.json'; a.click();
     }
-
-    document.getElementById('input-importar').onchange = function(e) {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            try {
-                const importado = JSON.parse(ev.target.result);
-                db = importado;
-                sync();
-                alert("Sistema alimentado com sucesso!");
-            } catch(e) { alert("Ficheiro inválido."); }
-        };
-        reader.readAsText(file);
-    };
 
     function exportarExcel() {
         const ws = XLSX.utils.json_to_sheet(db);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Financeiro");
-        XLSX.writeFile(wb, "Relatorio_Financeiro.xlsx");
+        XLSX.writeFile(wb, "FluxoPro_Relatorio.xlsx");
     }
 
-    // 🎨 TEMAS E RESET
-    function trocarTema(t) {
-        if(t === 'dark') {
-            document.documentElement.style.setProperty('--bg', '#0f172a');
-            document.documentElement.style.setProperty('--card', '#1e293b');
-            document.documentElement.style.setProperty('--text', '#f8fafc');
-            document.documentElement.style.setProperty('--border', '#334155');
-        } else if(t === 'emerald') {
-            document.documentElement.style.setProperty('--primary', '#059669');
-            document.documentElement.style.setProperty('--bg', '#f0fdf4');
-            document.documentElement.style.setProperty('--card', '#ffffff');
-            document.documentElement.style.setProperty('--text', '#064e3b');
-        } else {
-            location.reload(); // Reset para o padrão
-        }
-    }
+    function remover(id) { db = db.filter(i => i.id !== id); sync(); }
 
-    function resetTotal() {
-        if(confirm("ESTA AÇÃO É IRREVERSÍVEL. Apagar todos os dados?")) {
-            localStorage.clear();
-            location.reload();
-        }
-    }
-
-    // INICIALIZAR
     renderTabela();
 </script>
 </body>
