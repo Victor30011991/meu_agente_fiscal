@@ -1,191 +1,178 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
 <meta charset="UTF-8">
 <title>FluxoPro Engine v11</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <style>
 :root{
---bg:#f4f6fb;
---card:#ffffff;
---primary:#4f46e5;
---danger:#ef4444;
---success:#22c55e;
---text:#0f172a;
---muted:#64748b;
---radius:14px;
+  --bg:#f5f7fb;
+  --card:#ffffff;
+  --primary:#4f46e5;
+  --success:#10b981;
+  --danger:#ef4444;
+  --text:#0f172a;
 }
 
 body{
-margin:0;
-font-family:Inter,system-ui;
-background:var(--bg);
-color:var(--text);
+  margin:0;
+  font-family:Inter,system-ui;
+  background:var(--bg);
+  color:var(--text);
 }
 
 header{
-background:#fff;
-padding:14px 24px;
-display:flex;
-align-items:center;
-justify-content:space-between;
-box-shadow:0 6px 18px rgba(0,0,0,.05);
-position:sticky;
-top:0;
-z-index:10;
+  background:#fff;
+  padding:14px 24px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,.05);
+}
+
+header h1{
+  font-size:20px;
+  margin:0;
+  flex:1;
 }
 
 nav button{
-border:none;
-background:#eee;
-padding:10px 18px;
-border-radius:12px;
-cursor:pointer;
-font-weight:600;
+  border:0;
+  padding:8px 14px;
+  border-radius:12px;
+  background:#eee;
+  cursor:pointer;
+  font-weight:600;
 }
 
 nav button.active{
-background:var(--primary);
-color:#fff;
+  background:var(--primary);
+  color:#fff;
 }
 
-.container{
-padding:24px;
-max-width:1400px;
-margin:auto;
+main{
+  padding:22px;
 }
 
 .card{
-background:var(--card);
-border-radius:var(--radius);
-padding:18px;
-box-shadow:0 12px 30px rgba(15,23,42,.05);
-margin-bottom:20px;
+  background:var(--card);
+  border-radius:18px;
+  padding:18px;
+  box-shadow:0 10px 30px rgba(0,0,0,.06);
+  margin-bottom:20px;
 }
 
-.controls{
-display:flex;
-gap:10px;
-flex-wrap:wrap;
-}
-
-button.primary{
-background:var(--primary);
-color:#fff;
-border:none;
-padding:10px 16px;
-border-radius:10px;
-cursor:pointer;
-}
-
-button.soft{
-background:#eee;
-border:none;
-padding:10px 16px;
-border-radius:10px;
-cursor:pointer;
+.flex{
+  display:flex;
+  gap:18px;
+  flex-wrap:wrap;
 }
 
 table{
-width:100%;
-border-collapse:collapse;
-font-size:14px;
+  width:100%;
+  border-collapse:collapse;
 }
 
 th,td{
-padding:10px;
-border-bottom:1px solid #e5e7eb;
-}
-
-th{
-background:#f8fafc;
-text-align:left;
+  padding:10px;
+  border-bottom:1px solid #e5e7eb;
+  text-align:left;
 }
 
 td[contenteditable]{
-background:#f8fafc;
-border-radius:6px;
+  background:#fafafa;
+  border-radius:6px;
 }
 
 .badge{
-padding:6px 12px;
-border-radius:999px;
-font-weight:600;
-font-size:12px;
-display:inline-block;
+  padding:5px 10px;
+  border-radius:999px;
+  font-weight:600;
+  cursor:pointer;
+  display:inline-block;
 }
 
-.entrada{background:#dcfce7;color:#166534;}
+.entrada{background:#dcfce7;color:#047857;}
 .saida{background:#fee2e2;color:#991b1b;}
 
-.flex{
-display:flex;
-gap:16px;
-flex-wrap:wrap;
+button.primary{
+  background:var(--primary);
+  color:#fff;
+  border:0;
+  padding:10px 14px;
+  border-radius:10px;
+  cursor:pointer;
 }
 
-.card-mini{
-flex:1;
-min-width:220px;
-padding:16px;
-border-radius:14px;
-background:#fff;
-box-shadow:0 8px 20px rgba(0,0,0,.05);
+button.light{
+  background:#eee;
+  border:0;
+  padding:10px 14px;
+  border-radius:10px;
+  cursor:pointer;
 }
 
-select,input{
-padding:8px 10px;
-border-radius:8px;
-border:1px solid #e5e7eb;
+input,select{
+  padding:8px;
+  border-radius:8px;
+  border:1px solid #ddd;
 }
 
-.theme-dark{--bg:#020617;--card:#020617;color:#fff;}
-.theme-gold{--primary:#d4af37;}
-.theme-emerald{--primary:#059669;}
-.theme-indigo{--primary:#4f46e5;}
-.theme-rose{--primary:#e11d48;}
+.hidden{display:none}
+
+.summary{
+  display:flex;
+  gap:18px;
+}
+
+.summary .box{
+  flex:1;
+  background:#f8fafc;
+  border-radius:12px;
+  padding:14px;
+}
 </style>
 </head>
 <body>
 
 <header>
-<strong>FluxoPro Engine v11</strong>
+  <h1>FluxoPro Engine v11</h1>
 
-<div class="controls">
-<select id="profileSelect"></select>
-<button class="soft" onclick="addProfile()">+</button>
-</div>
+  <select id="perfilSelect"></select>
+  <button id="novoPerfil">+</button>
 
-<nav>
-<button onclick="showTab('lancamentos')" class="active">Lançamentos</button>
-<button onclick="showTab('dashboard')">Dashboard</button>
-<button onclick="showTab('config')">Configurações</button>
-</nav>
+  <nav>
+    <button data-tab="lanc" class="active">Lançamentos</button>
+    <button data-tab="dash">Dashboard</button>
+    <button data-tab="cfg">Configurações</button>
+  </nav>
 </header>
 
-<div class="container">
+<main>
 
 <!-- ================= LANCAMENTOS ================= -->
 
-<div id="tab-lancamentos">
+<section id="tab-lanc">
 
-<div class="card controls">
-<button class="primary" onclick="novoLancamento()">Novo lançamento</button>
-<input type="file" id="fileInput">
-<button class="soft" onclick="importarArquivo()">Alimentar perfil</button>
+<div class="card flex">
+  <button class="primary" id="addLinha">Novo lançamento</button>
+
+  <input type="file" id="fileInput">
+  <button class="light" id="importar">Alimentar perfil</button>
 </div>
 
 <div class="card">
+
 <table>
 <thead>
 <tr>
-<th>Pessoa (CPF/CNPJ)</th>
+<th>Pessoa</th>
 <th>Data</th>
 <th>Categoria</th>
 <th>Tipo</th>
@@ -197,332 +184,395 @@ border:1px solid #e5e7eb;
 </thead>
 <tbody id="tbody"></tbody>
 </table>
-</div>
-
-<div class="card flex">
-<div class="card-mini">
-<strong>Total Entradas</strong>
-<h3 id="totalEntradas">R$ 0,00</h3>
-</div>
-<div class="card-mini">
-<strong>Total Saídas</strong>
-<h3 id="totalSaidas">R$ 0,00</h3>
-</div>
-<div class="card-mini">
-<strong>Resultado</strong>
-<h3 id="resultado">R$ 0,00</h3>
-</div>
-</div>
 
 </div>
+
+<div class="card summary">
+  <div class="box">Entradas: <strong id="sumEnt">R$ 0,00</strong></div>
+  <div class="box">Saídas: <strong id="sumSai">R$ 0,00</strong></div>
+  <div class="box">Diferença: <strong id="sumRes">R$ 0,00</strong></div>
+</div>
+
+</section>
 
 <!-- ================= DASHBOARD ================= -->
 
-<div id="tab-dashboard" style="display:none">
+<section id="tab-dash" class="hidden">
 
 <div class="card flex">
-<div class="card-mini">
-<strong>Saúde Financeira</strong>
-<p id="saude"></p>
-</div>
+
+<div style="flex:1">
+<h4>Distribuição por categoria</h4>
+<canvas id="chartPizza"></canvas>
+<p id="resumoPizza"></p>
 </div>
 
-<div class="card">
-<canvas id="chart"></canvas>
+<div style="flex:1">
+<h4>Entradas x Saídas (%)</h4>
+<canvas id="chartPercentual"></canvas>
+<p id="resumoPercentual"></p>
+</div>
+
+<div style="flex:1">
+<h4>Resumo financeiro</h4>
+<canvas id="chartResumo"></canvas>
+<p id="resumoResumo"></p>
 </div>
 
 </div>
+
+</section>
 
 <!-- ================= CONFIG ================= -->
 
-<div id="tab-config" style="display:none">
+<section id="tab-cfg" class="hidden">
 
 <div class="card">
+<h3>Painel de controle</h3>
 
-<h3>Painel de Controle</h3>
-
-<div class="controls">
-<select onchange="setTheme(this.value)">
-<option value="">Tema padrão</option>
-<option value="theme-dark">Dark</option>
-<option value="theme-gold">Gold</option>
-<option value="theme-emerald">Emerald</option>
-<option value="theme-indigo">Indigo</option>
-<option value="theme-rose">Rose</option>
-</select>
-
-<button class="soft" onclick="exportarTudo()">Backup global</button>
-<button class="soft" onclick="resetar()">Reset de fábrica</button>
-</div>
+<button class="light" id="backup">Backup Excel (todos perfis)</button>
+<button class="light" id="reset">Reset de fábrica</button>
 
 </div>
 
-</div>
+</section>
 
-</div>
+</main>
 
 <script>
 const DB_KEY="fluxopro_v11";
-let chart;
+
+let charts={};
 
 function loadDB(){
-return JSON.parse(localStorage.getItem(DB_KEY) || '{"profiles":{},"theme":""}');
+  return JSON.parse(localStorage.getItem(DB_KEY)) || {
+    profiles:{},
+    active:null
+  };
 }
+
 function saveDB(db){
-localStorage.setItem(DB_KEY,JSON.stringify(db));
+  localStorage.setItem(DB_KEY,JSON.stringify(db));
 }
 
 function currentProfile(){
-return document.getElementById("profileSelect").value;
+  const db=loadDB();
+  return db.active;
 }
+
+/* ---------------- NORMALIZAÇÃO ---------------- */
 
 function normalizeValue(v){
-if(v===undefined||v===null)return 0;
-let s=String(v).replace(/[R$\s]/g,'');
-if(s.includes(",") && s.includes(".")){
-if(s.lastIndexOf(",")>s.lastIndexOf(".")){
-s=s.replace(/\./g,"").replace(",",".");
-}else{
-s=s.replace(/,/g,"");
-}
-}else{
-s=s.replace(",",".");
-}
-let n=parseFloat(s);
-return isNaN(n)?null:n;
+  if(typeof v==="number") return v;
+
+  let s=String(v).replace(/[^\d,.-]/g,"");
+
+  if(s.indexOf(",")>-1 && s.indexOf(".")>-1){
+    if(s.lastIndexOf(",")>s.lastIndexOf(".")){
+      s=s.replace(/\./g,"").replace(",",".");
+    }else{
+      s=s.replace(/,/g,"");
+    }
+  }else{
+    s=s.replace(",",".");
+  }
+
+  let n=parseFloat(s);
+  return isNaN(n)?null:n;
 }
 
-function renderProfiles(){
-let db=loadDB();
-let sel=document.getElementById("profileSelect");
-sel.innerHTML="";
-Object.keys(db.profiles).forEach(p=>{
-let o=document.createElement("option");
-o.value=p;
-o.textContent=p;
-sel.appendChild(o);
-});
-if(sel.options.length) sel.value=sel.options[0].value;
-renderTable();
+/* ---------------- PERFIS ---------------- */
+
+function renderPerfis(){
+  const db=loadDB();
+  const sel=document.getElementById("perfilSelect");
+
+  sel.innerHTML=Object.keys(db.profiles)
+    .map(p=>`<option ${p===db.active?"selected":""}>${p}</option>`).join("");
 }
 
-function addProfile(){
-let nome=prompt("CPF / CNPJ / Identificador:");
-if(!nome) return;
-let db=loadDB();
-db.profiles[nome]=[];
-saveDB(db);
-renderProfiles();
-}
+document.getElementById("novoPerfil").onclick=()=>{
+  const n=prompt("Nome do perfil (CPF/CNPJ/Pessoa)");
+  if(!n) return;
 
-document.getElementById("profileSelect").addEventListener("change",renderTable);
+  const db=loadDB();
+  db.profiles[n]=[];
+  db.active=n;
+  saveDB(db);
+  renderPerfis();
+  renderTable();
+  renderDashboard();
+};
 
-function novoLancamento(){
-let db=loadDB();
-db.profiles[currentProfile()].push({
-pessoa:"",
-data:"",
-categoria:"",
-tipo:"Entrada",
-valor:0,
-obs:""
-});
-saveDB(db);
-renderTable();
-}
+document.getElementById("perfilSelect").onchange=e=>{
+  const db=loadDB();
+  db.active=e.target.value;
+  saveDB(db);
+  renderTable();
+  renderDashboard();
+};
+
+/* ---------------- TABELA ---------------- */
 
 function renderTable(){
-let db=loadDB();
-let list=db.profiles[currentProfile()]||[];
-let tbody=document.getElementById("tbody");
-tbody.innerHTML="";
-let frag=document.createDocumentFragment();
+  const db=loadDB();
+  const list=db.profiles[db.active]||[];
+  const tbody=document.getElementById("tbody");
 
-list.forEach((r,i)=>{
-let tr=document.createElement("tr");
+  let ent=0,sai=0;
 
-tr.innerHTML=`
-<td contenteditable data-f="pessoa">${r.pessoa||""}</td>
-<td contenteditable data-f="data">${r.data||""}</td>
-<td contenteditable data-f="categoria">${r.categoria||""}</td>
-<td data-f="tipo">
-<span class="badge ${r.tipo==="Entrada"?"entrada":"saida"}">${r.tipo}</span>
-</td>
-<td contenteditable data-f="valor">R$ ${Number(r.valor).toFixed(2).replace(".",",")}</td>
-<td contenteditable data-f="obs">${r.obs||""}</td>
-<td><button class="soft" onclick="toggleTipo(${i})">Editar</button></td>
-<td><button class="soft" onclick="remover(${i})">🗑</button></td>
-`;
+  let html="";
 
-tr.querySelectorAll("[contenteditable]").forEach(td=>{
-td.onblur=()=>updateCell(i,td.dataset.f,td.innerText);
+  list.forEach(l=>{
+    const v=l.valor||0;
+    if(l.tipo==="Entrada") ent+=v; else sai+=v;
+
+    html+=`
+<tr data-id="${l.id}">
+<td contenteditable data-f="pessoa">${l.pessoa||""}</td>
+<td contenteditable data-f="data">${l.data||""}</td>
+<td contenteditable data-f="categoria">${l.categoria||""}</td>
+<td><span class="badge ${l.tipo==="Entrada"?"entrada":"saida"}">${l.tipo}</span></td>
+<td contenteditable data-f="valor">${formatMoney(l.valor)}</td>
+<td contenteditable data-f="obs">${l.obs||""}</td>
+<td><button class="light editTipo">Trocar</button></td>
+<td><button class="light del">🗑</button></td>
+</tr>`;
+  });
+
+  tbody.innerHTML=html;
+
+  document.getElementById("sumEnt").innerText=formatMoney(ent);
+  document.getElementById("sumSai").innerText=formatMoney(sai);
+  document.getElementById("sumRes").innerText=formatMoney(ent-sai);
+}
+
+function formatMoney(v){
+  return new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0);
+}
+
+document.getElementById("tbody").addEventListener("click",e=>{
+  const tr=e.target.closest("tr");
+  if(!tr) return;
+
+  const id=tr.dataset.id;
+  const db=loadDB();
+  const list=db.profiles[db.active];
+
+  const item=list.find(i=>i.id===id);
+
+  if(e.target.classList.contains("del")){
+    db.profiles[db.active]=list.filter(i=>i.id!==id);
+  }
+
+  if(e.target.classList.contains("editTipo")){
+    item.tipo=item.tipo==="Entrada"?"Saída":"Entrada";
+  }
+
+  saveDB(db);
+  renderTable();
+  renderDashboard();
 });
 
-frag.appendChild(tr);
-});
+document.getElementById("tbody").addEventListener("blur",e=>{
+  const td=e.target;
+  const tr=td.closest("tr");
+  if(!td.dataset.f) return;
 
-tbody.appendChild(frag);
-calcularTotais();
-renderChart();
-}
+  const db=loadDB();
+  const item=db.profiles[db.active].find(i=>i.id===tr.dataset.id);
 
-function updateCell(i,field,value){
-let db=loadDB();
-let row=db.profiles[currentProfile()][i];
+  if(td.dataset.f==="valor"){
+    const n=normalizeValue(td.innerText);
+    if(n===null){
+      renderTable();
+      return;
+    }
+    item.valor=n;
+  }else{
+    item[td.dataset.f]=td.innerText;
+  }
 
-if(field==="valor"){
-let n=normalizeValue(value);
-if(n===null){
-alert("Valor inválido");
-renderTable();
-return;
-}
-row.valor=n;
-}else{
-row[field]=value.trim();
-}
-saveDB(db);
-renderTable();
-}
+  saveDB(db);
+  renderTable();
+  renderDashboard();
 
-function toggleTipo(i){
-let db=loadDB();
-let r=db.profiles[currentProfile()][i];
-r.tipo = r.tipo==="Entrada"?"Saída":"Entrada";
-saveDB(db);
-renderTable();
-}
+},true);
 
-function remover(i){
-let db=loadDB();
-db.profiles[currentProfile()].splice(i,1);
-saveDB(db);
-renderTable();
-}
+/* ---------------- NOVO ---------------- */
 
-function calcularTotais(){
-let db=loadDB();
-let list=db.profiles[currentProfile()]||[];
-let ent=0, sai=0;
-
-list.forEach(r=>{
-if(r.tipo==="Entrada") ent+=Number(r.valor)||0;
-else sai+=Number(r.valor)||0;
-});
-
-document.getElementById("totalEntradas").textContent=ent.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-document.getElementById("totalSaidas").textContent=sai.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-document.getElementById("resultado").textContent=(ent-sai).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-
-let saude=document.getElementById("saude");
-if(ent===0 && sai===0) saude.textContent="Perfil sem dados.";
-else if(ent>sai) saude.textContent="Boa saúde financeira. Continue controlando os custos.";
-else saude.textContent="Atenção: suas saídas superam as entradas.";
-}
-
-function renderChart(){
-let db=loadDB();
-let list=db.profiles[currentProfile()]||[];
-
-let cat={};
-list.forEach(r=>{
-let k=r.categoria||"Sem categoria";
-let v=Number(r.valor)||0;
-if(r.tipo==="Saída") v*=-1;
-cat[k]=(cat[k]||0)+v;
-});
-
-let labels=Object.keys(cat);
-let data=Object.values(cat);
-
-if(chart) chart.destroy();
-
-chart=new Chart(document.getElementById("chart"),{
-type:"bar",
-data:{
-labels,
-datasets:[{label:"Resultado por categoria",data}]
-}
-});
-}
-
-function importarArquivo(){
-let f=document.getElementById("fileInput").files[0];
-if(!f) return;
-
-let reader=new FileReader();
-reader.onload=e=>{
-let data=new Uint8Array(e.target.result);
-let wb=XLSX.read(data,{type:"array"});
-let ws=wb.Sheets[wb.SheetNames[0]];
-let json=XLSX.utils.sheet_to_json(ws);
-
-let db=loadDB();
-
-json.forEach(l=>{
-let valor=normalizeValue(l.Valor||l.valor);
-if(valor===null) return;
-
-db.profiles[currentProfile()].push({
-pessoa:l.Pessoa||l.CPF||l.CNPJ||"",
-data:l.Data||"",
-categoria:l.Categoria||"",
-tipo:(String(l.Tipo).toLowerCase().includes("sa")?"Saída":"Entrada"),
-valor,
-obs:l.Observacao||l.Observação||""
-});
-});
-
-saveDB(db);
-renderTable();
+document.getElementById("addLinha").onclick=()=>{
+  const db=loadDB();
+  db.profiles[db.active].push({
+    id:crypto.randomUUID(),
+    pessoa:"",
+    data:"",
+    categoria:"",
+    tipo:"Entrada",
+    valor:0,
+    obs:""
+  });
+  saveDB(db);
+  renderTable();
 };
-reader.readAsArrayBuffer(f);
+
+/* ---------------- IMPORTAÇÃO ---------------- */
+
+document.getElementById("importar").onclick=()=>{
+  const file=document.getElementById("fileInput").files[0];
+  if(!file) return;
+
+  const db=loadDB();
+  const list=db.profiles[db.active];
+
+  if(file.name.endsWith(".json")){
+    const fr=new FileReader();
+    fr.onload=()=>{
+      const arr=JSON.parse(fr.result);
+      arr.forEach(l=>{
+        list.push({
+          id:crypto.randomUUID(),
+          pessoa:l.Pessoa||"",
+          data:l.Data||"",
+          categoria:l.Categoria||"",
+          tipo:l.Tipo||"Entrada",
+          valor:normalizeValue(l.Valor)||0,
+          obs:l.Observacao||""
+        });
+      });
+      saveDB(db);
+      renderTable();
+      renderDashboard();
+    };
+    fr.readAsText(file);
+  }else{
+    const fr=new FileReader();
+    fr.onload=e=>{
+      const wb=XLSX.read(e.target.result,{type:"binary"});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws);
+
+      rows.forEach(r=>{
+        list.push({
+          id:crypto.randomUUID(),
+          pessoa:r.Pessoa||"",
+          data:r.Data||"",
+          categoria:r.Categoria||"",
+          tipo:r.Tipo||"Entrada",
+          valor:normalizeValue(r.Valor)||0,
+          obs:r.Observacao||""
+        });
+      });
+
+      saveDB(db);
+      renderTable();
+      renderDashboard();
+    };
+    fr.readAsBinaryString(file);
+  }
+};
+
+/* ---------------- DASHBOARD ---------------- */
+
+function renderDashboard(){
+  const db=loadDB();
+  const list=db.profiles[db.active]||[];
+
+  let ent=0,sai=0;
+  let cat={};
+
+  list.forEach(l=>{
+    const v=l.valor||0;
+    if(l.tipo==="Entrada") ent+=v; else sai+=v;
+
+    if(l.tipo==="Saída"){
+      cat[l.categoria||"Sem categoria"]=(cat[l.categoria||"Sem categoria"]||0)+v;
+    }
+  });
+
+  if(charts.pizza) charts.pizza.destroy();
+  if(charts.perc) charts.perc.destroy();
+  if(charts.res) charts.res.destroy();
+
+  charts.pizza=new Chart(chartPizza,{
+    type:"pie",
+    data:{labels:Object.keys(cat),datasets:[{data:Object.values(cat)}]}
+  });
+
+  document.getElementById("resumoPizza").innerText=
+    "Categorias: "+Object.keys(cat).length;
+
+  charts.perc=new Chart(chartPercentual,{
+    type:"doughnut",
+    data:{labels:["Entradas","Saídas"],datasets:[{data:[ent,sai]}]}
+  });
+
+  const t=ent+sai;
+  document.getElementById("resumoPercentual").innerText=
+    t?`Entradas ${(ent/t*100).toFixed(1)}% | Saídas ${(sai/t*100).toFixed(1)}%`:"Sem dados";
+
+  charts.res=new Chart(chartResumo,{
+    type:"bar",
+    data:{labels:["Entradas","Saídas","Resultado"],datasets:[{data:[ent,sai,ent-sai]}]}
+  });
+
+  document.getElementById("resumoResumo").innerText=
+    ent-sai>=0?"Saldo positivo.":"Saldo negativo.";
 }
 
-function exportarTudo(){
-let db=loadDB();
-let rows=[];
-Object.entries(db.profiles).forEach(([p,arr])=>{
-arr.forEach(r=>rows.push({...r,Perfil:p}));
+/* ---------------- CONFIG ---------------- */
+
+document.getElementById("backup").onclick=()=>{
+  const db=loadDB();
+  let rows=[];
+
+  Object.entries(db.profiles).forEach(([p,arr])=>{
+    arr.forEach(l=>{
+      rows.push({...l,perfil:p});
+    });
+  });
+
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"DB");
+  XLSX.writeFile(wb,"fluxopro_backup.xlsx");
+};
+
+document.getElementById("reset").onclick=()=>{
+  if(confirm("Apagar todo o banco de dados?")){
+    localStorage.removeItem(DB_KEY);
+    location.reload();
+  }
+};
+
+/* ---------------- SPA ---------------- */
+
+document.querySelectorAll("nav button").forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+
+    document.querySelectorAll("main section").forEach(s=>s.classList.add("hidden"));
+    document.getElementById("tab-"+b.dataset.tab).classList.remove("hidden");
+
+    if(b.dataset.tab==="dash") renderDashboard();
+  };
 });
-let ws=XLSX.utils.json_to_sheet(rows);
-let wb=XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(wb,ws,"Banco");
-XLSX.writeFile(wb,"fluxopro_backup.xlsx");
-}
 
-function resetar(){
-if(confirm("Apagar todos os dados?")){
-localStorage.removeItem(DB_KEY);
-location.reload();
-}
-}
+/* ---------------- INIT ---------------- */
 
-function setTheme(t){
-document.body.className=t;
-let db=loadDB();
-db.theme=t;
-saveDB(db);
-}
+(function(){
+  const db=loadDB();
+  if(!db.active){
+    const p="Principal";
+    db.profiles[p]=[];
+    db.active=p;
+    saveDB(db);
+  }
 
-function showTab(t){
-document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
-event.target.classList.add("active");
-
-["lancamentos","dashboard","config"].forEach(id=>{
-document.getElementById("tab-"+id).style.display=id===t?"block":"none";
-});
-renderChart();
-}
-
-(function init(){
-let db=loadDB();
-if(!Object.keys(db.profiles).length){
-db.profiles["Perfil 1"]=[];
-saveDB(db);
-}
-if(db.theme) document.body.className=db.theme;
-renderProfiles();
+  renderPerfis();
+  renderTable();
+  renderDashboard();
 })();
 </script>
 
