@@ -3,78 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FluxoPro Brasil | Deluxe v6.0</title>
+    <title>FluxoPro Brasil | Multi-Instance v8.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        /* --- DESIGN SYSTEM EXPANDIDO --- */
         :root {
             --primary: #4f46e5; --success: #10b981; --danger: #ef4444;
-            --bg: #f9fafb; --card: #ffffff; --text: #1f2937; --border: #e5e7eb;
-            --accent: #6366f1;
+            --bg: #f3f4f6; --card: #ffffff; --text: #1f2937; --border: #e5e7eb;
         }
-
-        /* TEMAS ADICIONAIS */
         [data-theme="midnight"] { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --border: #334155; --primary: #38bdf8; }
-        [data-theme="emerald"] { --primary: #059669; --bg: #f0fdf4; --text: #064e3b; }
-        [data-theme="gold"] { --primary: #b45309; --bg: #fffbeb; --text: #78350f; --card: #ffffff; }
-        [data-theme="rose"] { --primary: #e11d48; --bg: #fff1f2; --text: #881337; }
-        [data-theme="royal"] { --primary: #6d28d9; --bg: #f5f3ff; --text: #4c1d95; }
-
+        
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .container { max-width: 1300px; margin: 0 auto; padding: 0 20px; }
         
-        header { background: var(--card); border-bottom: 1px solid var(--border); padding: 15px 0; sticky: top; z-index: 100; }
+        header { background: var(--card); border-bottom: 2px solid var(--primary); padding: 15px 0; position: sticky; top: 0; z-index: 100; }
         .nav-flex { display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-weight: 800; font-size: 1.4rem; letter-spacing: -1px; }
-        .logo span { color: var(--primary); }
         
-        nav button { background: none; border: none; padding: 10px 15px; font-weight: 600; cursor: pointer; color: #6b7280; border-bottom: 2px solid transparent; transition: 0.2s; }
-        nav button.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .profile-switcher { background: #eef2ff; padding: 8px 15px; border-radius: 8px; border: 1px solid var(--primary); display: flex; align-items: center; gap: 10px; }
+        .profile-switcher select { border: none; background: none; font-weight: 800; color: var(--primary); outline: none; cursor: pointer; }
 
-        main { padding: 30px 0; }
-        .tab-content { display: none; animation: fadeIn 0.4s ease; }
+        nav button { background: none; border: none; padding: 10px 15px; font-weight: 600; cursor: pointer; color: #6b7280; }
+        nav button.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
+
+        main { padding: 25px 0; }
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
         .tab-content.active { display: block; }
 
-        .card { background: var(--card); border-radius: 16px; padding: 24px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
         
-        /* LAYOUTS ESPECÍFICOS */
-        .layout-grid { display: grid; gap: 20px; }
-        #aba-dash.layout-focus { grid-template-columns: 1fr; }
-        #aba-dash.layout-hybrid { grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); }
-
-        /* TABELA E EDIÇÃO */
-        .table-container { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; background: var(--card); }
-        th { background: #f9fafb; padding: 14px; font-size: 11px; color: #6b7280; text-transform: uppercase; text-align: left; }
-        [data-theme="midnight"] th { background: #1e293b; }
-        td { padding: 14px; border-bottom: 1px solid var(--border); font-size: 14px; outline: none; }
-        td[contenteditable="true"]:focus { background: rgba(99, 102, 241, 0.1); box-shadow: inset 0 0 0 2px var(--primary); }
-
-        .btn { padding: 12px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: rgba(0,0,0,0.03); padding: 12px; text-align: left; font-size: 11px; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        
+        .btn { padding: 10px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; border: none; font-size: 13px; }
         .btn-main { background: var(--primary); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
         .btn-sec { background: var(--border); color: var(--text); }
 
-        .chart-box { height: 350px; width: 100%; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: var(--card); padding: 30px; border-radius: 15px; width: 380px; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; }
 
-        /* CONFIGS */
-        .config-item { margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
-        .config-item label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 14px; }
-        select, input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); }
-
-        .indica-ia { background: linear-gradient(135deg, var(--primary), #a855f7); color: white; padding: 20px; border-radius: 12px; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <header>
     <div class="container nav-flex">
-        <div class="logo">FluxoPro <span>Deluxe</span></div>
+        <div class="logo" style="font-weight: 900; font-size: 1.5rem;">Fluxo<span style="color:var(--primary)">Pro</span></div>
+        
+        <div class="profile-switcher">
+            <span style="font-size: 11px; font-weight: 700; color: #6366f1;">PERFIL ATIVO:</span>
+            <select id="select-perfil" onchange="trocarPerfil()">
+                <option value="Geral">Fluxo Geral</option>
+            </select>
+            <button class="btn btn-main" style="padding: 4px 8px;" onclick="novoPerfil()">+</button>
+        </div>
+
         <nav>
-            <button onclick="mudarAba('list')" id="nav-list" class="active">Dados</button>
-            <button onclick="mudarAba('dash')" id="nav-dash">Dashboards</button>
-            <button onclick="mudarAba('config')" id="nav-config">Painel de Controle</button>
+            <button onclick="mudarAba('list')" id="nav-list" class="active">Lançamentos</button>
+            <button onclick="mudarAba('dash')" id="nav-dash">Analytics</button>
+            <button onclick="mudarAba('config')" id="nav-config">Sistema</button>
         </nav>
     </div>
 </header>
@@ -82,90 +72,57 @@
 <main class="container">
     <section id="aba-list" class="tab-content active">
         <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-            <button class="btn btn-main" onclick="abrirModal()">+ Novo Lançamento</button>
-            <button class="btn btn-sec" onclick="exportarExcel()">📥 Exportar Relatório</button>
+            <button class="btn btn-main" onclick="abrirModal()">+ Novo Registro no Perfil</button>
+            <div>
+                <button class="btn btn-sec" onclick="exportarFiltro()">📥 Baixar este Perfil</button>
+                <button class="btn btn-danger" onclick="limparDadosPerfil()">🗑️ Limpar este Perfil</button>
+            </div>
         </div>
         <div class="card" style="padding:0; overflow:hidden;">
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr><th>Data</th><th>Categoria</th><th>Fluxo</th><th>Valor</th><th>Ação</th></tr>
-                    </thead>
-                    <tbody id="corpo-tabela"></tbody>
-                </table>
-            </div>
+            <table>
+                <thead>
+                    <tr><th>Data</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Ação</th></tr>
+                </thead>
+                <tbody id="tabela-corpo"></tbody>
+            </table>
         </div>
     </section>
 
     <section id="aba-dash" class="tab-content">
-        <div id="dash-grid-system" class="layout-grid layout-hybrid">
-            <div class="card"><h3>🍕 Divisão de Gastos</h3><div class="chart-box"><canvas id="chartPizza"></canvas></div></div>
-            <div class="card"><h3>📊 Ganhos Mensais</h3><div class="chart-box"><canvas id="chartBarras"></canvas></div></div>
-            <div class="card"><h3>🔝 Maiores Custos (%)</h3><div class="chart-box"><canvas id="chartTop"></canvas></div></div>
+        <div class="grid">
+            <div class="card"><h3>🍕 Gastos do Perfil</h3><div style="height:300px"><canvas id="chartPizza"></canvas></div></div>
+            <div class="card"><h3>📊 Mensal (Entradas)</h3><div style="height:300px"><canvas id="chartBarras"></canvas></div></div>
         </div>
     </section>
 
     <section id="aba-config" class="tab-content">
-        <div class="layout-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+        <div class="grid">
             <div class="card">
-                <h3>🎨 Personalização Visual</h3>
-                <div class="config-item">
-                    <label>Tema de Cores</label>
-                    <select onchange="aplicarTema(this.value)">
-                        <option value="default">Indigo Standard</option>
-                        <option value="midnight">Midnight Dark</option>
-                        <option value="emerald">Emerald Business</option>
-                        <option value="gold">Gold Management</option>
-                        <option value="rose">Rose Premium</option>
-                        <option value="royal">Royal Purple</option>
-                    </select>
-                </div>
-                <div class="config-item">
-                    <label>Modelo de Layout (Dashboard)</label>
-                    <select onchange="aplicarLayout(this.value)">
-                        <option value="layout-hybrid">Grade Híbrida (Lado a Lado)</option>
-                        <option value="layout-focus">Foco Total (Um por vez)</option>
-                    </select>
-                </div>
+                <h3>📤 Exportação Master</h3>
+                <p style="font-size: 13px;">Escolha como deseja baixar seus dados:</p>
+                <button class="btn btn-main" style="width: 100%; margin-bottom: 10px;" onclick="exportarTudo()">Baixar TUDO (Todos os CPFs/CNPJs)</button>
+                <button class="btn btn-sec" style="width: 100%;" onclick="exportarFiltro()">Baixar Apenas Perfil Ativo</button>
             </div>
-
             <div class="card">
-                <h3>📄 Configurações da Planilha</h3>
-                <div class="config-item">
-                    <label>Nome do Proprietário / CPF</label>
-                    <input type="text" id="prop-nome" placeholder="Digite seu nome ou documento" onblur="salvarPref()">
-                </div>
-                <div class="config-item">
-                    <label>Nome do Arquivo Exportado</label>
-                    <input type="text" id="prop-file" placeholder="Ex: Financeiro_2024" onblur="salvarPref()">
-                </div>
-                <div class="config-item">
-                    <label>Alimentar via Arquivo</label>
-                    <input type="file" id="input-upload" accept=".xlsx, .json" onchange="importarArquivo()">
-                </div>
-            </div>
-
-            <div class="card indica-ia">
-                <h3>💡 Indicação do Especialista</h3>
-                <p id="dica-texto">Carregue dados para receber uma análise de saúde financeira.</p>
-                <hr style="opacity: 0.2;">
-                <button class="btn" style="background: white; color: var(--primary); width:100%;" onclick="gerarDica()">Gerar Nova Indicação</button>
+                <h3>⚠ Zona de Perigo</h3>
+                <p style="font-size: 13px;">Apagar permanentemente todos os perfis e dados do sistema.</p>
+                <button class="btn btn-danger" style="width: 100%;" onclick="resetTotal()">Reset Total do Sistema</button>
             </div>
         </div>
     </section>
 </main>
 
-<div class="modal" id="meuModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 1000;">
-    <div class="modal-content" style="background: white; padding: 32px; border-radius: 20px; width: 400px;">
-        <h2 style="margin-top:0">Novo Registro</h2>
+<div class="modal" id="modalAdd">
+    <div class="modal-content">
+        <h3 id="modal-titulo">Novo Lançamento</h3>
         <form id="form-registro">
-            <input type="date" id="m-data" required style="margin-bottom:15px; width:100%; padding:10px;">
-            <input type="text" id="m-cat" placeholder="Categoria" required style="margin-bottom:15px; width:100%; padding:10px;">
-            <select id="m-tipo" style="margin-bottom:15px; width:100%; padding:10px;"><option value="Entrada">Ganhos (+)</option><option value="Saída">Gastos (-)</option></select>
-            <input type="text" id="m-valor" placeholder="Valor (Ex: 100,00)" required style="margin-bottom:15px; width:100%; padding:10px;">
+            <input type="date" id="f-data" required>
+            <input type="text" id="f-cat" placeholder="Categoria (Ex: Aluguel, Venda)" required>
+            <select id="f-tipo"><option value="Entrada">Entrada (+)</option><option value="Saída">Saída (-)</option></select>
+            <input type="text" id="f-valor" placeholder="Valor (Ex: 1.500,00)" required>
             <div style="display: flex; gap: 10px;">
-                <button type="button" class="btn btn-sec" style="flex:1" onclick="fecharModal()">Cancelar</button>
-                <button type="submit" class="btn btn-main" style="flex:1">Salvar</button>
+                <button type="button" class="btn btn-sec" style="flex:1" onclick="fecharModal()">Sair</button>
+                <button type="submit" class="btn btn-main" style="flex:1">Gravar</button>
             </div>
         </form>
     </div>
@@ -175,135 +132,157 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
-    let db = JSON.parse(localStorage.getItem('fluxopro_deluxe_v6')) || [];
-    let prefs = JSON.parse(localStorage.getItem('fluxopro_prefs')) || {tema: 'default', layout: 'layout-hybrid', nome: '', arquivo: 'Relatorio_FluxoPro'};
+    // --- ESTADO INICIAL ---
+    let db = JSON.parse(localStorage.getItem('fluxopro_v8_data')) || [];
+    let perfis = JSON.parse(localStorage.getItem('fluxopro_v8_profiles')) || ["Geral"];
+    let perfilAtivo = "Geral";
     let charts = {};
 
-    function mudarAba(id) {
-        document.querySelectorAll('.tab-content, nav button').forEach(el => el.classList.remove('active'));
-        document.getElementById('aba-' + id).classList.add('active');
-        document.getElementById('nav-' + id).classList.add('active');
-        if(id === 'dash') renderCharts();
+    // --- GERENCIAMENTO DE PERFIS (CPF/CNPJ) ---
+    function atualizarDropdown() {
+        const select = document.getElementById('select-perfil');
+        select.innerHTML = perfis.map(p => `<option value="${p}" ${p === perfilAtivo ? 'selected' : ''}>${p}</option>`).join('');
     }
 
-    // --- CUSTOMIZAÇÃO ---
-    function aplicarTema(t) { document.body.setAttribute('data-theme', t); prefs.tema = t; salvarPref(); }
-    function aplicarLayout(l) { 
-        const grid = document.getElementById('dash-grid-system');
-        grid.className = 'layout-grid ' + l;
-        prefs.layout = l;
-        salvarPref();
+    function novoPerfil() {
+        const nome = prompt("Digite o identificador (Nome, CPF ou CNPJ):");
+        if (nome && !perfis.includes(nome)) {
+            perfis.push(nome);
+            localStorage.setItem('fluxopro_v8_profiles', JSON.stringify(perfis));
+            perfilAtivo = nome;
+            atualizarDropdown();
+            refresh();
+        }
     }
-    function salvarPref() {
-        prefs.nome = document.getElementById('prop-nome').value;
-        prefs.arquivo = document.getElementById('prop-file').value;
-        localStorage.setItem('fluxopro_prefs', JSON.stringify(prefs));
+
+    function trocarPerfil() {
+        perfilAtivo = document.getElementById('select-perfil').value;
+        refresh();
     }
 
     // --- MOTOR DE DADOS ---
-    function sync() {
-        localStorage.setItem('fluxopro_deluxe_v6', JSON.stringify(db));
-        renderTabela();
+    function limparValor(v) {
+        let n = String(v).replace('R$', '').replace(/\s/g, '');
+        if (n.includes(',') && n.includes('.')) n = n.replace(/\./g, '').replace(',', '.');
+        else n = n.replace(',', '.');
+        return parseFloat(n) || 0;
     }
 
-    function editar(id, campo, valor) {
-        const i = db.findIndex(x => x.id === id);
-        if(campo === 'valor') {
-            db[i][campo] = parseFloat(valor.replace(',', '.')) || 0;
-        } else {
-            db[i][campo] = valor;
-        }
-        localStorage.setItem('fluxopro_deluxe_v6', JSON.stringify(db));
+    function refresh() {
+        localStorage.setItem('fluxopro_v8_data', JSON.stringify(db));
+        renderTabela();
+        renderCharts();
     }
 
     function renderTabela() {
-        const corpo = document.getElementById('corpo-tabela');
-        corpo.innerHTML = db.sort((a,b) => new Date(b.data) - new Date(a.data)).map(item => `
+        const corpo = document.getElementById('tabela-corpo');
+        // FILTRO: Só mostra o que pertence ao perfil ativo
+        const dadosFiltrados = db.filter(item => item.perfil === perfilAtivo);
+        
+        corpo.innerHTML = dadosFiltrados.sort((a,b) => new Date(b.data) - new Date(a.data)).map(item => `
             <tr>
                 <td contenteditable="true" onblur="editar(${item.id}, 'data', this.innerText)">${item.data}</td>
                 <td contenteditable="true" onblur="editar(${item.id}, 'cat', this.innerText)">${item.cat}</td>
                 <td style="color:${item.tipo === 'Entrada' ? 'var(--success)' : 'var(--danger)'}; font-weight:700">${item.tipo}</td>
-                <td contenteditable="true" onblur="editar(${item.id}, 'valor', this.innerText)" style="font-weight:700">R$ ${item.valor.toLocaleString('pt-BR')}</td>
-                <td><button onclick="remover(${item.id})" style="background:none; border:none; cursor:pointer">🗑️</button></td>
+                <td contenteditable="true" onblur="editar(${item.id}, 'valor', this.innerText)" style="font-weight:700">
+                    R$ ${item.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                </td>
+                <td><button onclick="remover(${item.id})" style="background:none; border:none; cursor:pointer;">🗑️</button></td>
             </tr>
-        `).join('') || '<tr><td colspan="5" style="text-align:center; padding:20px;">Nenhum dado encontrado.</td></tr>';
+        `).join('') || '<tr><td colspan="5" style="text-align:center; padding:20px;">Nenhum dado neste perfil.</td></tr>';
     }
 
-    function importarArquivo() {
-        const file = document.getElementById('input-upload').files[0];
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const workbook = XLSX.read(e.target.result, {type: 'binary'});
-            const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-            const novos = rows.map(r => ({
-                id: Math.random(),
-                data: r.Data || new Date().toISOString().split('T')[0],
-                cat: r.Categoria || 'Importado',
-                tipo: (String(r.Tipo)).includes('Entrada') ? 'Entrada' : 'Saída',
-                valor: parseFloat(r.Valor) || 0
-            }));
-            db = [...db, ...novos]; sync(); alert("Planilha integrada com sucesso!");
-        };
-        reader.readAsBinaryString(file);
+    // --- FUNÇÕES DE BOTÃO ---
+    function limparDadosPerfil() {
+        if(confirm(`Deseja apagar todos os lançamentos do perfil ${perfilAtivo}?`)) {
+            db = db.filter(item => item.perfil !== perfilAtivo);
+            refresh();
+        }
     }
 
+    function resetTotal() {
+        if(confirm("ATENÇÃO: Isso apagará TODOS os perfis e TODOS os dados. Confirmar?")) {
+            localStorage.clear();
+            location.reload();
+        }
+    }
+
+    // --- EXPORTAÇÃO INTELIGENTE ---
+    function exportarFiltro() {
+        const dados = db.filter(item => item.perfil === perfilAtivo);
+        baixarExcel(dados, `Relatorio_${perfilAtivo}`);
+    }
+
+    function exportarTudo() {
+        baixarExcel(db, "Relatorio_Consolidado_Todos_Perfis");
+    }
+
+    function baixarExcel(dados, nome) {
+        const ws = XLSX.utils.json_to_sheet(dados);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Financeiro");
+        XLSX.writeFile(wb, `${nome}.xlsx`);
+    }
+
+    // --- DASHBOARDS ---
     function renderCharts() {
-        const gastos = db.filter(i => i.tipo === 'Saída');
-        const ganhos = db.filter(i => i.tipo === 'Entrada');
-        const cats = {}; gastos.forEach(g => cats[g.cat] = (cats[g.cat] || 0) + g.valor);
+        const dados = db.filter(item => item.perfil === perfilAtivo);
+        const gastos = dados.filter(i => i.tipo === 'Saída');
+        const ganhos = dados.filter(i => i.tipo === 'Entrada');
+
+        const catMap = {};
+        gastos.forEach(g => catMap[g.cat] = (catMap[g.cat] || 0) + g.valor);
         
-        initChart('chartPizza', 'pie', Object.keys(cats), Object.values(cats));
-        
-        const ganhosMes = Array(12).fill(0);
-        ganhos.forEach(g => { ganhosMes[new Date(g.data).getUTCMonth()] += g.valor; });
-        initChart('chartBarras', 'bar', ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'], ganhosMes);
-        
-        initChart('chartTop', 'doughnut', Object.keys(cats), Object.values(cats));
+        initChart('chartPizza', 'pie', Object.keys(catMap), Object.values(catMap));
+
+        const meses = Array(12).fill(0);
+        ganhos.forEach(g => { meses[new Date(g.data).getUTCMonth()] += g.valor; });
+        initChart('chartBarras', 'bar', ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'], meses);
     }
 
-    function initChart(id, type, labels, data) {
+    function initChart(id, tipo, labels, data) {
         if(charts[id]) charts[id].destroy();
         charts[id] = new Chart(document.getElementById(id), {
-            type, data: { labels, datasets: [{ data, backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'] }]},
+            type: tipo,
+            data: { labels, datasets: [{ data, backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] }]},
             options: { responsive: true, maintainAspectRatio: false }
         });
     }
 
-    function exportarExcel() {
-        const ws = XLSX.utils.json_to_sheet(db);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Financeiro");
-        XLSX.writeFile(wb, `${prefs.arquivo || 'Relatorio'}.xlsx`);
-    }
-
-    function gerarDica() {
-        const gastosTotais = db.filter(i => i.tipo === 'Saída').reduce((a, b) => a + b.valor, 0);
-        const ganhosTotais = db.filter(i => i.tipo === 'Entrada').reduce((a, b) => a + b.valor, 0);
-        const texto = document.getElementById('dica-texto');
-        
-        if(gastosTotais > ganhosTotais) texto.innerText = "🚨 Alerta: Seus gastos superam os ganhos. Reduza despesas fixas em 15% este mês.";
-        else if(ganhosTotais === 0) texto.innerText = "💡 Indicação: Comece lançando seus ganhos para que eu possa analisar seu fluxo.";
-        else texto.innerText = "✅ Parabéns! Seu saldo é positivo. Recomendamos investir 20% do excedente em reserva de emergência.";
-    }
-
-    // Modal helpers
-    function abrirModal() { document.getElementById('meuModal').style.display = 'flex'; }
-    function fecharModal() { document.getElementById('meuModal').style.display = 'none'; }
+    // --- MODAL E AUXILIARES ---
+    function abrirModal() { document.getElementById('modalAdd').style.display = 'flex'; }
+    function fecharModal() { document.getElementById('modalAdd').style.display = 'none'; }
+    
     document.getElementById('form-registro').onsubmit = function(e) {
         e.preventDefault();
-        db.push({ id: Date.now(), data: document.getElementById('m-data').value, cat: document.getElementById('m-cat').value, tipo: document.getElementById('m-tipo').value, valor: parseFloat(document.getElementById('m-valor').value.replace(',', '.')) });
-        sync(); fecharModal(); this.reset();
+        db.push({
+            id: Date.now(),
+            perfil: perfilAtivo, // VÍNCULO DO DADO AO PERFIL
+            data: document.getElementById('f-data').value,
+            cat: document.getElementById('f-cat').value,
+            tipo: document.getElementById('f-tipo').value,
+            valor: limparValor(document.getElementById('f-valor').value)
+        });
+        refresh(); fecharModal(); this.reset();
     };
-    function remover(id) { db = db.filter(i => i.id !== id); sync(); }
 
-    // Carregar Prefs
-    window.onload = () => {
-        document.getElementById('prop-nome').value = prefs.nome;
-        document.getElementById('prop-file').value = prefs.arquivo;
-        aplicarTema(prefs.tema);
-        aplicarLayout(prefs.layout);
-        renderTabela();
+    function editar(id, campo, valor) {
+        const i = db.findIndex(x => x.id === id);
+        if(campo === 'valor') db[i][campo] = limparValor(valor);
+        else db[i][campo] = valor;
+        localStorage.setItem('fluxopro_v8_data', JSON.stringify(db));
     }
+
+    function remover(id) { db = db.filter(i => i.id !== id); refresh(); }
+
+    function mudarAba(aba) {
+        document.querySelectorAll('.tab-content, nav button').forEach(el => el.classList.remove('active'));
+        document.getElementById('aba-' + aba).classList.add('active');
+        document.getElementById('nav-' + aba).classList.add('active');
+        if(aba === 'dash') renderCharts();
+    }
+
+    window.onload = () => { atualizarDropdown(); refresh(); };
 </script>
 </body>
 </html>
