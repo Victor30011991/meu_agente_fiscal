@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FluxoPro Brasil | Master v9.0</title>
+    <title>FluxoPro Brasil | Enterprise Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -11,43 +11,44 @@
             --bg: #f9fafb; --card: #ffffff; --text: #1f2937; --border: #e5e7eb;
         }
         [data-theme="midnight"] { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --border: #334155; --primary: #38bdf8; }
-        
+        [data-theme="emerald"] { --primary: #059669; --bg: #f0fdf4; --text: #064e3b; --card: #ffffff; }
+
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .container { max-width: 1300px; margin: 0 auto; padding: 0 20px; }
         
-        header { background: var(--card); border-bottom: 2px solid var(--primary); padding: 15px 0; position: sticky; top: 0; z-index: 100; }
+        header { background: var(--card); border-bottom: 2px solid var(--primary); padding: 15px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .nav-flex { display: flex; justify-content: space-between; align-items: center; }
         
-        /* FILTRO DE PERFIL */
-        .profile-box { background: #eef2ff; padding: 10px 15px; border-radius: 10px; border: 1px solid var(--primary); display: flex; align-items: center; gap: 10px; }
-        .profile-box select { border: none; background: none; font-weight: 800; color: var(--primary); cursor: pointer; outline: none; }
+        .profile-badge { background: var(--primary); color: white; padding: 8px 16px; border-radius: 12px; display: flex; align-items: center; gap: 10px; font-weight: 700; }
+        .profile-badge select { background: none; border: none; color: white; font-weight: 800; cursor: pointer; outline: none; width: auto; margin: 0; }
 
-        nav button { background: none; border: none; padding: 10px 15px; font-weight: 600; cursor: pointer; color: #6b7280; }
-        nav button.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
+        nav button { background: none; border: none; padding: 10px 18px; font-weight: 700; cursor: pointer; color: #6b7280; border-radius: 8px; }
+        nav button.active { color: var(--primary); background: rgba(79, 70, 229, 0.1); }
 
         main { padding: 30px 0; }
-        .tab-content { display: none; animation: fadeIn 0.3s ease; }
-        .tab-content.active { display: block; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
 
-        .card { background: var(--card); border-radius: 16px; padding: 24px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        
-        /* TABELA */
-        table { width: 100%; border-collapse: collapse; }
-        th { background: rgba(0,0,0,0.02); padding: 14px; text-align: left; font-size: 11px; text-transform: uppercase; color: #6b7280; }
-        td { padding: 14px; border-bottom: 1px solid var(--border); font-size: 14px; outline: none; }
-        td[contenteditable="true"]:focus { background: rgba(79, 70, 229, 0.05); box-shadow: inset 0 0 0 1px var(--primary); }
+        .card { background: var(--card); border-radius: 20px; padding: 25px; border: 1px solid var(--border); margin-bottom: 20px; }
+        .grid-master { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px; }
+        .layout-focus { grid-template-columns: 1fr; }
 
-        .btn { padding: 12px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; font-size: 13px; transition: 0.2s; }
+        .table-wrap { overflow-x: auto; border-radius: 15px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { background: rgba(0,0,0,0.03); padding: 16px; text-align: left; font-size: 12px; color: #6b7280; text-transform: uppercase; }
+        td { padding: 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
+
+        .btn { padding: 12px 24px; border-radius: 12px; font-weight: 800; cursor: pointer; border: none; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
         .btn-main { background: var(--primary); color: white; }
-        .btn-danger { background: var(--danger); color: white; }
         .btn-sec { background: var(--border); color: var(--text); }
+        .btn-danger { background: var(--danger); color: white; }
 
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: var(--card); padding: 32px; border-radius: 20px; width: 400px; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: var(--card); padding: 30px; border-radius: 20px; width: 100%; max-width: 450px; }
+
+        input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: var(--text); box-sizing: border-box; margin-bottom: 15px; }
         
-        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -55,60 +56,62 @@
 <header>
     <div class="container nav-flex">
         <div class="logo" style="font-weight: 900; font-size: 1.5rem;">Fluxo<span style="color:var(--primary)">Pro</span></div>
-        
-        <div class="profile-box">
-            <span style="font-size: 11px; font-weight: 700;">PERFIL:</span>
-            <select id="select-perfil" onchange="trocarPerfil()"></select>
-            <button class="btn btn-main" style="padding: 5px 10px;" onclick="novoPerfil()">+</button>
+        <div class="profile-badge">
+            <select id="select-perfil"></select>
+            <button id="btn-novo-perfil" title="Novo Perfil" style="background:rgba(255,255,255,0.2); border:none; color:white; border-radius:50%; width:24px; height:24px; cursor:pointer;">+</button>
         </div>
-
         <nav>
-            <button onclick="mudarAba('list')" id="nav-list" class="active">Lançamentos</button>
-            <button onclick="mudarAba('dash')" id="nav-dash">Dashboards</button>
-            <button onclick="mudarAba('config')" id="nav-config">Alimentar / Config</button>
+            <button data-tab="list" class="nav-btn active">Lançamentos</button>
+            <button data-tab="dash" class="nav-btn">Analytics</button>
+            <button data-tab="config" class="nav-btn">Configurações</button>
         </nav>
     </div>
 </header>
 
 <main class="container">
     <section id="aba-list" class="tab-content active">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-            <button class="btn btn-main" onclick="abrirModal()">+ Novo Registro Manual</button>
-            <div>
-                <button class="btn btn-sec" onclick="exportarPerfil()">📥 Baixar este Perfil</button>
-                <button class="btn btn-danger" onclick="limparPerfil()">🗑️ Limpar este Perfil</button>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 25px;">
+            <button class="btn btn-main" id="btn-abrir-modal">+ Novo Lançamento</button>
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-sec" id="btn-export-perfil">📥 Exportar Perfil</button>
+                <button class="btn btn-danger" id="btn-limpar-perfil">🗑️ Limpar Perfil</button>
             </div>
         </div>
-        <div class="card" style="padding:0; overflow:hidden;">
+        <div class="table-wrap">
             <table>
                 <thead>
                     <tr><th>Data</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Ação</th></tr>
                 </thead>
-                <tbody id="tabela-corpo"></tbody>
+                <tbody id="corpo-tabela"></tbody>
             </table>
         </div>
     </section>
 
     <section id="aba-dash" class="tab-content">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px;">
-            <div class="card"><h3>🍕 Gastos do Perfil</h3><div style="height:350px"><canvas id="chartPizza"></canvas></div></div>
-            <div class="card"><h3>📊 Entradas por Mês</h3><div style="height:350px"><canvas id="chartBarras"></canvas></div></div>
+        <div id="dash-grid" class="grid-master">
+            <div class="card"><h3>🍕 Gastos por Categoria</h3><div style="height:300px"><canvas id="chartPizza"></canvas></div></div>
+            <div class="card"><h3>📊 Evolução Mensal</h3><div style="height:300px"><canvas id="chartBarras"></canvas></div></div>
         </div>
     </section>
 
     <section id="aba-config" class="tab-content">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="grid-master">
             <div class="card">
-                <h3>📥 Alimentar Sistema (Arquivo)</h3>
-                <p style="font-size: 13px; color: #6b7280;">Suba um arquivo Excel ou JSON para alimentar o perfil <b><span class="nome-perfil-display"></span></b>.</p>
-                <input type="file" id="input-arquivo" accept=".xlsx, .json" style="margin-top: 10px;">
-                <button class="btn btn-main" style="width: 100%; margin-top: 10px;" onclick="processarArquivo()">Alimentar Agora</button>
+                <h3>📥 Importar Dados</h3>
+                <input type="file" id="input-arquivo" accept=".xlsx, .json">
+                <button class="btn btn-main" style="width:100%" id="btn-processar">Processar Arquivo</button>
             </div>
             <div class="card">
-                <h3>📤 Exportação Master</h3>
-                <p style="font-size: 13px; color: #6b7280;">Baixe todos os dados de todos os perfis em um único arquivo.</p>
-                <button class="btn btn-sec" style="width: 100%; margin-bottom: 10px;" onclick="exportarTudo()">Exportar Banco Completo</button>
-                <button class="btn btn-danger" style="width: 100%;" onclick="resetTotal()">Reset Geral (Limpar Tudo)</button>
+                <h3>🎨 Aparência</h3>
+                <select id="tema-seletor">
+                    <option value="default">Indigo Light</option>
+                    <option value="midnight">Midnight Dark</option>
+                    <option value="emerald">Emerald Green</option>
+                </select>
+                <select id="layout-seletor">
+                    <option value="grid-master">Grade Híbrida</option>
+                    <option value="layout-focus">Foco Total</option>
+                </select>
             </div>
         </div>
     </section>
@@ -116,15 +119,15 @@
 
 <div class="modal" id="modalAdd">
     <div class="modal-content">
-        <h3>Novo Registro</h3>
+        <h3 id="modal-titulo">Novo Lançamento</h3>
         <form id="form-registro">
             <input type="date" id="f-data" required>
-            <input type="text" id="f-cat" placeholder="Categoria" required>
+            <input type="text" id="f-cat" placeholder="Categoria (ex: Aluguel)" required>
             <select id="f-tipo"><option value="Entrada">Entrada (+)</option><option value="Saída">Saída (-)</option></select>
             <input type="text" id="f-valor" placeholder="Valor (Ex: 1500,00)" required>
             <div style="display: flex; gap: 10px;">
-                <button type="button" class="btn btn-sec" style="flex:1" onclick="fecharModal()">Sair</button>
-                <button type="submit" class="btn btn-main" style="flex:1">Gravar</button>
+                <button type="button" class="btn btn-sec" style="flex:1" id="btn-fechar-modal">Cancelar</button>
+                <button type="submit" class="btn btn-main" style="flex:1">Salvar</button>
             </div>
         </form>
     </div>
@@ -134,170 +137,236 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
-    let db = JSON.parse(localStorage.getItem('fluxopro_v9_db')) || [];
-    let perfis = JSON.parse(localStorage.getItem('fluxopro_v9_perfs')) || ["Geral"];
-    let perfilAtivo = localStorage.getItem('fluxopro_v9_ativo') || "Geral";
-    let charts = {};
-
-    // --- NORMALIZADOR DE VALORES ---
-    function limparValor(v) {
-        if (typeof v === 'number') return v;
-        let n = String(v).replace('R$', '').replace(/\s/g, '');
-        if (n.includes(',') && n.includes('.')) n = n.replace(/\./g, '').replace(',', '.');
-        else n = n.replace(',', '.');
-        return parseFloat(n) || 0;
-    }
-
-    // --- SINCRONIZAÇÃO E REFRESH ---
-    function sync() {
-        localStorage.setItem('fluxopro_v9_db', JSON.stringify(db));
-        localStorage.setItem('fluxopro_v9_perfs', JSON.stringify(perfis));
-        localStorage.setItem('fluxopro_v9_ativo', perfilAtivo);
-        
-        document.querySelectorAll('.nome-perfil-display').forEach(el => el.innerText = perfilAtivo);
-        renderTabela();
-        renderCharts();
-    }
-
-    function mudarAba(id) {
-        document.querySelectorAll('.tab-content, nav button').forEach(el => el.classList.remove('active'));
-        document.getElementById('aba-' + id).classList.add('active');
-        document.getElementById('nav-' + id).classList.add('active');
-        if(id === 'dash') renderCharts();
-    }
-
-    // --- GERENCIAR PERFIS ---
-    function atualizarSeletor() {
-        const select = document.getElementById('select-perfil');
-        select.innerHTML = perfis.map(p => `<option value="${p}" ${p === perfilAtivo ? 'selected' : ''}>${p}</option>`).join('');
-    }
-
-    function novoPerfil() {
-        const nome = prompt("Identificador do Perfil (CPF, CNPJ ou Nome):");
-        if(nome && !perfis.includes(nome)) {
-            perfis.push(nome);
-            perfilAtivo = nome;
-            atualizarSeletor();
-            sync();
-        }
-    }
-
-    function trocarPerfil() {
-        perfilAtivo = document.getElementById('select-perfil').value;
-        sync();
-    }
-
-    // --- IMPORTAÇÃO (BOTÃO PARA ALIMENTAR) ---
-    function processarArquivo() {
-        const file = document.getElementById('input-arquivo').files[0];
-        if(!file) return alert("Selecione um arquivo.");
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                let novosDados = [];
-                if(file.name.endsWith('.json')) {
-                    novosDados = JSON.parse(e.target.result);
-                } else {
-                    const wb = XLSX.read(e.target.result, {type: 'binary'});
-                    const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-                    novosDados = data.map(r => ({
-                        id: Math.random() * Date.now(),
-                        perfil: perfilAtivo, // Vincula ao perfil que está na tela
-                        data: r.Data || r.date || new Date().toISOString().split('T')[0],
-                        cat: r.Categoria || r.category || 'Outros',
-                        tipo: String(r.Tipo).includes('Entrada') ? 'Entrada' : 'Saída',
-                        valor: limparValor(r.Valor || r.valor || r.value)
-                    }));
-                }
-                db = [...db, ...novosDados];
-                sync();
-                alert(`Perfil ${perfilAtivo} alimentado com sucesso!`);
-                mudarAba('list');
-            } catch(err) { alert("Erro ao processar arquivo."); }
-        };
-        if(file.name.endsWith('.json')) reader.readAsText(file);
-        else reader.readAsBinaryString(file);
-    }
-
-    // --- TABELA COM EDIÇÃO INLINE ---
-    function renderTabela() {
-        const corpo = document.getElementById('tabela-corpo');
-        const filtrados = db.filter(i => i.perfil === perfilAtivo);
-        corpo.innerHTML = filtrados.sort((a,b) => new Date(b.data) - new Date(a.data)).map(item => `
-            <tr>
-                <td contenteditable="true" onblur="editar(${item.id}, 'data', this.innerText)">${item.data}</td>
-                <td contenteditable="true" onblur="editar(${item.id}, 'cat', this.innerText)">${item.cat}</td>
-                <td style="color:${item.tipo === 'Entrada' ? 'var(--success)' : 'var(--danger)'}; font-weight:700">${item.tipo}</td>
-                <td contenteditable="true" onblur="editar(${item.id}, 'valor', this.innerText)" style="font-weight:700">
-                    R$ ${item.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-                </td>
-                <td><button onclick="remover(${item.id})" style="border:none; background:none; cursor:pointer;">🗑️</button></td>
-            </tr>
-        `).join('') || '<tr><td colspan="5" style="text-align:center; padding:20px;">Perfil vazio.</td></tr>';
-    }
-
-    function editar(id, campo, valor) {
-        const i = db.findIndex(x => x.id === id);
-        if(campo === 'valor') db[i][campo] = limparValor(valor);
-        else db[i][campo] = valor;
-        localStorage.setItem('fluxopro_v9_db', JSON.stringify(db));
-    }
-
-    // --- DASHBOARDS ---
-    function renderCharts() {
-        const filtrados = db.filter(i => i.perfil === perfilAtivo);
-        const gastos = filtrados.filter(i => i.tipo === 'Saída');
-        const ganhos = filtrados.filter(i => i.tipo === 'Entrada');
-
-        const catMap = {};
-        gastos.forEach(g => catMap[g.cat] = (catMap[g.cat] || 0) + g.valor);
-        initChart('chartPizza', 'pie', Object.keys(catMap), Object.values(catMap));
-
-        const meses = Array(12).fill(0);
-        ganhos.forEach(g => { meses[new Date(g.data).getUTCMonth()] += g.valor; });
-        initChart('chartBarras', 'bar', ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'], meses);
-    }
-
-    function initChart(id, tipo, labels, data) {
-        if(charts[id]) charts[id].destroy();
-        charts[id] = new Chart(document.getElementById(id), {
-            type: tipo,
-            data: { labels, datasets: [{ data, backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'] }]},
-            options: { responsive: true, maintainAspectRatio: false }
-        });
-    }
-
-    // --- FUNÇÕES DE BOTÃO ---
-    function abrirModal() { document.getElementById('modalAdd').style.display = 'flex'; }
-    function fecharModal() { document.getElementById('modalAdd').style.display = 'none'; }
-    
-    document.getElementById('form-registro').onsubmit = function(e) {
-        e.preventDefault();
-        db.push({
-            id: Date.now(),
-            perfil: perfilAtivo,
-            data: document.getElementById('f-data').value,
-            cat: document.getElementById('f-cat').value,
-            tipo: document.getElementById('f-tipo').value,
-            valor: limparValor(document.getElementById('f-valor').value)
-        });
-        sync(); fecharModal(); this.reset();
+/**
+ * FluxoPro - Módulo de Engenharia Principal
+ * Padrão: Modular Pattern (IIFE)
+ */
+const FluxoPro = (() => {
+    // --- ESTADO PRIVADO ---
+    let state = {
+        db: JSON.parse(localStorage.getItem('fpro_db_v10')) || [],
+        perfis: JSON.parse(localStorage.getItem('fpro_perfs_v10')) || ["Geral"],
+        perfilAtivo: localStorage.getItem('fpro_ativo_v10') || "Geral",
+        config: JSON.parse(localStorage.getItem('fpro_cfg_v10')) || { tema: 'default', layout: 'grid-master' }
     };
 
-    function limparPerfil() { if(confirm(`Limpar todos os dados de ${perfilAtivo}?`)) { db = db.filter(i => i.perfil !== perfilAtivo); sync(); } }
-    function resetTotal() { if(confirm("Apagar TUDO?")) { localStorage.clear(); location.reload(); } }
-    function remover(id) { db = db.filter(i => i.id !== id); sync(); }
+    const charts = {};
 
-    function exportarPerfil() { baixarExcel(db.filter(i => i.perfil === perfilAtivo), `Fluxo_${perfilAtivo}`); }
-    function exportarTudo() { baixarExcel(db, "FluxoPro_Full_Database"); }
-    function baixarExcel(dados, nome) {
-        const ws = XLSX.utils.json_to_sheet(dados);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Financeiro");
-        XLSX.writeFile(wb, `${nome}.xlsx`);
-    }
+    // --- UTILS & SEGURANÇA ---
+    const Utils = {
+        cleanVal: (v) => {
+            if (typeof v === 'number') return v;
+            return parseFloat(String(v).replace('R$', '').replace(/\./g, '').replace(',', '.')) || 0;
+        },
+        formatCur: (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v),
+        escape: (str) => {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        },
+        uuid: () => Date.now().toString(36) + Math.random().toString(36).substr(2)
+    };
 
-    window.onload = () => { atualizarSeletor(); sync(); };
+    // --- PERSISTÊNCIA ---
+    const persist = () => {
+        localStorage.setItem('fpro_db_v10', JSON.stringify(state.db));
+        localStorage.setItem('fpro_perfs_v10', JSON.stringify(state.perfis));
+        localStorage.setItem('fpro_ativo_v10', state.perfilAtivo);
+        localStorage.setItem('fpro_cfg_v10', JSON.stringify(state.config));
+    };
+
+    // --- RENDERIZAÇÃO ---
+    const UI = {
+        renderTable() {
+            const corpo = document.getElementById('corpo-tabela');
+            const filtrados = state.db
+                .filter(i => i.perfil === state.perfilAtivo)
+                .sort((a, b) => new Date(b.data) - new Date(a.data));
+
+            corpo.innerHTML = filtrados.length ? filtrados.map(item => `
+                <tr>
+                    <td>${item.data}</td>
+                    <td>${Utils.escape(item.cat)}</td>
+                    <td style="color:${item.tipo === 'Entrada' ? 'var(--success)' : 'var(--danger)'}; font-weight:700">${item.tipo}</td>
+                    <td>${Utils.formatCur(item.valor)}</td>
+                    <td>
+                        <button onclick="FluxoPro.deleteEntry('${item.id}')" style="background:none; border:none; cursor:pointer;">🗑️</button>
+                    </td>
+                </tr>
+            `).join('') : '<tr><td colspan="5" style="text-align:center; padding:30px; opacity:0.6">Nenhum registro encontrado.</td></tr>';
+        },
+
+        renderCharts() {
+            const dados = state.db.filter(i => i.perfil === state.perfilAtivo);
+            const gastos = dados.filter(i => i.tipo === 'Saída');
+            
+            // Agregação de Categorias
+            const catMap = {};
+            gastos.forEach(g => catMap[g.cat] = (catMap[g.cat] || 0) + g.valor);
+
+            this.updateChart('chartPizza', 'doughnut', Object.keys(catMap), Object.values(catMap));
+            
+            // Agregação Mensal (Exemplo simplificado)
+            const meses = Array(12).fill(0);
+            dados.filter(i => i.tipo === 'Entrada').forEach(g => {
+                const m = new Date(g.data).getUTCMonth();
+                meses[m] += g.valor;
+            });
+            this.updateChart('chartBarras', 'bar', ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'], meses);
+        },
+
+        updateChart(id, type, labels, data) {
+            if (charts[id]) {
+                charts[id].data.labels = labels;
+                charts[id].data.datasets[0].data = data;
+                charts[id].update();
+            } else {
+                const ctx = document.getElementById(id);
+                if(!ctx) return;
+                charts[id] = new Chart(ctx, {
+                    type: type,
+                    data: { labels, datasets: [{ data, backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] }] },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+        },
+
+        refreshProfiles() {
+            const sel = document.getElementById('select-perfil');
+            sel.innerHTML = state.perfis.map(p => `<option value="${p}" ${p === state.perfilAtivo ? 'selected' : ''}>${p}</option>`).join('');
+        }
+    };
+
+    // --- LÓGICA DE NEGÓCIO ---
+    return {
+        init() {
+            this.bindEvents();
+            this.applyTheme(state.config.tema);
+            document.getElementById('layout-seletor').value = state.config.layout;
+            document.getElementById('dash-grid').className = state.config.layout;
+            UI.refreshProfiles();
+            UI.renderTable();
+        },
+
+        bindEvents() {
+            // Delegação de eventos para Tabs
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.onclick = () => this.switchTab(btn.dataset.tab);
+            });
+
+            document.getElementById('select-perfil').onchange = (e) => {
+                state.perfilAtivo = e.target.value;
+                this.sync();
+            };
+
+            document.getElementById('btn-novo-perfil').onclick = () => {
+                const n = prompt("Nome do Perfil:");
+                if (n && !state.perfis.includes(n)) {
+                    state.perfis.push(n);
+                    state.perfilAtivo = n;
+                    this.sync();
+                    UI.refreshProfiles();
+                }
+            };
+
+            document.getElementById('form-registro').onsubmit = (e) => {
+                e.preventDefault();
+                const novaEntrada = {
+                    id: Utils.uuid(),
+                    perfil: state.perfilAtivo,
+                    data: document.getElementById('f-data').value,
+                    cat: document.getElementById('f-cat').value,
+                    tipo: document.getElementById('f-tipo').value,
+                    valor: Utils.cleanVal(document.getElementById('f-valor').value)
+                };
+                state.db.push(novaEntrada);
+                this.sync();
+                this.closeModal();
+                e.target.reset();
+            };
+
+            document.getElementById('btn-abrir-modal').onclick = () => document.getElementById('modalAdd').style.display='flex';
+            document.getElementById('btn-fechar-modal').onclick = this.closeModal;
+            document.getElementById('tema-seletor').onchange = (e) => this.applyTheme(e.target.value);
+            document.getElementById('layout-seletor').onchange = (e) => this.applyLayout(e.target.value);
+            document.getElementById('btn-limpar-perfil').onclick = () => this.clearActiveProfile();
+            document.getElementById('btn-processar').onclick = () => this.importFile();
+        },
+
+        switchTab(tabId) {
+            document.querySelectorAll('.tab-content, .nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(`aba-${tabId}`).classList.add('active');
+            document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+            if (tabId === 'dash') UI.renderCharts();
+        },
+
+        sync() {
+            persist();
+            UI.renderTable();
+            if (document.getElementById('aba-dash').classList.contains('active')) UI.renderCharts();
+        },
+
+        applyTheme(t) {
+            document.body.setAttribute('data-theme', t);
+            state.config.tema = t;
+            persist();
+        },
+
+        applyLayout(l) {
+            document.getElementById('dash-grid').className = l;
+            state.config.layout = l;
+            persist();
+        },
+
+        deleteEntry(id) {
+            if(confirm("Excluir lançamento?")) {
+                state.db = state.db.filter(i => i.id !== id);
+                this.sync();
+            }
+        },
+
+        clearActiveProfile() {
+            if(confirm(`Limpar todos os dados de ${state.perfilAtivo}?`)) {
+                state.db = state.db.filter(i => i.perfil !== state.perfilAtivo);
+                this.sync();
+            }
+        },
+
+        closeModal() { document.getElementById('modalAdd').style.display='none'; },
+
+        importFile() {
+            const file = document.getElementById('input-arquivo').files[0];
+            if (!file) return alert("Selecione um arquivo.");
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const wb = XLSX.read(e.target.result, { type: 'binary' });
+                    const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                    
+                    const validos = data.map(r => ({
+                        id: Utils.uuid(),
+                        perfil: state.perfilAtivo,
+                        data: r.Data || new Date().toISOString().split('T')[0],
+                        cat: r.Categoria || 'Diverso',
+                        tipo: String(r.Tipo).includes('Entrada') ? 'Entrada' : 'Saída',
+                        valor: Utils.cleanVal(r.Valor || 0)
+                    }));
+
+                    state.db = [...state.db, ...validos];
+                    this.sync();
+                    alert("Importação concluída!");
+                } catch (err) {
+                    alert("Erro ao processar arquivo. Verifique o formato.");
+                }
+            };
+            reader.readAsBinaryString(file);
+        }
+    };
+})();
+
+// Inicialização segura
+window.onload = () => FluxoPro.init();
 </script>
 </body>
 </html>
