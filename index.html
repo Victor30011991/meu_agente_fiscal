@@ -2,356 +2,348 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>FluxoPro Engine v11</title>
+<title>FluxoPro</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Inter,system-ui;background:#f5f7fb;color:#1f2937}
-:root{--p:#4f46e5;--card:#fff;--b:#e5e7eb;--ok:#10b981;--bad:#ef4444}
-header{background:#fff;border-bottom:1px solid var(--b);padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
-.tabs button{border:none;padding:10px 16px;border-radius:12px;cursor:pointer;font-weight:700;background:#f3f4f6}
-.tabs button.active{background:var(--p);color:#fff}
-.container{max-width:1200px;margin:auto;padding:20px}
-.card{background:var(--card);border-radius:18px;padding:20px;border:1px solid var(--b);margin-bottom:20px;box-shadow:0 10px 20px rgba(0,0,0,.04)}
-table{width:100%;border-collapse:collapse}
-th,td{padding:12px 10px;border-bottom:1px solid var(--b)}
-td[contenteditable]{cursor:text}
-td[contenteditable]:focus{outline:2px solid var(--p);background:#eef2ff}
-.badge{padding:6px 12px;border-radius:999px;font-weight:700;cursor:pointer;display:inline-block}
-.entrada{background:#ecfdf5;color:var(--ok)}
-.saida{background:#fef2f2;color:var(--bad)}
-button{border:none;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
-.main{background:var(--p);color:#fff}
-.actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-select,input,textarea{padding:8px 10px;border-radius:10px;border:1px solid var(--b);font-family:inherit}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
-.resume{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:10px}
-.resume div{background:#f9fafb;border-radius:12px;padding:12px;font-weight:700}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center}
-.modal .card{max-width:380px;width:90%}
-.hidden{display:none}
+:root{
+  --bg:#f5f7fb;
+  --card:#ffffff;
+  --text:#1f2937;
+  --primary:#2563eb;
+}
+
+[data-theme="dark"]{
+  --bg:#0f172a;
+  --card:#020617;
+  --text:#e5e7eb;
+  --primary:#60a5fa;
+}
+
+body{
+  margin:0;
+  font-family:Inter;
+  background:var(--bg);
+  color:var(--text);
+}
+
+header{
+  padding:16px 24px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:var(--card);
+}
+
+main{
+  max-width:1100px;
+  margin:auto;
+  padding:24px;
+}
+
+.card{
+  background:var(--card);
+  border-radius:14px;
+  padding:16px;
+  margin-bottom:16px;
+  box-shadow:0 8px 20px rgba(0,0,0,.05);
+}
+
+button,select,input{
+  padding:8px 12px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-family:Inter;
+}
+
+button{
+  background:var(--primary);
+  color:#fff;
+  border:0;
+  cursor:pointer;
+  font-weight:600;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+th,td{
+  padding:8px;
+  border-bottom:1px solid #ddd;
+  font-size:14px;
+}
+
+.flex{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+small{opacity:.7}
 </style>
 </head>
+
 <body>
 
 <header>
-<strong>FluxoPro Engine v11</strong>
+  <b>FluxoPro</b>
 
-<div style="display:flex;gap:10px;align-items:center">
-<select id="perfilSelect"></select>
-<button id="novoPerfil">+</button>
-
-<div class="tabs">
-<button data-tab="lanc" class="active">Lançamentos</button>
-<button data-tab="dash">Dashboard</button>
-<button data-tab="conf">Configurações</button>
-</div>
-</div>
+  <div class="flex">
+    <select id="perfilSelect"></select>
+    <button onclick="novoPerfil()">Novo perfil</button>
+    <button onclick="alternarTema()">Tema</button>
+  </div>
 </header>
 
-<div class="container">
+<main>
 
-<section id="tab-lanc">
+<div class="card">
+  <h3>Dashboard</h3>
 
-<div class="actions">
-<button class="main" id="novoLanc">Novo lançamento</button>
-<button id="importar">Alimentar perfil</button>
+  <div class="flex">
+    <div>Entradas: <b id="dEnt"></b></div>
+    <div>Saídas: <b id="dSai"></b></div>
+    <div>Resultado: <b id="dRes"></b></div>
+  </div>
+
+  <br>
+
+  <div class="flex">
+    <button onclick="abrirExport()">Exportar</button>
+    <button onclick="abrirImport()">Importar</button>
+  </div>
 </div>
 
 <div class="card">
-<h3>Dados do perfil</h3>
-<input id="perfilNome" placeholder="Nome / Razão social" style="width:100%;margin-bottom:8px">
-<input id="perfilDoc" placeholder="CPF ou CNPJ" style="width:100%">
-</div>
+  <h3>Novo lançamento</h3>
 
-<div class="resume">
-<div>Entradas<br><span id="sumEnt">R$ 0,00</span></div>
-<div>Saídas<br><span id="sumSai">R$ 0,00</span></div>
-<div>Resultado<br><span id="sumRes">R$ 0,00</span></div>
-</div>
-
-<div class="card">
-<table>
-<thead>
-<tr>
-<th>Data</th>
-<th>Categoria</th>
-<th>Tipo</th>
-<th>Valor</th>
-<th>Observação</th>
-<th>Apagar</th>
-</tr>
-</thead>
-<tbody id="tbody"></tbody>
-</table>
-</div>
-</section>
-
-<section id="tab-dash" class="hidden">
-
-<div class="grid">
-
-<div class="card">
-<h4>Distribuição por categoria</h4>
-<canvas id="chartPizza"></canvas>
-<p id="txtPizza"></p>
+  <div class="flex">
+    <input type="date" id="data">
+    <input placeholder="Categoria" id="cat">
+    <select id="tipo">
+      <option>Entrada</option>
+      <option>Saída</option>
+    </select>
+    <input placeholder="Valor" id="valor">
+    <input placeholder="Observação" id="obs">
+    <button onclick="salvar()">Salvar</button>
+  </div>
 </div>
 
 <div class="card">
-<h4>Percentual Entradas x Saídas</h4>
-<canvas id="chartPerc"></canvas>
-<p id="txtPerc"></p>
+  <h3>Lançamentos</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Categoria</th>
+        <th>Tipo</th>
+        <th>Valor</th>
+        <th>Obs</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="tb"></tbody>
+  </table>
 </div>
 
-<div class="card">
-<h4>Resumo Financeiro</h4>
-<canvas id="chartResumo"></canvas>
-<p id="txtResumo"></p>
-</div>
-
-</div>
-</section>
-
-<section id="tab-conf" class="hidden">
-<div class="card">
-<h3>Painel de controle</h3>
-<button id="exportAll">Relatório (Excel / PDF)</button>
-<button id="resetAll">Reset de fábrica</button>
-</div>
-</section>
-
-</div>
-
-<div class="modal" id="modal">
-<div class="card">
-<h3>Novo lançamento</h3>
-<form id="form">
-<input type="date" id="data" required><br><br>
-<input type="text" id="cat" placeholder="Categoria" required><br><br>
-<select id="tipo">
-<option>Entrada</option>
-<option>Saída</option>
-</select><br><br>
-<input type="text" id="valor" placeholder="Valor" required><br><br>
-<textarea id="obs" placeholder="Observação"></textarea><br><br>
-<button class="main">Salvar</button>
-</form>
-</div>
-</div>
+</main>
 
 <script>
-const KEY="fluxopro_v11";
-let charts={};
+const KEY = "fluxopro_v11";
+const THEME_KEY = "fluxopro_theme";
 
-function loadDB(){
-  return JSON.parse(localStorage.getItem(KEY)) || {
-    active:"default",
-    profiles:{default:[]},
+/* =========================
+   Inicialização
+========================= */
+
+let db = JSON.parse(localStorage.getItem(KEY));
+
+if(!db){
+  db = {
+    active: "Principal",
+    profiles: {
+      "Principal":[]
+    },
     profileInfo:{}
   };
+  localStorage.setItem(KEY,JSON.stringify(db));
 }
 
-function saveDB(db){localStorage.setItem(KEY,JSON.stringify(db));}
+let perfilAtivo = db.active;
 
-function normalizeValue(v){
-  let s=String(v||"").replace(/[^\d.,-]/g,"").replace(",",".");
-  let n=parseFloat(s);
-  return isNaN(n)?null:n;
+/* =========================
+   Tema
+========================= */
+
+function carregarTema(){
+  const t = localStorage.getItem(THEME_KEY) || "light";
+  document.documentElement.setAttribute("data-theme",t);
 }
 
-function formatMoney(v){
+function alternarTema(){
+  const atual = document.documentElement.getAttribute("data-theme") || "light";
+  const novo = atual === "light" ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme",novo);
+  localStorage.setItem(THEME_KEY,novo);
+}
+
+/* =========================
+   Perfis
+========================= */
+
+function renderPerfis(){
+
+  perfilSelect.innerHTML = Object.keys(db.profiles)
+    .map(p=>`<option ${p===perfilAtivo?"selected":""}>${p}</option>`)
+    .join("");
+
+}
+
+perfilSelect.onchange = ()=>{
+  perfilAtivo = perfilSelect.value;
+  db.active = perfilAtivo;
+  salvarDB();
+  render();
+};
+
+function novoPerfil(){
+
+  const nome = prompt("Nome do perfil:");
+  if(!nome) return;
+
+  if(db.profiles[nome]){
+    alert("Perfil já existe.");
+    return;
+  }
+
+  db.profiles[nome] = [];
+  db.profileInfo[nome] = {};
+
+  perfilAtivo = nome;
+  db.active = nome;
+
+  salvarDB();
+  render();
+}
+
+/* =========================
+   Lançamentos
+========================= */
+
+function salvar(){
+
+  if(!data.value || !valor.value){
+    alert("Preencha data e valor.");
+    return;
+  }
+
+  const v = Number(
+    String(valor.value)
+      .replace(".","")
+      .replace(",",".")
+  );
+
+  if(isNaN(v)){
+    alert("Valor inválido.");
+    return;
+  }
+
+  db.profiles[perfilAtivo].push({
+    id: crypto.randomUUID(),
+    data: data.value,
+    cat: cat.value,
+    tipo: tipo.value,
+    valor: v,
+    obs: obs.value
+  });
+
+  data.value="";
+  cat.value="";
+  valor.value="";
+  obs.value="";
+
+  salvarDB();
+  render();
+}
+
+function excluir(id){
+  db.profiles[perfilAtivo] =
+    db.profiles[perfilAtivo].filter(l=>l.id!==id);
+
+  salvarDB();
+  render();
+}
+
+/* =========================
+   Dashboard + tabela
+========================= */
+
+function money(v){
   return new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0);
 }
 
-function list(){
-  const db=loadDB();
-  return db.profiles[db.active]||[];
-}
+function render(){
 
-function renderPerfis(){
-  const db=loadDB();
-  perfilSelect.innerHTML=Object.keys(db.profiles).map(p=>
-    `<option ${p===db.active?"selected":""}>${p}</option>`
-  ).join("");
-}
-
-function renderProfileInfo(){
-  const db=loadDB();
-  const info=db.profileInfo[db.active]||{};
-  perfilNome.value=info.nome||"";
-  perfilDoc.value=info.doc||"";
-}
-
-function saveProfileInfo(){
-  const db=loadDB();
-  db.profileInfo[db.active]={
-    nome:perfilNome.value.trim(),
-    doc:perfilDoc.value.trim()
-  };
-  saveDB(db);
-}
-
-function renderTable(){
-  const dados=list();
-  tbody.innerHTML=dados.length?dados.map(i=>`
-<tr data-id="${i.id}">
-<td contenteditable data-f="data">${i.data||""}</td>
-<td contenteditable data-f="cat">${i.cat||""}</td>
-<td><span class="badge ${i.tipo==="Entrada"?"entrada":"saida"} btnTipo">${i.tipo}</span></td>
-<td contenteditable data-f="valor">${formatMoney(i.valor)}</td>
-<td contenteditable data-f="obs">${i.obs||""}</td>
-<td><button class="del">🗑️</button></td>
-</tr>`).join(""):`<tr><td colspan="6">Sem dados</td></tr>`;
-}
-
-function updateResumo(){
-  let e=0,s=0;
-  list().forEach(i=>{
-    i.tipo==="Entrada"?e+=i.valor:s+=i.valor;
-  });
-  sumEnt.innerText=formatMoney(e);
-  sumSai.innerText=formatMoney(s);
-  sumRes.innerText=formatMoney(e-s);
-}
-
-function renderDashboard(){
-  const dados=list();
-  let ent=0,sai=0,mapa={};
-
-  dados.forEach(i=>{
-    i.tipo==="Entrada"?ent+=i.valor:sai+=i.valor;
-    if(i.tipo==="Saída") mapa[i.cat||"Outros"]=(mapa[i.cat||"Outros"]||0)+i.valor;
-  });
-
-  if(charts.pizza) charts.pizza.destroy();
-  charts.pizza=new Chart(chartPizza,{type:"doughnut",
-    data:{labels:Object.keys(mapa),datasets:[{data:Object.values(mapa)}]}});
-
-  if(charts.perc) charts.perc.destroy();
-  charts.perc=new Chart(chartPerc,{type:"pie",
-    data:{labels:["Entradas","Saídas"],datasets:[{data:[ent,sai]}]}});
-
-  if(charts.res) charts.res.destroy();
-  charts.res=new Chart(chartResumo,{type:"bar",
-    data:{labels:["Entradas","Saídas","Resultado"],datasets:[{data:[ent,sai,ent-sai]}]}});
-
-  txtPizza.innerText="Categorias com maiores saídas.";
-  txtPerc.innerText=(ent+sai)?`Entradas representam ${(ent/(ent+sai)*100).toFixed(1)}%`:"";
-  txtResumo.innerText=ent>=sai?"Saúde financeira positiva.":"Atenção: gastos maiores que entradas.";
-}
-
-function refreshAll(){
-  renderTable();
-  updateResumo();
-  renderProfileInfo();
-  renderDashboard();
-}
-
-form.onsubmit=e=>{
-  e.preventDefault();
-  const v=normalizeValue(valor.value);
-  if(v===null)return alert("Valor inválido");
-
-  const db=loadDB();
-  db.profiles[db.active].push({
-    id:crypto.randomUUID(),
-    data:data.value,cat:cat.value,tipo:tipo.value,valor:v,obs:obs.value
-  });
-  saveDB(db);
-  modal.style.display="none";
-  form.reset();
-  refreshAll();
-};
-
-tbody.onclick=e=>{
-  const tr=e.target.closest("tr");
-  if(!tr)return;
-  const db=loadDB();
-  const item=db.profiles[db.active].find(i=>i.id===tr.dataset.id);
-
-  if(e.target.classList.contains("del")){
-    db.profiles[db.active]=db.profiles[db.active].filter(i=>i.id!==item.id);
-  }
-
-  if(e.target.classList.contains("btnTipo")){
-    item.tipo=item.tipo==="Entrada"?"Saída":"Entrada";
-  }
-
-  saveDB(db);
-  refreshAll();
-};
-
-tbody.addEventListener("blur",e=>{
-  const td=e.target;
-  if(!td.dataset.f)return;
-  const tr=td.closest("tr");
-  const db=loadDB();
-  const item=db.profiles[db.active].find(i=>i.id===tr.dataset.id);
-
-  if(td.dataset.f==="valor"){
-    const n=normalizeValue(td.innerText);
-    if(n===null){td.innerText=formatMoney(item.valor);return;}
-    item.valor=n;
-  }else item[td.dataset.f]=td.innerText.trim();
-
-  saveDB(db);
-  refreshAll();
-},true);
-
-perfilNome.onblur=saveProfileInfo;
-perfilDoc.onblur=saveProfileInfo;
-
-novoLanc.onclick=()=>modal.style.display="flex";
-
-perfilSelect.onchange=e=>{
-  const db=loadDB();
-  db.active=e.target.value;
-  saveDB(db);
-  refreshAll();
-};
-
-novoPerfil.onclick=()=>{
-  const n=prompt("Nome do perfil");
-  if(!n)return;
-  const db=loadDB();
-  db.profiles[n]=[];
-  db.profileInfo[n]={};
-  db.active=n;
-  saveDB(db);
   renderPerfis();
-  refreshAll();
-};
 
-document.querySelectorAll(".tabs button").forEach(b=>{
-  b.onclick=()=>{
-    document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));
-    b.classList.add("active");
-    document.querySelectorAll("section").forEach(s=>s.classList.add("hidden"));
-    document.getElementById("tab-"+b.dataset.tab).classList.remove("hidden");
-    if(b.dataset.tab==="dash") renderDashboard();
-  };
-});
+  const lista = db.profiles[perfilAtivo];
 
-importar.onclick=()=>window.open("import.html","_blank");
-exportAll.onclick=()=>window.open("export.html","_blank");
+  let ent=0,sai=0;
 
-resetAll.onclick=()=>{
-  if(confirm("Apagar todos os dados?")){
-    localStorage.removeItem(KEY);
-    location.reload();
-  }
-};
+  lista.forEach(l=>{
+    if(l.tipo==="Entrada") ent+=Number(l.valor)||0;
+    else sai+=Number(l.valor)||0;
+  });
 
-(function init(){
-  const db=loadDB();
-  saveDB(db);
-  renderPerfis();
-  refreshAll();
-})();
+  dEnt.innerText = money(ent);
+  dSai.innerText = money(sai);
+  dRes.innerText = money(ent-sai);
+
+  tb.innerHTML = lista.map(l=>`
+    <tr>
+      <td>${l.data||""}</td>
+      <td>${l.cat||""}</td>
+      <td>${l.tipo||""}</td>
+      <td>${money(l.valor)}</td>
+      <td>${l.obs||""}</td>
+      <td><button onclick="excluir('${l.id}')">X</button></td>
+    </tr>
+  `).join("");
+}
+
+/* =========================
+   Exportação / Importação
+========================= */
+
+function abrirExport(){
+  window.open(`export.html?perfil=${encodeURIComponent(perfilAtivo)}`);
+}
+
+function abrirImport(){
+  window.open(`import.html?perfil=${encodeURIComponent(perfilAtivo)}`);
+}
+
+/* =========================
+   Util
+========================= */
+
+function salvarDB(){
+  localStorage.setItem(KEY,JSON.stringify(db));
+}
+
+/* =========================
+   Start
+========================= */
+
+carregarTema();
+render();
 </script>
+
 </body>
 </html>
