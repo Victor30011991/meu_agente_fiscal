@@ -6,8 +6,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 *{box-sizing:border-box}
@@ -17,7 +19,6 @@ body{
   background:#f5f7fb;
   color:#1f2937;
 }
-
 :root{
   --p:#4f46e5;
   --card:#fff;
@@ -25,7 +26,6 @@ body{
   --ok:#10b981;
   --bad:#ef4444;
 }
-
 header{
   background:#fff;
   border-bottom:1px solid var(--b);
@@ -34,7 +34,6 @@ header{
   justify-content:space-between;
   align-items:center;
 }
-
 .tabs button{
   border:none;
   padding:10px 16px;
@@ -43,14 +42,11 @@ header{
   font-weight:700;
   background:#f3f4f6;
 }
-
 .tabs button.active{
   background:var(--p);
   color:#fff;
 }
-
 .container{max-width:1200px;margin:auto;padding:20px}
-
 .card{
   background:var(--card);
   border-radius:18px;
@@ -59,26 +55,19 @@ header{
   margin-bottom:20px;
   box-shadow:0 10px 20px rgba(0,0,0,.04);
 }
-
 table{
   width:100%;
   border-collapse:collapse;
 }
-
 th,td{
   padding:12px 10px;
   border-bottom:1px solid var(--b);
 }
-
-td[contenteditable]{
-  cursor:text;
-}
-
+td[contenteditable]{cursor:text}
 td[contenteditable]:focus{
   outline:2px solid var(--p);
   background:#eef2ff;
 }
-
 .badge{
   padding:6px 12px;
   border-radius:999px;
@@ -86,10 +75,8 @@ td[contenteditable]:focus{
   cursor:pointer;
   display:inline-block;
 }
-
 .entrada{background:#ecfdf5;color:var(--ok)}
 .saida{background:#fef2f2;color:var(--bad)}
-
 button{
   border:none;
   border-radius:10px;
@@ -97,43 +84,36 @@ button{
   font-weight:700;
   cursor:pointer;
 }
-
 .main{background:var(--p);color:#fff}
-
 .actions{
   display:flex;
   gap:10px;
   flex-wrap:wrap;
   margin-bottom:10px;
 }
-
 select,input[type=file],input,textarea{
   padding:8px 10px;
   border-radius:10px;
   border:1px solid var(--b);
   font-family:inherit;
 }
-
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
   gap:20px;
 }
-
 .resume{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
   gap:10px;
   margin-bottom:10px;
 }
-
 .resume div{
   background:#f9fafb;
   border-radius:12px;
   padding:12px;
   font-weight:700;
 }
-
 .modal{
   position:fixed;
   inset:0;
@@ -142,9 +122,7 @@ select,input[type=file],input,textarea{
   align-items:center;
   justify-content:center;
 }
-
 .modal .card{max-width:380px;width:90%}
-
 .hidden{display:none}
 </style>
 </head>
@@ -167,13 +145,19 @@ select,input[type=file],input,textarea{
 
 <div class="container">
 
-<!-- Lançamentos -->
 <section id="tab-lanc">
 
 <div class="actions">
   <button class="main" id="novoLanc">Novo lançamento</button>
   <input type="file" id="fileIn">
   <button id="importar">Alimentar perfil</button>
+</div>
+
+<!-- DADOS DA PESSOA / EMPRESA (SEPARADO DA TABELA) -->
+<div class="card">
+  <h3>Dados do perfil</h3>
+  <input id="perfilNome" placeholder="Nome / Razão social" style="width:100%;margin-bottom:8px">
+  <input id="perfilDoc" placeholder="CPF ou CNPJ" style="width:100%">
 </div>
 
 <div class="resume">
@@ -186,13 +170,11 @@ select,input[type=file],input,textarea{
 <table>
 <thead>
 <tr>
-<th>Pessoa</th>
 <th>Data</th>
 <th>Categoria</th>
 <th>Tipo</th>
 <th>Valor</th>
 <th>Observação</th>
-<th>Editar</th>
 <th>Apagar</th>
 </tr>
 </thead>
@@ -202,7 +184,6 @@ select,input[type=file],input,textarea{
 
 </section>
 
-<!-- Dashboard -->
 <section id="tab-dash" class="hidden">
 
 <div class="grid">
@@ -229,13 +210,13 @@ select,input[type=file],input,textarea{
 
 </section>
 
-<!-- Config -->
 <section id="tab-conf" class="hidden">
 
 <div class="card">
 <h3>Painel de controle</h3>
 
 <button id="exportAll">Backup global (Excel)</button>
+<button id="exportAllPdf">Backup global (PDF)</button>
 <button id="resetAll">Reset de fábrica</button>
 
 </div>
@@ -244,13 +225,11 @@ select,input[type=file],input,textarea{
 
 </div>
 
-<!-- modal -->
 <div class="modal" id="modal">
   <div class="card">
     <h3>Novo lançamento</h3>
 
     <form id="form">
-      <input type="text" id="pessoa" placeholder="CPF / CNPJ / Nome" required><br><br>
       <input type="date" id="data" required><br><br>
       <input type="text" id="cat" placeholder="Categoria" required><br><br>
       <select id="tipo">
@@ -270,9 +249,8 @@ const KEY="fluxopro_v11";
 function loadDB(){
   return JSON.parse(localStorage.getItem(KEY)) || {
     active:"default",
-    profiles:{
-      default:[]
-    }
+    profiles:{ default:[] },
+    profileInfo:{}
   };
 }
 
@@ -306,9 +284,7 @@ let charts={};
 
 function renderPerfis(){
   const db=loadDB();
-  const sel=document.getElementById("perfilSelect");
-
-  sel.innerHTML=Object.keys(db.profiles)
+  perfilSelect.innerHTML=Object.keys(db.profiles)
     .map(p=>`<option ${p===db.active?"selected":""}>${p}</option>`).join("");
 }
 
@@ -317,61 +293,66 @@ function list(){
   return db.profiles[db.active]||[];
 }
 
+function renderProfileInfo(){
+  const db=loadDB();
+  const info=db.profileInfo[db.active]||{};
+  perfilNome.value=info.nome||"";
+  perfilDoc.value=info.doc||"";
+}
+
+function saveProfileInfo(){
+  const db=loadDB();
+  db.profileInfo[db.active]={
+    nome:perfilNome.value.trim(),
+    doc:perfilDoc.value.trim()
+  };
+  saveDB(db);
+}
+
 function renderTable(){
   const tb=document.getElementById("tbody");
   const dados=list();
 
   if(!dados.length){
-    tb.innerHTML='<tr><td colspan="8">Sem dados</td></tr>';
+    tb.innerHTML='<tr><td colspan="6">Sem dados</td></tr>';
     return;
   }
 
   let html="";
-
   for(const i of dados){
     html+=`
 <tr data-id="${i.id}">
-<td contenteditable data-f="pessoa">${i.pessoa||""}</td>
 <td contenteditable data-f="data">${i.data||""}</td>
 <td contenteditable data-f="cat">${i.cat||""}</td>
-<td>
-<span class="badge ${i.tipo==="Entrada"?"entrada":"saida"} btnTipo">${i.tipo}</span>
-</td>
+<td><span class="badge ${i.tipo==="Entrada"?"entrada":"saida"} btnTipo">${i.tipo}</span></td>
 <td contenteditable data-f="valor">${formatMoney(i.valor)}</td>
 <td contenteditable data-f="obs">${i.obs||""}</td>
-<td>✏️</td>
 <td><button class="del">🗑️</button></td>
 </tr>`;
   }
-
   tb.innerHTML=html;
 }
 
 function updateResumo(){
   const dados=list();
   let e=0,s=0;
-
   dados.forEach(i=>{
     if(i.tipo==="Entrada") e+=i.valor||0;
     else s+=i.valor||0;
   });
-
-  document.getElementById("sumEnt").innerText=formatMoney(e);
-  document.getElementById("sumSai").innerText=formatMoney(s);
-  document.getElementById("sumRes").innerText=formatMoney(e-s);
+  sumEnt.innerText=formatMoney(e);
+  sumSai.innerText=formatMoney(s);
+  sumRes.innerText=formatMoney(e-s);
 }
 
 function renderDashboard(){
-
   const dados=list();
-
   let ent=0,sai=0;
   const mapa={};
 
   dados.forEach(i=>{
     if(i.tipo==="Entrada") ent+=i.valor||0;
     else sai+=i.valor||0;
-
     if(i.tipo==="Saída"){
       mapa[i.cat||"Outros"]=(mapa[i.cat||"Outros"]||0)+(i.valor||0);
     }
@@ -379,61 +360,45 @@ function renderDashboard(){
 
   const total=ent+sai;
 
-  // pizza
   if(charts.pizza) charts.pizza.destroy();
   charts.pizza=new Chart(chartPizza,{
     type:"doughnut",
     data:{labels:Object.keys(mapa),datasets:[{data:Object.values(mapa)}]}
   });
 
-  document.getElementById("txtPizza").innerText=
-    "Categorias com maiores saídas.";
+  txtPizza.innerText="Categorias com maiores saídas.";
 
-  // percentual
   if(charts.perc) charts.perc.destroy();
   charts.perc=new Chart(chartPerc,{
     type:"pie",
-    data:{
-      labels:["Entradas","Saídas"],
-      datasets:[{data:[ent,sai]}]
-    }
+    data:{labels:["Entradas","Saídas"],datasets:[{data:[ent,sai]}]}
   });
 
-  document.getElementById("txtPerc").innerText=
-    total?`Entradas representam ${(ent/total*100).toFixed(1)}% do fluxo.`:"";
+  txtPerc.innerText=total?`Entradas representam ${(ent/total*100).toFixed(1)}% do fluxo.`:"";
 
-  // resumo
   if(charts.res) charts.res.destroy();
   charts.res=new Chart(chartResumo,{
     type:"bar",
-    data:{
-      labels:["Entradas","Saídas","Resultado"],
-      datasets:[{data:[ent,sai,ent-sai]}]
-    }
+    data:{labels:["Entradas","Saídas","Resultado"],datasets:[{data:[ent,sai,ent-sai]}]}
   });
 
-  document.getElementById("txtResumo").innerText=
-    ent>=sai?"Saúde financeira positiva.":"Atenção: gastos maiores que entradas.";
+  txtResumo.innerText=ent>=sai?"Saúde financeira positiva.":"Atenção: gastos maiores que entradas.";
 }
 
 function refresh(){
   renderTable();
   updateResumo();
+  renderProfileInfo();
 }
 
-document.getElementById("form").onsubmit=e=>{
+form.onsubmit=e=>{
   e.preventDefault();
-
   const n=normalizeValue(valor.value);
-  if(n===null){
-    alert("Valor inválido");
-    return;
-  }
+  if(n===null){alert("Valor inválido");return;}
 
   const db=loadDB();
   db.profiles[db.active].push({
     id:crypto.randomUUID(),
-    pessoa:pessoa.value,
     data:data.value,
     cat:cat.value,
     tipo:tipo.value,
@@ -448,7 +413,7 @@ document.getElementById("form").onsubmit=e=>{
   renderDashboard();
 };
 
-document.getElementById("tbody").addEventListener("click",e=>{
+tbody.addEventListener("click",e=>{
   const tr=e.target.closest("tr");
   if(!tr) return;
 
@@ -470,7 +435,7 @@ document.getElementById("tbody").addEventListener("click",e=>{
   }
 });
 
-document.getElementById("tbody").addEventListener("blur",e=>{
+tbody.addEventListener("blur",e=>{
   const td=e.target;
   if(!td.dataset.f) return;
 
@@ -493,8 +458,10 @@ document.getElementById("tbody").addEventListener("blur",e=>{
   saveDB(db);
   updateResumo();
   renderDashboard();
-
 },true);
+
+perfilNome.onblur=saveProfileInfo;
+perfilDoc.onblur=saveProfileInfo;
 
 novoLanc.onclick=()=>modal.style.display="flex";
 
@@ -511,6 +478,7 @@ novoPerfil.onclick=()=>{
   if(!n) return;
   const db=loadDB();
   db.profiles[n]=[];
+  db.profileInfo[n]={};
   db.active=n;
   saveDB(db);
   renderPerfis();
@@ -522,10 +490,8 @@ document.querySelectorAll(".tabs button").forEach(b=>{
   b.onclick=()=>{
     document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));
     b.classList.add("active");
-
     document.querySelectorAll("section").forEach(s=>s.classList.add("hidden"));
     document.getElementById("tab-"+b.dataset.tab).classList.remove("hidden");
-
     if(b.dataset.tab==="dash") renderDashboard();
   };
 });
@@ -538,21 +504,18 @@ importar.onclick=()=>{
   r.onload=e=>{
     const wb=XLSX.read(e.target.result,{type:"binary"});
     const data=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-
     const db=loadDB();
 
     data.forEach(l=>{
       const v=normalizeValue(l.Valor);
       if(v===null) return;
-
       db.profiles[db.active].push({
         id:crypto.randomUUID(),
-        pessoa:l.Pessoa||"",
         data:l.Data||"",
         cat:l.Categoria||"",
         tipo:l.Tipo||"Entrada",
         valor:v,
-        obs:l.Observacao||""
+        obs:l.Observacao||l.Observação||""
       });
     });
 
@@ -575,6 +538,30 @@ exportAll.onclick=()=>{
   XLSX.writeFile(wb,"backup_fluxopro.xlsx");
 };
 
+exportAllPdf.onclick=()=>{
+  const { jsPDF } = window.jspdf;
+  const db=loadDB();
+  const doc=new jsPDF();
+  let y=10;
+
+  doc.text("Backup global - FluxoPro",10,y);
+  y+=8;
+
+  for(const p in db.profiles){
+    doc.text(`Perfil: ${p}`,10,y); y+=6;
+
+    db.profiles[p].forEach(l=>{
+      if(y>280){doc.addPage();y=10;}
+      doc.text(`${l.data} | ${l.cat} | ${l.tipo} | ${l.valor}`,10,y);
+      y+=5;
+    });
+
+    y+=6;
+  }
+
+  doc.save("backup_fluxopro.pdf");
+};
+
 resetAll.onclick=()=>{
   if(confirm("Apagar todos os dados?")){
     localStorage.removeItem(KEY);
@@ -585,6 +572,7 @@ resetAll.onclick=()=>{
 function init(){
   const db=loadDB();
   if(!db.profiles[db.active]) db.profiles[db.active]=[];
+  if(!db.profileInfo) db.profileInfo={};
   saveDB(db);
   renderPerfis();
   refresh();
