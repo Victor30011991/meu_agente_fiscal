@@ -241,14 +241,16 @@ const FluxoPro = (() => {
 
     document.getElementById('form-registro').onsubmit = e=>{
       e.preventDefault();
+
       FinanceService.add({
-        id:Utils.uuid(),
-        perfil:state.perfilAtivo,
-        data:fData.value,
-        cat:fCat.value,
-        tipo:fTipo.value,
-        valor:Utils.clean(fValor.value)
+        id: Utils.uuid(),
+        perfil: state.perfilAtivo,
+        data: document.getElementById('f-data').value,
+        cat: document.getElementById('f-cat').value,
+        tipo: document.getElementById('f-tipo').value,
+        valor: Utils.clean(document.getElementById('f-valor').value)
       });
+
       document.getElementById('modalAdd').style.display='none';
       e.target.reset();
       refresh();
@@ -279,15 +281,9 @@ const FluxoPro = (() => {
     },true);
 
     document.getElementById('select-perfil').onchange = e=>{
-      ProfileService.setset(e.target.value);
-    };
-
-    function ProfileServiceSet(v){
-      ProfileService.setAtivo(v);
+      ProfileService.setAtivo(e.target.value);
       refresh();
-    }
-    ProfileServiceSet.bind=null;
-    document.getElementById('select-perfil').onchange = e=>ProfileServiceSet(e.target.value);
+    };
 
     document.getElementById('btn-novo-perfil').onclick=()=>{
       const n = prompt('Novo perfil');
