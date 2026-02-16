@@ -1,171 +1,153 @@
-let db = JSON.parse(localStorage.getItem('fluxopro_vfinal')) || {
-    config: { nome: 'Minha Empresa', logo: '', theme: 'default' },
-    entries: []
-};
+// Base de Dados com Persistência Local
+let db = JSON.parse(localStorage.getItem('fluxopro_db')) || [];
+let activeCharts = {};
 
-let charts = {};
-
-// Inicialização
-window.onload = () => {
-    applyConfig();
+document.addEventListener('DOMContentLoaded', () => {
     renderTable();
-    initImport();
-};
+    initFileUpload();
+});
 
-function switchTab(tab) {
-    document.querySelectorAll('.tab-content, .nav-btn').forEach(el => el.classList.remove('active'));
-    document.getElementById(`tab-${tab}`).classList.add('active');
-    document.getElementById(`btn-${tab}`).classList.add('active');
-    if(tab === 'dash') renderDashboards();
+// NAVEGAÇÃO ENTRE ABAS
+function switchTab(tabId) {
+    document.querySelectorAll('.tab-pane, .nav-link').forEach(el => el.classList.remove('active'));
+    document.getElementById(`tab-${tabId}`).classList.add('active');
+    document.getElementById(`btn-${tabId}`).classList.add('active');
+    if(tabId === 'dash') renderCharts();
 }
 
-// CRUD Core
-document.getElementById('entry-form').onsubmit = (e) => {
+// LANÇAMENTO MANUAL
+document.getElementById('form-entry').onsubmit = (e) => {
     e.preventDefault();
     const entry = {
         id: Date.now(),
         data: document.getElementById('f-date').value,
+        cat: document.getElementById('f-cat').value,
         tipo: document.getElementById('f-tipo').value,
-        dest: document.getElementById('f-dest').value,
-        valor: parseFloat(document.getElementById('f-valor').value),
-        categoria: document.getElementById('f-cat').value || 'Diversos'
+        val: parseFloat(document.getElementById('f-val').value)
     };
-    db.entries.push(entry);
-    save();
-    closeModal('modal-entry');
-    renderTable();
+    db.push(entry);
+    sync();
+    closeModal('entry-modal');
     e.target.reset();
 };
 
-function renderTable() {
-    const filter = document.getElementById('filter-dest').value;
-    const filtered = filter === 'todos' ? db.entries : db.entries.filter(e => e.dest === filter);
-    
-    document.getElementById('table-body').innerHTML = filtered.sort((a,b) => new Date(b.data) - new Date(a.data)).map(e => `
-        <tr>
-            <td>${e.data.split('-').reverse().join('/')}</td>
-            <td><span class="badge ${e.dest}">${e.dest}</span></td>
-            <td>${e.categoria}</td>
-            <td style="color:${e.tipo === 'Entrada' ? '#10b981' : '#ef4444'}">R$ ${e.valor.toFixed(2)}</td>
-            <td>
-                <button onclick="deleteEntry(${e.id})">🗑️</button>
-            </td>
-        </tr>
-    `).join('');
+// MOTOR DE IMPORTAÇÃO (JSON, EXCEL)
+function initFileUpload() {
+    const zone = document.getElementById('drop-zone');
+    const input = document.getElementById('file-input');
+
+    zone.onclick = () => input.click();
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+
+        reader.onload = (evt) => {
+            if (file.name.endsWith('.json')) {
+                const data = JSON.parse(evt.target.result);
+                db = Array.isArray(data) ? data : (data.entries || []);
+            } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                const workbook = XLSX.read(evt.target.result, {type: 'binary'});
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(firstSheet);
+                // Mapeamento inteligente de colunas
+                db = rows.map(r => ({
+                    id: Date.now() + Math.random(),
+                    data: r.Data || r.date || new Date().toISOString().split('T')[0],
+                    cat: r.Categoria || r.category || 'Geral',
+                    tipo: r.Tipo || r.type || 'Saída',
+                    val: parseFloat(r.Valor || r.value || 0)
+                }));
+            }
+            sync();
+            alert("Dados importados com sucesso!");
+        };
+
+        if (file.name.endsWith('.json')) reader.readAsText(file);
+        else reader.readAsBinaryString(file);
+    };
 }
 
-// Motores de Dashboards (3 versões)
-function renderDashboards() {
-    const entries = db.entries;
-    
-    // 1. Geral
-    const inG = entries.filter(e => e.tipo === 'Entrada').reduce((a,b) => a+b.valor, 0);
-    const outG = entries.filter(e => e.tipo === 'Saída').reduce((a,b) => a+b.valor, 0);
-    updateChart('chartGeral', 'doughnut', ['Entradas', 'Saídas'], [inG, outG]);
-
-    // 2. MEI Fiscal
-    const faturadoMei = entries.filter(e => e.dest === 'Empresa' && e.tipo === 'Entrada').reduce((a,b) => a+b.valor, 0);
-    const limite = 81000;
-    const resto = Math.max(0, limite - faturadoMei);
-    updateChart('chartMei', 'bar', ['Consumido', 'Disponível'], [faturadoMei, resto]);
-    
-    document.getElementById('mei-alert-container').innerHTML = faturadoMei > (limite * 0.8) ? 
-        `<div style="color:red; font-weight:bold; margin-bottom:10px;">⚠️ ALERTA: 80% do limite MEI atingido!</div>` : '';
-
-    // 3. Categorias
-    const cats = [...new Set(entries.map(e => e.categoria))];
-    const catData = cats.map(c => entries.filter(e => e.categoria === c).reduce((a,b) => a+b.valor, 0));
-    updateChart('chartCats', 'pie', cats, catData);
+// EXPORTAÇÃO (SAVE GAME)
+function exportFile(type) {
+    if (type === 'json') {
+        const blob = new Blob([JSON.stringify(db, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'fluxopro_backup.json'; a.click();
+    } else {
+        const ws = XLSX.utils.json_to_sheet(db);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Financeiro");
+        XLSX.writeFile(wb, "fluxopro_relatorio.xlsx");
+    }
 }
 
-function updateChart(id, type, labels, data) {
-    if(charts[id]) charts[id].destroy();
-    charts[id] = new Chart(document.getElementById(id), {
+// RENDERIZAÇÃO DE GRÁFICOS (3 MODELOS)
+function renderCharts() {
+    const gastos = db.filter(e => e.tipo === 'Saída');
+    const ganhos = db.filter(e => e.tipo === 'Entrada');
+
+    // 1. PIZZA: Gastos por Categoria
+    const catMap = {};
+    gastos.forEach(g => catMap[g.cat] = (catMap[g.cat] || 0) + g.val);
+    createChart('chartPie', 'pie', Object.keys(catMap), Object.values(catMap));
+
+    // 2. RÉGUAS: Ganhos Mensais (Jan-Dez)
+    const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const ganhosMes = Array(12).fill(0);
+    ganhos.forEach(g => {
+        const m = new Date(g.data).getMonth();
+        ganhosMes[m] += g.val;
+    });
+    createChart('chartBars', 'bar', meses, ganhosMes);
+
+    // 3. RANKING %: Top Gastadores
+    const totalGasto = gastos.reduce((a,b) => a+b.val, 0);
+    const sortedCats = Object.keys(catMap).sort((a,b) => catMap[b] - catMap[a]);
+    const values = sortedCats.map(c => ((catMap[c] / totalGasto) * 100).toFixed(1));
+    createChart('chartRanking', 'doughnut', sortedCats, values);
+}
+
+function createChart(id, type, labels, data) {
+    if (activeCharts[id]) activeCharts[id].destroy();
+    activeCharts[id] = new Chart(document.getElementById(id), {
         type: type,
-        data: { labels, datasets: [{ data, backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] }] },
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
+            }]
+        },
         options: { responsive: true, maintainAspectRatio: false }
     });
 }
 
-// Exportação Profissional (PDF & Excel)
-async function exportData(format) {
-    if(format === 'pdf') {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        // Header
-        doc.setFillColor(79, 70, 229);
-        doc.rect(0, 0, 210, 40, 'F');
-        doc.setTextColor(255);
-        doc.setFontSize(20);
-        doc.text(db.config.nome, 15, 25);
-        
-        doc.setTextColor(0);
-        doc.setFontSize(12);
-        doc.text("Relatório Gerencial de Fluxo de Caixa", 15, 50);
-
-        const rows = db.entries.map(e => [e.data, e.dest, e.categoria, `R$ ${e.valor.toFixed(2)}`]);
-        doc.autoTable({ head: [['Data', 'Conta', 'Categoria', 'Valor']], body: rows, startY: 60 });
-
-        // Nova Página: Dashboard do Relatório
-        doc.addPage();
-        doc.text("Dashboard Consolidado", 15, 20);
-        const chartImg = document.getElementById('chartGeral').toDataURL('image/png');
-        doc.addImage(chartImg, 'PNG', 15, 30, 180, 100);
-
-        doc.save("Relatorio_FluxoPro.pdf");
-    } else {
-        const ws = XLSX.utils.json_to_sheet(db.entries);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Financeiro");
-        XLSX.writeFile(wb, "Financeiro_FluxoPro.xlsx");
-    }
+// UTILITÁRIOS
+function sync() {
+    localStorage.setItem('fluxopro_db', JSON.stringify(db));
+    renderTable();
 }
 
-// Configurações e Persistência
-function save() { localStorage.setItem('fluxopro_vfinal', JSON.stringify(db)); }
+function renderTable() {
+    const html = db.sort((a,b) => new Date(b.data) - new Date(a.data)).map(e => `
+        <tr>
+            <td>${e.data}</td>
+            <td>${e.cat}</td>
+            <td style="color:${e.tipo === 'Entrada' ? 'var(--success)' : 'var(--danger)'}; font-weight:bold">${e.tipo}</td>
+            <td>R$ ${e.val.toFixed(2)}</td>
+            <td style="text-align:right"><button onclick="deleteEntry(${e.id})" style="border:none; background:none; cursor:pointer">🗑️</button></td>
+        </tr>
+    `).join('');
+    document.getElementById('table-body').innerHTML = html || '<tr><td colspan="5" style="text-align:center">Nenhum dado disponível.</td></tr>';
+}
+
+function deleteEntry(id) {
+    db = db.filter(e => e.id !== id);
+    sync();
+}
+
+function applyTheme(t) { document.body.setAttribute('data-theme', t); }
 function openModal(id) { document.getElementById(id).style.display = 'flex'; }
 function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-function openExportModal() { openModal('modal-export'); }
-
-function saveConfig() {
-    db.config.nome = document.getElementById('conf-nome').value;
-    save();
-    location.reload();
-}
-
-function applyConfig() {
-    document.body.setAttribute('data-theme', db.config.theme);
-    document.getElementById('conf-nome').value = db.config.nome;
-    document.getElementById('app-title').innerHTML = `${db.config.nome} <span>Brasil</span>`;
-    if(db.config.logo) {
-        document.getElementById('display-logo').src = db.config.logo;
-        document.getElementById('display-logo').style.display = 'block';
-    }
-}
-
-function handleLogo(input) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        db.config.logo = e.target.result;
-        save();
-        applyConfig();
-    };
-    reader.readAsDataURL(input.files[0]);
-}
-
-function initImport() {
-    document.getElementById('universal-import').onchange = (e) => {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            if(file.name.endsWith('.json')) {
-                db.entries = JSON.parse(ev.target.result).entries || JSON.parse(ev.target.result);
-                save(); renderTable();
-            }
-        };
-        reader.readAsText(file);
-    };
-}
-function deleteEntry(id) { if(confirm("Remover lançamento?")) { db.entries = db.entries.filter(e => e.id !== id); save(); renderTable(); } }
-function clearAllData() { if(confirm("APAGAR TUDO?")) { localStorage.clear(); location.reload(); } }
+function resetSystem() { if(confirm("Apagar todos os dados?")) { localStorage.clear(); location.reload(); } }
