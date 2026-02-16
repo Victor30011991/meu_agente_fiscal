@@ -1,184 +1,120 @@
-/**
- * FLUXOPRO BRASIL - Lógica do Sistema
- */
-
-// 1. Estado da Aplicação
-let db = JSON.parse(localStorage.getItem('fluxopro_db')) || {
-    config: { nome: '', doc: '', logo: '' },
+let db = JSON.parse(localStorage.getItem('fluxopro_enterprise')) || {
+    config: { nome: 'FluxoPro', theme: 'default' },
     entries: []
 };
 
 let activeCharts = {};
 
-// 2. Inicialização
+// 🔄 INICIALIZAÇÃO
 document.addEventListener('DOMContentLoaded', () => {
-    initializeApp();
+    applyTheme(db.config.theme);
+    document.getElementById('theme-selector').value = db.config.theme;
+    document.getElementById('conf-nome').value = db.config.nome;
+    renderTable();
+    initUniversalImport();
 });
 
-function initializeApp() {
-    loadProfile();
-    renderTable();
-    initImportListener();
-}
-
-// 3. Controle de Interface (UI)
+// 📑 CONTROLE DE ABAS (CORREÇÃO DA TELA ÚNICA)
 function switchTab(tabId) {
-    // Gerenciar Botões
-    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-    document.getElementById(`btn-${tabId}`).classList.add('active');
-
-    // Gerenciar Telas
-    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    
     document.getElementById(`tab-${tabId}`).classList.add('active');
-
-    if (tabId === 'dash') renderAllCharts();
+    document.getElementById(`btn-${tabId}`).classList.add('active');
+    
+    if(tabId === 'dash') renderCharts();
 }
 
-function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-// 4. Gestão de Dados (CRUD)
-function save() {
-    localStorage.setItem('fluxopro_db', JSON.stringify(db));
-    renderTable();
+// 🎨 GESTÃO DE TEMA
+function applyTheme(theme) {
+    document.body.setAttribute('data-theme', theme);
+    db.config.theme = theme;
+    save();
 }
 
-const entryForm = document.getElementById('form-entry');
-if (entryForm) {
-    entryForm.onsubmit = (e) => {
-        e.preventDefault();
-        
-        const newEntry = {
-            id: Date.now(),
-            data: document.getElementById('f-data').value,
-            tipo: document.getElementById('f-tipo').value,
-            dest: document.getElementById('f-dest').value,
-            valor: parseFloat(document.getElementById('f-valor').value),
-            categoria: document.getElementById('f-cat').value || 'Geral',
-            obs: document.getElementById('f-obs').value
-        };
+// 📂 IMPORTAÇÃO UNIVERSAL (EXCEL / JSON)
+function initUniversalImport() {
+    const input = document.getElementById('universal-import');
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
 
-        db.entries.push(newEntry);
-        save();
-        closeModal('modal-entry');
-        e.target.reset();
+        if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+            reader.onload = (evt) => {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(sheet);
+                
+                // Mapeamento inteligente de colunas
+                json.forEach(row => {
+                    db.entries.push({
+                        id: Date.now() + Math.random(),
+                        data: row.Data || new Date().toISOString().split('T')[0],
+                        tipo: row.Tipo || 'Saída',
+                        categoria: row.Categoria || 'Importado',
+                        valor: parseFloat(row.Valor) || 0,
+                        dest: row.Destino || 'Empresa'
+                    });
+                });
+                save();
+                alert('Excel importado com sucesso!');
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            reader.onload = (evt) => {
+                const imported = JSON.parse(evt.target.result);
+                db.entries = imported.entries || imported;
+                save();
+                location.reload();
+            };
+            reader.readAsText(file);
+        }
     };
 }
 
-function renderTable() {
-    const tableBody = document.getElementById('lista-corpo');
-    if (!tableBody) return;
+// 📥 EXPORTAÇÃO REAL (FIXED)
+function openExportModal() { document.getElementById('modal-export').style.display = 'flex'; }
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-    tableBody.innerHTML = db.entries
-        .sort((a, b) => new Date(b.data) - new Date(a.data))
-        .map(entry => `
-            <tr>
-                <td>${formatDate(entry.data)}</td>
-                <td><span class="badge">${entry.dest}</span></td>
-                <td>${entry.categoria}</td>
-                <td style="color: ${entry.tipo === 'Entrada' ? 'var(--success)' : 'var(--danger)'}; font-weight: 600">
-                    R$ ${entry.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-                </td>
-                <td><small>${entry.obs || '-'}</small></td>
-                <td>
-                    <button class="btn-icon" onclick="deleteEntry(${entry.id})" title="Excluir">🗑️</button>
-                </td>
-            </tr>
-        `).join('');
-}
-
-// 5. Dashboards (Charts)
-function renderAllCharts() {
-    const entries = db.entries;
-    
-    // Gráfico de Fluxo (Entradas vs Saídas)
-    const inSum = entries.filter(e => e.tipo === 'Entrada').reduce((acc, cur) => acc + cur.valor, 0);
-    const outSum = entries.filter(e => e.tipo === 'Saída').reduce((acc, cur) => acc + cur.valor, 0);
-    updateChart('chartGeral', 'doughnut', ['Entradas', 'Saídas'], [inSum, outSum]);
-
-    // Gráfico MEI
-    const faturamentoMei = entries
-        .filter(e => e.dest === 'Empresa' && e.tipo === 'Entrada')
-        .reduce((acc, cur) => acc + cur.valor, 0);
-    
-    const limiteMei = 81000;
-    checkMeiStatus(faturamentoMei, limiteMei);
-    updateChart('chartMei', 'bar', ['Faturado', 'Teto'], [faturamentoMei, limiteMei]);
-
-    // Categorias
-    const catMap = {};
-    entries.forEach(e => {
-        catMap[e.categoria] = (catMap[e.categoria] || 0) + e.valor;
-    });
-    updateChart('chartCategorias', 'pie', Object.keys(catMap), Object.values(catMap));
-}
-
-function updateChart(canvasId, type, labels, data) {
-    if (activeCharts[canvasId]) activeCharts[canvasId].destroy();
-    
-    const ctx = document.getElementById(canvasId).getContext('2d');
-    activeCharts[canvasId] = new Chart(ctx, {
-        type: type,
-        data: {
-            labels: labels,
-            datasets: [{
-                data: data,
-                backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
-            }]
-        },
-        options: { responsive: true, maintainAspectRatio: false }
-    });
-}
-
-// 6. Funções Auxiliares
-function formatDate(dateStr) {
-    return dateStr.split('-').reverse().join('/');
-}
-
-function deleteEntry(id) {
-    if (confirm('Tem certeza que deseja excluir este lançamento?')) {
-        db.entries = db.entries.filter(e => e.id !== id);
-        save();
-    }
-}
-
-function checkMeiStatus(atual, limite) {
-    const alertDiv = document.getElementById('mei-status');
-    if (atual > limite * 0.8) {
-        alertDiv.innerHTML = `<div class="alert warning">Atenção: Você atingiu 80% do limite MEI!</div>`;
+async function generateExport(type) {
+    if (type === 'excel') {
+        const ws = XLSX.utils.json_to_sheet(db.entries);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "FluxoFinanceiro");
+        XLSX.writeFile(wb, `FluxoPro_Export_${Date.now()}.xlsx`);
     } else {
-        alertDiv.innerHTML = '';
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.text(`Relatório: ${db.config.nome}`, 14, 20);
+        const rows = db.entries.map(e => [e.data, e.tipo, e.categoria, e.valor.toFixed(2)]);
+        doc.autoTable({ head: [['Data', 'Tipo', 'Categoria', 'Valor']], body: rows, startY: 30 });
+        doc.save("FluxoPro_Relatorio.pdf");
     }
+    closeModal('modal-export');
 }
 
-function saveConfig() {
-    db.config.nome = document.getElementById('conf-nome').value;
-    db.config.doc = document.getElementById('conf-doc').value;
-    save();
-    alert('Perfil atualizado com sucesso!');
+// 📊 DASHBOARDS
+function renderCharts() {
+    const ctx1 = document.getElementById('chartGeral').getContext('2d');
+    const inSum = db.entries.filter(e => e.tipo === 'Entrada').reduce((a,b) => a+b.valor, 0);
+    const outSum = db.entries.filter(e => e.tipo === 'Saída').reduce((a,b) => a+b.valor, 0);
+
+    if(activeCharts.c1) activeCharts.c1.destroy();
+    activeCharts.c1 = new Chart(ctx1, {
+        type: 'doughnut',
+        data: { labels: ['Entradas', 'Saídas'], datasets: [{ data: [inSum, outSum], backgroundColor: ['#10b981', '#ef4444'] }] }
+    });
 }
 
-function loadProfile() {
-    document.getElementById('conf-nome').value = db.config.nome || '';
-    document.getElementById('conf-doc').value = db.config.doc || '';
+function save() { localStorage.setItem('fluxopro_enterprise', JSON.stringify(db)); renderTable(); }
+function renderTable() {
+    const corpo = document.getElementById('lista-corpo');
+    corpo.innerHTML = db.entries.map(e => `
+        <tr><td>${e.data}</td><td>${e.tipo}</td><td>${e.categoria}</td><td>R$ ${e.valor.toFixed(2)}</td>
+        <td><button onclick="deleteEntry(${e.id})">🗑️</button></td></tr>
+    `).join('');
 }
-
-function initImportListener() {
-    const importInput = document.getElementById('import-db');
-    if (importInput) {
-        importInput.onchange = (e) => {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                try {
-                    db = JSON.parse(ev.target.result);
-                    save();
-                    location.reload();
-                } catch (err) {
-                    alert('Erro ao importar arquivo JSON.');
-                }
-            };
-            reader.readAsText(file);
-        };
-    }
-}
+function deleteEntry(id) { db.entries = db.entries.filter(e => e.id !== id); save(); }
+function saveConfig() { save(); alert('Configurações aplicadas!'); }
+function updateBrand(val) { document.getElementById('user-brand-name').innerText = val || 'FluxoPro'; }
