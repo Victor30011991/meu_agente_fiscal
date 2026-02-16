@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>FluxoPro – Relatório</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link id="themeLink" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:Inter,system-ui;
+  background:#f5f7fb;
+}
+.container{max-width:1000px;margin:auto;padding:30px}
+.card{
+  background:#fff;
+  border-radius:16px;
+  padding:20px;
+  box-shadow:0 10px 20px rgba(0,0,0,.05);
+}
+h1,h2{margin-top:0}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left}
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+}
+button{
+  padding:10px 14px;
+  border:0;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:700;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="top">
+  <h1>Relatório FluxoPro</h1>
+  <div>
+    <button onclick="exportExcel()">Excel</button>
+    <button onclick="exportPDF()">PDF</button>
+  </div>
+</div>
+
+<div class="card">
+  <h2 id="perfilTitulo"></h2>
+  <div id="perfilDados"></div>
+
+  <p><strong>Entradas:</strong> <span id="ent"></span></p>
+  <p><strong>Saídas:</strong> <span id="sai"></span></p>
+  <p><strong>Resultado:</strong> <span id="res"></span></p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Categoria</th>
+        <th>Tipo</th>
+        <th>Valor</th>
+        <th>Observação</th>
+      </tr>
+    </thead>
+    <tbody id="tb"></tbody>
+  </table>
+</div>
+
+</div>
+
+<script>
+const KEY="fluxopro_v11";
+
+function loadDB(){
+  return JSON.parse(localStorage.getItem(KEY));
+}
+
+function money(v){
+  return new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0);
+}
+
+const db=loadDB();
+const perfil=db.active;
+const dados=db.profiles[perfil]||[];
+const info=db.profileInfo?.[perfil]||{};
+
+perfilTitulo.innerText="Perfil: "+perfil;
+perfilDados.innerHTML=`
+<p><strong>Nome:</strong> ${info.nome||""}</p>
+<p><strong>Documento:</strong> ${info.doc||""}</p>
+`;
+
+let ent=0,sai=0;
+dados.forEach(l=>{
+  if(l.tipo==="Entrada") ent+=l.valor||0;
+  else sai+=l.valor||0;
+});
+
+ent.innerText=money(ent);
+sai.innerText=money(sai);
+res.innerText=money(ent-sai);
+
+tb.innerHTML=dados.map(l=>`
+<tr>
+<td>${l.data||""}</td>
+<td>${l.cat||""}</td>
+<td>${l.tipo}</td>
+<td>${money(l.valor)}</td>
+<td>${l.obs||""}</td>
+</tr>
+`).join("");
+
+/* Tema (se futuramente você salvar tema no DB) */
+if(db.theme){
+  themeLink.href="themes/"+db.theme+".css";
+}
+
+function exportExcel(){
+  const rows=dados.map(l=>({
+    Data:l.data,
+    Categoria:l.cat,
+    Tipo:l.tipo,
+    Valor:l.valor,
+    Observacao:l.obs
+  }));
+
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,perfil);
+  XLSX.writeFile(wb,`fluxopro_${perfil}.xlsx`);
+}
+
+function exportPDF(){
+  const { jsPDF }=window.jspdf;
+  const doc=new jsPDF();
+
+  let y=10;
+
+  doc.text(`Relatório - ${perfil}`,10,y); y+=8;
+  doc.text(`Entradas: ${money(ent)}`,10,y); y+=6;
+  doc.text(`Saídas: ${money(sai)}`,10,y); y+=6;
+  doc.text(`Resultado: ${money(ent-sai)}`,10,y); y+=10;
+
+  dados.forEach(l=>{
+    if(y>280){doc.addPage();y=10;}
+    doc.text(`${l.data} | ${l.cat} | ${l.tipo} | ${money(l.valor)}`,10,y);
+    y+=6;
+  });
+
+  doc.save(`fluxopro_${perfil}.pdf`);
+}
+</script>
+</body>
+</html>
