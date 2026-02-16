@@ -1,12 +1,346 @@
-<div class="card" id="resumo-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-bottom:15px;">
-  <div><b>Entradas</b><div id="resumo-entradas">R$ 0,00</div></div>
-  <div><b>Saídas</b><div id="resumo-saidas">R$ 0,00</div></div>
-  <div><b>Saldo</b><div id="resumo-saldo">R$ 0,00</div></div>
-</div>
+<script>
+const FluxoPro = (() => {
 
-<div class="card" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;">
-  <input type="date" id="filtro-inicio">
-  <input type="date" id="filtro-fim">
-  <button class="btn btn-sec" id="btn-filtrar">Filtrar</button>
-  <button class="btn btn-sec" id="btn-limpar-filtro">Limpar</button>
-</div>
+  const STORAGE = {
+    db: 'fpro_v12_db',
+    perfis: 'fpro_v12_perfs',
+    ativo: 'fpro_v12_ativo',
+    cfg: 'fpro_v12_cfg'
+  };
+
+  const state = {
+    db: JSON.parse(localStorage.getItem(STORAGE.db)) || [],
+    perfis: JSON.parse(localStorage.getItem(STORAGE.perfis)) || ["Geral"],
+    perfilAtivo: localStorage.getItem(STORAGE.ativo) || "Geral",
+    config: JSON.parse(localStorage.getItem(STORAGE.cfg)) || { tema:'default', privacidade:false },
+    filtro:{ ini:null, fim:null }
+  };
+
+  let charts = {};
+
+  /* ================= UTIL ================= */
+
+  const Utils = {
+    uuid(){ return Math.random().toString(36).substring(2,10); },
+    clean(v){
+      if(typeof v === 'number') return v;
+      return parseFloat(String(v).replace(/[^\d,-]/g,'').replace(',','.')) || 0;
+    },
+    money(v){
+      if(state.config.privacidade) return 'R$ ****';
+      return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v);
+    }
+  };
+
+  /* ================= STORE ================= */
+
+  const Store = {
+    save(){
+      localStorage.setItem(STORAGE.db,JSON.stringify(state.db));
+      localStorage.setItem(STORAGE.perfis,JSON.stringify(state.perfis));
+      localStorage.setItem(STORAGE.ativo,state.perfilAtivo);
+      localStorage.setItem(STORAGE.cfg,JSON.stringify(state.config));
+    }
+  };
+
+  /* ================= SERVICES ================= */
+
+  const FinanceService = {
+
+    list(){
+      let dados = state.db.filter(l=>l.perfil===state.perfilAtivo);
+
+      if(state.filtro.ini)
+        dados = dados.filter(d=>d.data >= state.filtro.ini);
+      if(state.filtro.fim)
+        dados = dados.filter(d=>d.data <= state.filtro.fim);
+
+      return dados.sort((a,b)=>new Date(b.data)-new Date(a.data));
+    },
+
+    add(data){
+      state.db.push(data);
+      Store.save();
+    },
+
+    update(id,field,value){
+      const l = state.db.find(i=>i.id===id);
+      if(!l) return;
+      l[field] = field==='valor' ? Utils.clean(value) : value;
+      Store.save();
+    },
+
+    remove(id){
+      state.db = state.db.filter(i=>i.id!==id);
+      Store.save();
+    },
+
+    toggleTipo(id){
+      const l = state.db.find(i=>i.id===id);
+      if(!l) return;
+      l.tipo = l.tipo==='Entrada'?'Saída':'Entrada';
+      Store.save();
+    },
+
+    resumo(){
+      const dados = this.list();
+      let ent=0, sai=0;
+      dados.forEach(i=>{
+        if(i.tipo==='Entrada') ent+=i.valor;
+        else sai+=i.valor;
+      });
+      return { ent, sai, saldo: ent - sai };
+    }
+
+  };
+
+  const ProfileService = {
+
+    list(){ return state.perfis; },
+
+    add(nome){
+      state.perfis.push(nome);
+      state.perfilAtivo = nome;
+      Store.save();
+    },
+
+    setAtivo(nome){
+      state.perfilAtivo = nome;
+      Store.save();
+    }
+
+  };
+
+  /* ================= UI ================= */
+
+  const UI = {
+
+    renderTabela(){
+      const dados = FinanceService.list();
+      const corpo = document.getElementById('corpo-tabela');
+
+      if(!dados.length){
+        corpo.innerHTML = '<tr><td colspan="5">Sem dados.</td></tr>';
+        return;
+      }
+
+      corpo.innerHTML = dados.map(i=>`
+        <tr data-id="${i.id}">
+          <td contenteditable="true" data-f="data">${i.data}</td>
+          <td contenteditable="true" data-f="cat">${i.cat}</td>
+          <td>
+            <button class="btn-tipo" style="border:none;background:none;font-weight:800;color:${i.tipo==='Entrada'?'var(--success)':'var(--danger)'}">
+              ${i.tipo}
+            </button>
+          </td>
+          <td contenteditable="true" data-f="valor">${Utils.money(i.valor)}</td>
+          <td><button class="btn-del" style="border:none;background:none;cursor:pointer">🗑️</button></td>
+        </tr>
+      `).join('');
+    },
+
+    renderResumo(){
+      const r = FinanceService.resumo();
+      document.getElementById('resumo-entradas').innerText = Utils.money(r.ent);
+      document.getElementById('resumo-saidas').innerText   = Utils.money(r.sai);
+      const saldoEl = document.getElementById('resumo-saldo');
+      saldoEl.innerText = Utils.money(r.saldo);
+      saldoEl.style.color = r.saldo < 0 ? 'var(--danger)' : 'var(--success)';
+    },
+
+    renderPerfis(){
+      const sel = document.getElementById('select-perfil');
+      sel.innerHTML = ProfileService.list()
+        .map(p=>`<option ${p===state.perfilAtivo?'selected':''}>${p}</option>`).join('');
+    },
+
+    renderCharts(){
+      const dados = FinanceService.list();
+
+      const gastos = dados.filter(i=>i.tipo==='Saída');
+      const mapa = {};
+      gastos.forEach(g=>mapa[g.cat]=(mapa[g.cat]||0)+g.valor);
+
+      this.draw('chartPizza','doughnut',Object.keys(mapa),Object.values(mapa));
+
+      const entradas = Array(12).fill(0);
+      dados.filter(i=>i.tipo==='Entrada')
+        .forEach(e=>entradas[new Date(e.data).getUTCMonth()] += e.valor);
+
+      this.draw('chartBarras','bar',
+        ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],
+        entradas
+      );
+    },
+
+    draw(id,type,labels,data){
+      if(charts[id]) charts[id].destroy();
+      const el = document.getElementById(id);
+      if(!el) return;
+
+      charts[id] = new Chart(el,{
+        type,
+        data:{labels,datasets:[{data,backgroundColor:['#4f46e5','#10b981','#f59e0b','#ef4444','#8b5cf6']}]},
+        options:{responsive:true,maintainAspectRatio:false}
+      });
+    }
+
+  };
+
+  /* ================= EXPORT ================= */
+
+  const ExportService = {
+
+    async pdf(){
+      await UI.renderCharts();
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      let y=20;
+
+      doc.setFontSize(22);
+      doc.text('FluxoPro - Relatório',15,y);
+
+      y+=10;
+      doc.setFontSize(12);
+      doc.text(`Perfil: ${state.perfilAtivo}`,15,y);
+
+      y+=15;
+
+      if(document.getElementById('exp-charts').checked){
+        const img = document.getElementById('chartPizza').toDataURL();
+        doc.addImage(img,'PNG',15,y,80,60);
+        y+=70;
+      }
+
+      if(document.getElementById('exp-lancamentos').checked){
+        const dados = FinanceService.list();
+        dados.forEach(l=>{
+          if(y>280){doc.addPage();y=20;}
+          doc.text(`${l.data} | ${l.cat} | ${l.tipo} | ${Utils.money(l.valor)}`,15,y);
+          y+=7;
+        });
+      }
+
+      doc.save(`Relatorio_${state.perfilAtivo}.pdf`);
+    },
+
+    excel(){
+      const dados = FinanceService.list();
+      const ws = XLSX.utils.json_to_sheet(dados);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,ws,'Financeiro');
+      XLSX.writeFile(wb,`FluxoPro_${state.perfilAtivo}.xlsx`);
+    }
+
+  };
+
+  /* ================= BIND ================= */
+
+  function bind(){
+
+    document.getElementById('form-registro').onsubmit = e=>{
+      e.preventDefault();
+      FinanceService.add({
+        id:Utils.uuid(),
+        perfil:state.perfilAtivo,
+        data:fData.value,
+        cat:fCat.value,
+        tipo:fTipo.value,
+        valor:Utils.clean(fValor.value)
+      });
+      document.getElementById('modalAdd').style.display='none';
+      e.target.reset();
+      refresh();
+    };
+
+    document.getElementById('corpo-tabela').addEventListener('click',e=>{
+      const tr = e.target.closest('tr');
+      if(!tr) return;
+      const id = tr.dataset.id;
+
+      if(e.target.classList.contains('btn-del')){
+        FinanceService.remove(id);
+        refresh();
+      }
+
+      if(e.target.classList.contains('btn-tipo')){
+        FinanceService.toggleTipo(id);
+        refresh();
+      }
+    });
+
+    document.getElementById('corpo-tabela').addEventListener('blur',e=>{
+      const td = e.target;
+      const tr = td.closest('tr');
+      if(!tr || !td.dataset.f) return;
+      FinanceService.update(tr.dataset.id,td.dataset.f,td.innerText);
+      refresh();
+    },true);
+
+    document.getElementById('select-perfil').onchange = e=>{
+      ProfileService.setset(e.target.value);
+    };
+
+    function ProfileServiceSet(v){
+      ProfileService.setAtivo(v);
+      refresh();
+    }
+    ProfileServiceSet.bind=null;
+    document.getElementById('select-perfil').onchange = e=>ProfileServiceSet(e.target.value);
+
+    document.getElementById('btn-novo-perfil').onclick=()=>{
+      const n = prompt('Novo perfil');
+      if(n){ProfileService.add(n);refresh();}
+    };
+
+    document.getElementById('tema-seletor').onchange=e=>{
+      state.config.tema=e.target.value;
+      document.body.setAttribute('data-theme',e.target.value);
+      Store.save();
+    };
+
+    document.getElementById('cfg-privacidade').onchange=e=>{
+      state.config.privacidade=e.target.checked;
+      Store.save();
+      refresh();
+    };
+
+    document.getElementById('btn-filtrar').onclick=()=>{
+      state.filtro.ini = document.getElementById('filtro-inicio').value||null;
+      state.filtro.fim = document.getElementById('filtro-fim').value||null;
+      refresh();
+    };
+
+    document.getElementById('btn-limpar-filtro').onclick=()=>{
+      state.filtro={ini:null,fim:null};
+      document.getElementById('filtro-inicio').value='';
+      document.getElementById('filtro-fim').value='';
+      refresh();
+    };
+
+    document.getElementById('btn-gerar-pdf').onclick=()=>ExportService.pdf();
+    document.getElementById('btn-gerar-excel').onclick=()=>ExportService.excel();
+
+  }
+
+  function refresh(){
+    UI.renderTabela();
+    UI.renderResumo();
+  }
+
+  function init(){
+    document.body.setAttribute('data-theme',state.config.tema);
+    document.getElementById('tema-seletor').value=state.config.tema;
+    document.getElementById('cfg-privacidade').checked=state.config.privacidade;
+    UI.renderPerfis();
+    bind();
+    refresh();
+  }
+
+  return { init };
+
+})();
+
+window.onload = ()=>FluxoPro.init();
+</script>
