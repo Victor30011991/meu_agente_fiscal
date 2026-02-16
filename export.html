@@ -4,16 +4,18 @@
 <meta charset="UTF-8">
 <title>FluxoPro – Relatório</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 body{margin:0;font-family:Inter;background:#f5f7fb}
 .container{max-width:1000px;margin:auto;padding:30px}
-.card{background:#fff;border-radius:16px;padding:20px}
+.card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 10px 25px rgba(0,0,0,.05)}
 table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left}
+th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left;font-size:14px}
 .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
 button{padding:10px 14px;border:0;border-radius:10px;font-weight:700;cursor:pointer}
 </style>
@@ -30,6 +32,7 @@ button{padding:10px 14px;border:0;border-radius:10px;font-weight:700;cursor:poin
 </div>
 
 <div class="card">
+
 <h2 id="perfilTitulo"></h2>
 <div id="perfilDados"></div>
 
@@ -40,87 +43,154 @@ button{padding:10px 14px;border:0;border-radius:10px;font-weight:700;cursor:poin
 <table>
 <thead>
 <tr>
-<th>Data</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Observação</th>
+<th>Data</th>
+<th>Categoria</th>
+<th>Tipo</th>
+<th>Valor</th>
+<th>Observação</th>
 </tr>
 </thead>
 <tbody id="tb"></tbody>
 </table>
+
 </div>
 </div>
 
 <script>
-const KEY="fluxopro_v11";
-const db=JSON.parse(localStorage.getItem(KEY));
-const perfil=db.active;
-const dados=db.profiles[perfil]||[];
-const info=db.profileInfo?.[perfil]||{};
+const KEY = "fluxopro_v11";
+
+const params = new URLSearchParams(window.location.search);
+let perfil = params.get("perfil");
+
+let db = JSON.parse(localStorage.getItem(KEY));
+
+if(!db || !db.profiles){
+  alert("Base de dados não encontrada.");
+  throw new Error("DB inexistente");
+}
+
+if(!perfil){
+  perfil = db.active;
+}
+
+if(!db.profiles[perfil]){
+  alert("Perfil não encontrado.");
+  throw new Error("Perfil inválido");
+}
+
+const dados = db.profiles[perfil];
+const info  = db.profileInfo?.[perfil] || {};
 
 function money(v){
   return new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0);
 }
 
-perfilTitulo.innerText="Perfil: "+perfil;
-perfilDados.innerHTML=`<p><b>Nome:</b> ${info.nome||""}</p><p><b>Documento:</b> ${info.doc||""}</p>`;
+perfilTitulo.innerText = "Perfil: " + perfil;
 
-let totalEnt=0,totalSai=0;
-dados.forEach(l=>l.tipo==="Entrada"?totalEnt+=l.valor:totalSai+=l.valor);
+perfilDados.innerHTML = `
+<p><b>Nome:</b> ${info.nome || ""}</p>
+<p><b>Documento:</b> ${info.doc || ""}</p>
+`;
 
-ent.innerText=money(totalEnt);
-sai.innerText=money(totalSai);
-res.innerText=money(totalEnt-totalSai);
+let totalEnt = 0;
+let totalSai = 0;
 
-tb.innerHTML=dados.map(l=>`
+dados.forEach(l=>{
+  if(l.tipo === "Entrada") totalEnt += Number(l.valor)||0;
+  else totalSai += Number(l.valor)||0;
+});
+
+ent.innerText = money(totalEnt);
+sai.innerText = money(totalSai);
+res.innerText = money(totalEnt-totalSai);
+
+tb.innerHTML = dados.map(l=>`
 <tr>
-<td>${l.data||""}</td>
-<td>${l.cat||""}</td>
-<td>${l.tipo}</td>
+<td>${l.data || ""}</td>
+<td>${l.cat || ""}</td>
+<td>${l.tipo || ""}</td>
 <td>${money(l.valor)}</td>
-<td>${l.obs||""}</td>
-</tr>`).join("");
+<td>${l.obs || ""}</td>
+</tr>
+`).join("");
 
 function exportExcel(){
-  const rows=[];
 
-  rows.push({Data:"Perfil",Categoria:perfil});
-  rows.push({Data:"Nome",Categoria:info.nome||""});
-  rows.push({Data:"Documento",Categoria:info.doc||""});
+  const rows = [];
+
+  rows.push({Data:"Perfil", Categoria:perfil});
+  rows.push({Data:"Nome", Categoria:info.nome||""});
+  rows.push({Data:"Documento", Categoria:info.doc||""});
   rows.push({});
-  rows.push({Data:"Entradas",Valor:totalEnt});
-  rows.push({Data:"Saídas",Valor:totalSai});
-  rows.push({Data:"Resultado",Valor:totalEnt-totalSai});
+  rows.push({Data:"Entradas", Valor:totalEnt});
+  rows.push({Data:"Saídas", Valor:totalSai});
+  rows.push({Data:"Resultado", Valor:(totalEnt-totalSai)});
+  rows.push({});
   rows.push({});
 
-  dados.forEach(l=>rows.push({
-    Data:l.data,Categoria:l.cat,Tipo:l.tipo,Valor:l.valor,Observacao:l.obs
-  }));
+  dados.forEach(l=>{
+    rows.push({
+      Data: l.data || "",
+      Categoria: l.cat || "",
+      Tipo: l.tipo || "",
+      Valor: l.valor || 0,
+      Observacao: l.obs || ""
+    });
+  });
 
-  const ws=XLSX.utils.json_to_sheet(rows);
-  ws["!cols"]=[{wch:14},{wch:22},{wch:12},{wch:16},{wch:30}];
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,"Relatorio");
-  XLSX.writeFile(wb,`fluxopro_${perfil}.xlsx`);
+  const ws = XLSX.utils.json_to_sheet(rows);
+
+  ws["!cols"]=[
+    {wch:14},
+    {wch:22},
+    {wch:12},
+    {wch:16},
+    {wch:30}
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Relatorio");
+
+  XLSX.writeFile(wb, `fluxopro_${perfil}.xlsx`);
 }
 
 function exportPDF(){
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF();
-  let y=10;
 
-  doc.text(`Relatório - ${perfil}`,10,y);y+=8;
-  doc.text(`Nome: ${info.nome||""}`,10,y);y+=6;
-  doc.text(`Documento: ${info.doc||""}`,10,y);y+=8;
-  doc.text(`Entradas: ${money(totalEnt)}`,10,y);y+=6;
-  doc.text(`Saídas: ${money(totalSai)}`,10,y);y+=6;
-  doc.text(`Resultado: ${money(totalEnt-totalSai)}`,10,y);y+=10;
+  const {jsPDF} = window.jspdf;
+
+  const doc = new jsPDF("p","mm","a4");
+
+  let y = 10;
+
+  doc.setFontSize(14);
+  doc.text(`Relatório - ${perfil}`,10,y); y+=8;
+
+  doc.setFontSize(10);
+  doc.text(`Nome: ${info.nome||""}`,10,y); y+=6;
+  doc.text(`Documento: ${info.doc||""}`,10,y); y+=8;
+
+  doc.text(`Entradas: ${money(totalEnt)}`,10,y); y+=5;
+  doc.text(`Saídas: ${money(totalSai)}`,10,y); y+=5;
+  doc.text(`Resultado: ${money(totalEnt-totalSai)}`,10,y); y+=8;
 
   dados.forEach(l=>{
-    if(y>280){doc.addPage();y=10;}
-    doc.text(`${l.data} | ${l.cat} | ${l.tipo} | ${money(l.valor)}`,10,y);
-    y+=6;
+
+    if(y > 285){
+      doc.addPage();
+      y = 10;
+    }
+
+    const linha =
+      `${l.data || ""} | ${l.cat || ""} | ${l.tipo || ""} | ${money(l.valor)} | ${l.obs || ""}`;
+
+    doc.text(linha.substring(0,180),10,y);
+    y += 5;
+
   });
 
   doc.save(`fluxopro_${perfil}.pdf`);
 }
 </script>
+
 </body>
 </html>
