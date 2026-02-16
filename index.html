@@ -9,135 +9,140 @@
 </head>
 <body>
 
-    <header>
-        <div class="header-content">
-            <div class="user-brand">
-                <img id="user-photo-preview" src="" alt="Perfil" style="display:none;">
-                <h1 id="brand-title">FluxoPro <span>Brasil</span></h1>
-            </div>
-            <nav>
-                <button onclick="switchTab('config')" id="btn-config" class="nav-btn active">Fiscal/Config</button>
-                <button onclick="switchTab('list')" id="btn-list" class="nav-btn">Lançamentos</button>
-                <button onclick="switchTab('dash')" id="btn-dash" class="nav-btn">Dashboard</button>
-            </nav>
+<header>
+    <div class="header-content">
+        <div class="user-brand">
+            <img id="user-photo-preview" src="" alt="Perfil" style="display:none;">
+            <h1 id="brand-title">FluxoPro <span>Brasil</span></h1>
         </div>
-    </header>
+        <nav>
+            <button onclick="switchTab('config')" id="btn-config" class="nav-btn active">Configurações</button>
+            <button onclick="switchTab('list')" id="btn-list" class="nav-btn">Lançamentos</button>
+            <button onclick="switchTab('dash')" id="btn-dash" class="nav-btn">Dashboard</button>
+        </nav>
+    </div>
+</header>
 
-    <main>
-        <section id="tab-config" class="tab-content active">
-            <div class="card card-center">
-                <h2>Personalização e Fiscal</h2>
-                <div class="import-box">
-                    <label>Alimentar Sistema (Arquivo JSON)</label>
-                    <input type="file" id="import-db-input" accept=".json">
-                </div>
-                <div class="form-group">
-                    <label>Foto de Perfil</label>
-                    <input type="file" id="user-photo-input" accept="image/*">
-                </div>
-                <div class="form-group">
-                    <label>Cor do Tema</label>
-                    <div class="color-picker-grid" id="theme-selector"></div>
-                </div>
-                <hr>
-                <div class="form-group">
-                    <label>Nome / Razão Social</label>
-                    <input type="text" id="conf-nome" placeholder="Digite seu nome">
-                </div>
-                <div class="form-group">
-                    <label>CPF / CNPJ / MEI</label>
-                    <input type="text" id="conf-doc" placeholder="000.000.000-00">
-                </div>
-                <button onclick="saveConfig()" class="btn btn-primary">Salvar Alterações</button>
+<main>
+    <section id="tab-config" class="tab-content active">
+        <div class="card card-center">
+            <h2>Personalização e Fiscal</h2>
+            <div class="import-box">
+                <label>Alimentar Sistema (Arquivo JSON)</label>
+                <input type="file" id="import-db-input" accept=".json">
             </div>
-        </section>
-
-        <section id="tab-list" class="tab-content">
-            <div class="action-bar">
-                <button onclick="openModal()" class="btn btn-primary btn-auto">+ Novo Lançamento</button>
-                <div class="export-btns">
-                    <button onclick="exportExcel()" class="btn btn-sec">Excel</button>
-                    <button onclick="exportPDF()" class="btn btn-sec">PDF Profissional</button>
-                </div>
+            <div class="form-group">
+                <label>Foto de Perfil</label>
+                <input type="file" id="user-photo-input" accept="image/*">
             </div>
-
-            <div class="mini-dash">
-                <div class="mini-card">
-                    <span>Entradas</span>
-                    <strong id="mini-entradas" class="txt-success">R$ 0,00</strong>
-                </div>
-                <div class="mini-card">
-                    <span>Saídas</span>
-                    <strong id="mini-saidas" class="txt-danger">R$ 0,00</strong>
-                </div>
-                <div class="mini-card">
-                    <span>Saldo Atual</span>
-                    <strong id="mini-balanco">R$ 0,00</strong>
-                </div>
+            <div class="form-group">
+                <label>Cor do Tema</label>
+                <div class="color-picker-grid" id="theme-selector"></div>
             </div>
-
-            <div class="card table-card">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Tipo</th>
-                            <th>Categoria</th>
-                            <th>Valor</th>
-                            <th>Obs</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="lista-corpo"></tbody>
-                </table>
+            <hr>
+            <div class="form-group">
+                <label>Nome / Razão Social</label>
+                <input type="text" id="conf-nome" placeholder="Digite seu nome">
             </div>
-        </section>
-
-        <section id="tab-dash" class="tab-content">
-            <div class="card chart-container">
-                <h3>Resumo por Categorias</h3>
-                <canvas id="ctxCategorias"></canvas>
+            <div class="form-group">
+                <label>CPF / CNPJ / MEI</label>
+                <input type="text" id="conf-doc" placeholder="000.000.000-00">
             </div>
-        </section>
-    </main>
+            <button onclick="saveConfig()" class="btn btn-primary">Salvar Alterações</button>
+        </div>
+    </section>
 
-    <div id="modal-entry" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h3>Novo Registro</h3>
-            <form id="form-transacao">
-                <div class="form-group"><label>Data</label><input type="date" id="f-data" required></div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Tipo</label>
-                        <select id="f-tipo">
-                            <option value="Entrada">Receita</option>
-                            <option value="Saída">Despesa</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Valor</label>
-                        <input type="number" id="f-valor" step="0.01" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Categoria</label>
-                    <select id="f-cat">
-                        <option>Vendas</option><option>Serviços</option><option>Alimentação</option>
-                        <option>Infraestrutura</option><option>Impostos</option><option>Outros</option>
+    <section id="tab-list" class="tab-content">
+        <div class="action-bar">
+            <button onclick="openModal()" class="btn btn-primary">+ Novo Lançamento</button>
+            <div class="export-btns">
+                <button onclick="exportExcel()" class="btn btn-sec">Excel</button>
+                <button onclick="exportPDF()" class="btn btn-sec">PDF Profissional</button>
+            </div>
+        </div>
+
+        <div class="mini-dash">
+            <div class="mini-card">
+                <span>Entradas</span>
+                <strong id="mini-entradas" class="txt-success">R$ 0,00</strong>
+            </div>
+            <div class="mini-card">
+                <span>Saídas</span>
+                <strong id="mini-saidas" class="txt-danger">R$ 0,00</strong>
+            </div>
+            <div class="mini-card">
+                <span>Saldo Atual</span>
+                <strong id="mini-balanco">R$ 0,00</strong>
+            </div>
+        </div>
+
+        <div class="card table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Tipo</th>
+                        <th>Categoria</th>
+                        <th>Valor</th>
+                        <th>Obs</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="lista-corpo"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="tab-dash" class="tab-content">
+        <div class="dash-grid">
+            <div class="chart-card">
+                <h4>Gastos por Categoria (Barras)</h4>
+                <canvas id="chartCategorias"></canvas>
+            </div>
+            <div class="chart-card">
+                <h4>Tendência Mensal (Linhas)</h4>
+                <canvas id="chartFluxo"></canvas>
+            </div>
+            <div class="chart-card">
+                <h4>Distribuição (Pizza)</h4>
+                <canvas id="chartPizza"></canvas>
+            </div>
+        </div>
+    </section>
+</main>
+
+<div id="modal-entry" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h3>Novo Registro</h3>
+        <form id="form-transacao">
+            <div class="form-group"><label>Data</label><input type="date" id="f-data" required></div>
+            <div class="form-row">
+                <div class="form-group"><label>Tipo</label>
+                    <select id="f-tipo">
+                        <option value="Entrada">Receita</option>
+                        <option value="Saída">Despesa</option>
                     </select>
                 </div>
-                <div class="form-group"><label>Observação</label><textarea id="f-obs" rows="2"></textarea></div>
-                <button type="submit" class="btn btn-primary">Confirmar</button>
-            </form>
-        </div>
+                <div class="form-group"><label>Valor</label><input type="number" id="f-valor" step="0.01" required></div>
+            </div>
+            <div class="form-group">
+                <label>Categoria</label>
+                <select id="f-cat">
+                    <option>Vendas</option><option>Serviços</option><option>Alimentação</option>
+                    <option>Transporte</option><option>Impostos</option><option>Outros</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Observação</label><textarea id="f-obs" rows="2"></textarea></div>
+            <button type="submit" class="btn btn-primary">Confirmar</button>
+        </form>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    
-    <script src="app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
