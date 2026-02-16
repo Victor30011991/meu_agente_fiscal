@@ -1,130 +1,77 @@
-let db = JSON.parse(localStorage.getItem('fluxopro_db')) || { 
-    profile: {nome: '', doc: '', theme: '#2563eb'}, 
-    entries: [] 
+// Banco de Dados Centralizado
+let db = JSON.parse(localStorage.getItem('fluxopro_final')) || {
+    config: { user: '', doc: '', meiLimit: 81000 },
+    entries: []
 };
 
-let charts = {};
+// Motores de Dashboards Independentes
+const charts = { geral: null, mei: null, despesas: null };
 
-document.addEventListener('DOMContentLoaded', () => {
-    loadProfile();
-    renderTable();
-    initImportListener();
-});
-
-// Correção do erro "undefined" nos campos
-function loadProfile() {
-    document.getElementById('conf-nome').value = db.profile.nome || "";
-    document.getElementById('conf-doc').value = db.profile.doc || "";
-    applyTheme(db.profile.theme || "#2563eb");
-}
-
-function applyTheme(color) { document.documentElement.style.setProperty('--primary', color); }
-
-// EXCEL: Design e Correção de ID científico
-function exportExcel() {
-    const dataToExport = db.entries.map(e => ({
-        Data: e.data.split('-').reverse().join('/'),
-        Tipo: e.tipo,
-        Categoria: e.categoria,
-        Valor: `R$ ${e.valor.toFixed(2)}`,
-        Observacao: e.obs || ""
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(dataToExport);
-    const wb = XLSX.utils.book_new();
-    
-    // Auto-ajuste de colunas
-    ws['!cols'] = [{wch: 12}, {wch: 10}, {wch: 18}, {wch: 15}, {wch: 25}];
-    
-    XLSX.utils.book_append_sheet(wb, ws, "Financeiro");
-    XLSX.writeFile(wb, "Relatorio_FluxoPro.xlsx");
-}
-
-// PDF: Design Profissional com 2 Páginas
-async function exportPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const color = db.profile.theme || '#2563eb';
-
-    // Pág 1: Tabela estilizada
-    doc.setFillColor(color);
-    doc.rect(0, 0, 210, 35, 'F');
-    doc.setTextColor(255);
-    doc.setFontSize(22);
-    doc.text("FLUXOPRO BRASIL", 14, 22);
-    doc.setFontSize(10);
-    doc.text(`Usuário: ${db.profile.nome || "Não cadastrado"}`, 14, 30);
-
-    const rows = db.entries.map(e => [e.data, e.tipo, e.categoria, e.valor.toFixed(2), e.obs]);
-    doc.autoTable({
-        head: [['Data', 'Tipo', 'Categoria', 'Valor', 'Obs']],
-        body: rows,
-        startY: 40,
-        headStyles: { fillColor: color }
-    });
-
-    // Pág 2: Dashboards
-    updateDashboards();
-    setTimeout(() => {
-        const canvas = document.getElementById('chartCategorias');
-        const imgData = canvas.toDataURL('image/png');
-        doc.addPage();
-        doc.setTextColor(0);
-        doc.text("ANÁLISE DE DESEMPENHO", 14, 20);
-        doc.addImage(imgData, 'PNG', 15, 35, 180, 90);
-        doc.save("Relatorio_Profissional.pdf");
-    }, 500);
-}
-
-// 3 Tipos de Dashboards
 function updateDashboards() {
-    const ctx1 = document.getElementById('chartCategorias').getContext('2d');
-    const ctx2 = document.getElementById('chartFluxo').getContext('2d');
-    const ctx3 = document.getElementById('chartPizza').getContext('2d');
+    // DASHBOARD 1: GERAL (Entradas vs Saídas)
+    const inSum = db.entries.filter(e => e.tipo === 'Entrada').reduce((a, b) => a + b.valor, 0);
+    const outSum = db.entries.filter(e => e.tipo === 'Saída').reduce((a, b) => a + b.valor, 0);
+    
+    renderChart('chartGeral', 'pie', ['Entradas', 'Saídas'], [inSum, outSum], 'geral');
 
+    // DASHBOARD 2: FISCAL MEI
+    const faturamentoEmp = db.entries.filter(e => e.dest === 'Empresa' && e.tipo === 'Entrada').reduce((a, b) => a + b.valor, 0);
+    const restante = Math.max(0, db.config.meiLimit - faturamentoEmp);
+    renderChart('chartMei', 'doughnut', ['Faturado', 'Disponível'], [faturamentoEmp, restante], 'mei');
+    
+    if (faturamentoEmp > db.config.meiLimit * 0.8) {
+        document.getElementById('mei-alert').innerHTML = `<p style="color:red">⚠️ Atenção: 80% do limite MEI atingido!</p>`;
+    }
+
+    // DASHBOARD 3: ANÁLISE CATEGORIAS
     const cats = [...new Set(db.entries.map(e => e.categoria))];
-    const vals = cats.map(c => db.entries.filter(e => e.categoria === c).reduce((a, b) => a + b.valor, 0));
-
-    if(charts.c1) charts.c1.destroy();
-    charts.c1 = new Chart(ctx1, { type: 'bar', data: { labels: cats, datasets: [{ label: 'R$', data: vals, backgroundColor: db.profile.theme }] }});
-
-    if(charts.c2) charts.c2.destroy();
-    charts.c2 = new Chart(ctx2, { type: 'line', data: { labels: cats, datasets: [{ label: 'Tendência', data: vals, borderColor: db.profile.theme, fill: true }] }});
-
-    if(charts.c3) charts.c3.destroy();
-    charts.c3 = new Chart(ctx3, { type: 'pie', data: { labels: cats, datasets: [{ data: vals, backgroundColor: ['#2563eb', '#16a34a', '#f59e0b', '#dc2626', '#7c3aed'] }] }});
+    const catVals = cats.map(c => db.entries.filter(e => e.categoria === c).reduce((a,b) => a + b.valor, 0));
+    renderChart('chartDespesas', 'bar', cats, catVals, 'despesas');
 }
 
-function switchTab(tab) {
-    document.querySelectorAll('.tab-content, .nav-btn').forEach(el => el.classList.remove('active'));
-    document.getElementById('tab-' + tab).classList.add('active');
-    document.getElementById('btn-' + tab).classList.add('active');
-    if(tab === 'dash') updateDashboards();
+function renderChart(id, type, labels, data, key) {
+    const ctx = document.getElementById(id).getContext('2d');
+    if (charts[key]) charts[key].destroy();
+    charts[key] = new Chart(ctx, {
+        type: type,
+        data: { labels, datasets: [{ data, backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444'] }] },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
 }
 
-function renderTable() {
-    const corpo = document.getElementById('lista-corpo');
-    let tin = 0, tout = 0;
-    corpo.innerHTML = db.entries.map(e => {
-        if(e.tipo === 'Entrada') tin += e.valor; else tout += e.valor;
-        return `<tr><td>${e.data}</td><td>${e.tipo}</td><td>${e.categoria}</td><td>R$ ${e.valor.toFixed(2)}</td><td>${e.obs}</td><td><button onclick="deleteEntry(${e.id})">🗑️</button></td></tr>`;
-    }).join('');
-    document.getElementById('mini-entradas').innerText = `R$ ${tin.toFixed(2)}`;
-    document.getElementById('mini-saidas').innerText = `R$ ${tout.toFixed(2)}`;
-    document.getElementById('mini-balanco').innerText = `R$ ${(tin - tout).toFixed(2)}`;
-}
+// TELA DE PRÉ-VISUALIZAÇÃO E EXPORTAÇÃO REAL
+function openExportModal() { document.getElementById('modal-export').style.display = 'flex'; }
 
-function save() { localStorage.setItem('fluxopro_db', JSON.stringify(db)); renderTable(); }
-function deleteEntry(id) { if(confirm("Apagar?")) { db.entries = db.entries.filter(e => e.id !== id); save(); } }
-function openModal() { document.getElementById('modal-entry').style.display = 'flex'; }
-function closeModal() { document.getElementById('modal-entry').style.display = 'none'; }
-function saveConfig() { db.profile.nome = document.getElementById('conf-nome').value; db.profile.doc = document.getElementById('conf-doc').value; save(); alert("Salvo!"); }
+async function processExport(format) {
+    const filtro = document.getElementById('exp-filtro').value;
+    const filtrados = filtro === 'todos' ? db.entries : db.entries.filter(e => e.dest === filtro);
 
-function initImportListener() {
-    const input = document.getElementById('import-db-input');
-    input.onchange = (e) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => { db = JSON.parse(ev.target.result); save(); loadProfile(); };
-        reader.readAsText(e.target.files[0]);
-    };
+    if (format === 'pdf') {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // CAPA E DESIGN
+        doc.setFillColor(79, 70, 229);
+        doc.rect(0, 0, 210, 40, 'F');
+        doc.setTextColor(255);
+        doc.text("RELATÓRIO FINANCEIRO - FLUXOPRO", 14, 25);
+        
+        // DASHBOARD DO RELATÓRIO (RESUMO)
+        doc.setTextColor(0);
+        doc.text("Página 1: Resumo do Período", 14, 50);
+        doc.text(`Total Registros: ${filtrados.length}`, 14, 60);
+        
+        // TABELA FORMATADA
+        const body = filtrados.map(e => [e.data, e.dest, e.categoria, `R$ ${e.valor.toFixed(2)}`]);
+        doc.autoTable({ head: [['Data', 'Destino', 'Categoria', 'Valor']], body, startY: 70 });
+        
+        doc.save(`Relatorio_${filtro}.pdf`);
+    } else {
+        // EXCEL FORMATADO
+        const ws = XLSX.utils.json_to_sheet(filtrados);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Dados");
+        XLSX.writeFile(wb, "FluxoPro_Export.xlsx");
+    }
+    closeModal('modal-export');
 }
