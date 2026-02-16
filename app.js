@@ -1,3 +1,8 @@
+/**
+ * FLUXOPRO BRASIL - Lógica do Sistema
+ */
+
+// 1. Estado da Aplicação
 let db = JSON.parse(localStorage.getItem('fluxopro_db')) || {
     config: { nome: '', doc: '', logo: '' },
     entries: []
@@ -5,147 +10,175 @@ let db = JSON.parse(localStorage.getItem('fluxopro_db')) || {
 
 let activeCharts = {};
 
+// 2. Inicialização
 document.addEventListener('DOMContentLoaded', () => {
-    loadProfile();
-    renderTable();
-    initImport();
+    initializeApp();
 });
 
-// NAVEGAÇÃO
-function switchTab(tab) {
-    document.querySelectorAll('.tab-content, .nav-btn').forEach(el => el.classList.remove('active'));
-    document.getElementById('tab-' + tab).classList.add('active');
-    document.getElementById('btn-' + tab).classList.add('active');
-    if(tab === 'dash') renderAllCharts();
+function initializeApp() {
+    loadProfile();
+    renderTable();
+    initImportListener();
 }
 
-// CRUD
-document.getElementById('form-entry').onsubmit = (e) => {
-    e.preventDefault();
-    const entry = {
-        id: Date.now(),
-        data: document.getElementById('f-data').value,
-        tipo: document.getElementById('f-tipo').value,
-        dest: document.getElementById('f-dest').value,
-        valor: parseFloat(document.getElementById('f-valor').value),
-        categoria: document.getElementById('f-cat').value || 'Geral',
-        obs: document.getElementById('f-obs').value
+// 3. Controle de Interface (UI)
+function switchTab(tabId) {
+    // Gerenciar Botões
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`btn-${tabId}`).classList.add('active');
+
+    // Gerenciar Telas
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.getElementById(`tab-${tabId}`).classList.add('active');
+
+    if (tabId === 'dash') renderAllCharts();
+}
+
+function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+// 4. Gestão de Dados (CRUD)
+function save() {
+    localStorage.setItem('fluxopro_db', JSON.stringify(db));
+    renderTable();
+}
+
+const entryForm = document.getElementById('form-entry');
+if (entryForm) {
+    entryForm.onsubmit = (e) => {
+        e.preventDefault();
+        
+        const newEntry = {
+            id: Date.now(),
+            data: document.getElementById('f-data').value,
+            tipo: document.getElementById('f-tipo').value,
+            dest: document.getElementById('f-dest').value,
+            valor: parseFloat(document.getElementById('f-valor').value),
+            categoria: document.getElementById('f-cat').value || 'Geral',
+            obs: document.getElementById('f-obs').value
+        };
+
+        db.entries.push(newEntry);
+        save();
+        closeModal('modal-entry');
+        e.target.reset();
     };
-    db.entries.push(entry);
-    save();
-    closeModal('modal-entry');
-    e.target.reset();
-};
+}
 
 function renderTable() {
-    const corpo = document.getElementById('lista-corpo');
-    corpo.innerHTML = db.entries.sort((a,b) => new Date(b.data) - new Date(a.data)).map(e => `
-        <tr>
-            <td>${e.data.split('-').reverse().join('/')}</td>
-            <td><span class="badge">${e.dest}</span></td>
-            <td>${e.categoria}</td>
-            <td style="color:${e.tipo === 'Entrada' ? 'green' : 'red'}">R$ ${e.valor.toFixed(2)}</td>
-            <td>${e.obs || '-'}</td>
-            <td>
-                <button onclick="deleteEntry(${e.id})">🗑️</button>
-                <button onclick="duplicateEntry(${e.id})">📋</button>
-            </td>
-        </tr>
-    `).join('');
+    const tableBody = document.getElementById('lista-corpo');
+    if (!tableBody) return;
+
+    tableBody.innerHTML = db.entries
+        .sort((a, b) => new Date(b.data) - new Date(a.data))
+        .map(entry => `
+            <tr>
+                <td>${formatDate(entry.data)}</td>
+                <td><span class="badge">${entry.dest}</span></td>
+                <td>${entry.categoria}</td>
+                <td style="color: ${entry.tipo === 'Entrada' ? 'var(--success)' : 'var(--danger)'}; font-weight: 600">
+                    R$ ${entry.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                </td>
+                <td><small>${entry.obs || '-'}</small></td>
+                <td>
+                    <button class="btn-icon" onclick="deleteEntry(${entry.id})" title="Excluir">🗑️</button>
+                </td>
+            </tr>
+        `).join('');
 }
 
-// DASHBOARDS (3 VERSÕES)
+// 5. Dashboards (Charts)
 function renderAllCharts() {
     const entries = db.entries;
     
-    // 1. Visão Geral
-    const inSum = entries.filter(e => e.tipo === 'Entrada').reduce((a,b) => a + b.valor, 0);
-    const outSum = entries.filter(e => e.tipo === 'Saída').reduce((a,b) => a + b.valor, 0);
-    createChart('chartGeral', 'doughnut', ['Entradas', 'Saídas'], [inSum, outSum]);
+    // Gráfico de Fluxo (Entradas vs Saídas)
+    const inSum = entries.filter(e => e.tipo === 'Entrada').reduce((acc, cur) => acc + cur.valor, 0);
+    const outSum = entries.filter(e => e.tipo === 'Saída').reduce((acc, cur) => acc + cur.valor, 0);
+    updateChart('chartGeral', 'doughnut', ['Entradas', 'Saídas'], [inSum, outSum]);
 
-    // 2. Visão Fiscal MEI
-    const faturamentoMei = entries.filter(e => e.dest === 'Empresa' && e.tipo === 'Entrada').reduce((a,b) => a + b.valor, 0);
-    const limite = 81000;
-    const alertBox = document.getElementById('mei-status');
-    alertBox.innerHTML = faturamentoMei > limite * 0.8 ? `<p style="color:red">⚠️ Limite MEI Próximo!</p>` : '';
-    createChart('chartMei', 'bar', ['Faturado', 'Limite Anual'], [faturamentoMei, limite]);
+    // Gráfico MEI
+    const faturamentoMei = entries
+        .filter(e => e.dest === 'Empresa' && e.tipo === 'Entrada')
+        .reduce((acc, cur) => acc + cur.valor, 0);
+    
+    const limiteMei = 81000;
+    checkMeiStatus(faturamentoMei, limiteMei);
+    updateChart('chartMei', 'bar', ['Faturado', 'Teto'], [faturamentoMei, limiteMei]);
 
-    // 3. Categorias
-    const cats = [...new Set(entries.map(e => e.categoria))];
-    const catData = cats.map(c => entries.filter(e => e.categoria === c).reduce((a,b) => a + b.valor, 0));
-    createChart('chartCategorias', 'pie', cats, catData);
+    // Categorias
+    const catMap = {};
+    entries.forEach(e => {
+        catMap[e.categoria] = (catMap[e.categoria] || 0) + e.valor;
+    });
+    updateChart('chartCategorias', 'pie', Object.keys(catMap), Object.values(catMap));
 }
 
-function createChart(id, type, labels, data) {
-    if(activeCharts[id]) activeCharts[id].destroy();
-    activeCharts[id] = new Chart(document.getElementById(id), {
+function updateChart(canvasId, type, labels, data) {
+    if (activeCharts[canvasId]) activeCharts[canvasId].destroy();
+    
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    activeCharts[canvasId] = new Chart(ctx, {
         type: type,
-        data: { labels, datasets: [{ data, backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] }] },
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
+            }]
+        },
         options: { responsive: true, maintainAspectRatio: false }
     });
 }
 
-// EXPORTAÇÃO PROFISSIONAL
-function openExportModal() { document.getElementById('modal-export').style.display = 'flex'; }
+// 6. Funções Auxiliares
+function formatDate(dateStr) {
+    return dateStr.split('-').reverse().join('/');
+}
 
-async function generateExport(type) {
-    const filtro = document.getElementById('exp-filtro').value;
-    const data = filtro === 'Tudo' ? db.entries : db.entries.filter(e => e.dest === filtro);
-
-    if(type === 'pdf') {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        // Capa do Relatório
-        doc.setFillColor(79, 70, 229);
-        doc.rect(0, 0, 210, 40, 'F');
-        doc.setTextColor(255);
-        doc.setFontSize(22);
-        doc.text("FluxoPro Brasil - Relatório Profissional", 15, 25);
-        
-        // Conteúdo
-        doc.setTextColor(0);
-        doc.setFontSize(12);
-        doc.text(`Proprietário: ${db.config.nome || 'N/A'}`, 15, 50);
-        doc.text(`Filtro Aplicado: ${filtro}`, 15, 57);
-
-        const rows = data.map(e => [e.data, e.dest, e.categoria, `R$ ${e.valor.toFixed(2)}`]);
-        doc.autoTable({ head: [['Data', 'Destino', 'Categoria', 'Valor']], body: rows, startY: 65 });
-
-        // Adiciona Dashboard no PDF (Página 2)
-        doc.addPage();
-        doc.text("Dashboard Consolidado do Período", 15, 20);
-        const chartImg = document.getElementById('chartGeral').toDataURL('image/png');
-        doc.addImage(chartImg, 'PNG', 15, 30, 180, 100);
-
-        doc.save(`Relatorio_FluxoPro_${filtro}.pdf`);
-    } else {
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Financeiro");
-        XLSX.writeFile(wb, `FluxoPro_${filtro}.xlsx`);
+function deleteEntry(id) {
+    if (confirm('Tem certeza que deseja excluir este lançamento?')) {
+        db.entries = db.entries.filter(e => e.id !== id);
+        save();
     }
 }
 
-// UTILITÁRIOS
-function save() { localStorage.setItem('fluxopro_db', JSON.stringify(db)); renderTable(); }
-function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-function deleteEntry(id) { if(confirm("Excluir?")) { db.entries = db.entries.filter(e => e.id !== id); save(); } }
+function checkMeiStatus(atual, limite) {
+    const alertDiv = document.getElementById('mei-status');
+    if (atual > limite * 0.8) {
+        alertDiv.innerHTML = `<div class="alert warning">Atenção: Você atingiu 80% do limite MEI!</div>`;
+    } else {
+        alertDiv.innerHTML = '';
+    }
+}
+
 function saveConfig() {
     db.config.nome = document.getElementById('conf-nome').value;
     db.config.doc = document.getElementById('conf-doc').value;
     save();
-    alert("Configurações salvas!");
+    alert('Perfil atualizado com sucesso!');
 }
+
 function loadProfile() {
-    document.getElementById('conf-nome').value = db.config.nome;
-    document.getElementById('conf-doc').value = db.config.doc;
+    document.getElementById('conf-nome').value = db.config.nome || '';
+    document.getElementById('conf-doc').value = db.config.doc || '';
 }
-function initImport() {
-    document.getElementById('import-db').onchange = (e) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => { db = JSON.parse(ev.target.result); save(); location.reload(); };
-        reader.readAsText(e.target.files[0]);
-    };
+
+function initImportListener() {
+    const importInput = document.getElementById('import-db');
+    if (importInput) {
+        importInput.onchange = (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    db = JSON.parse(ev.target.result);
+                    save();
+                    location.reload();
+                } catch (err) {
+                    alert('Erro ao importar arquivo JSON.');
+                }
+            };
+            reader.readAsText(file);
+        };
+    }
 }
