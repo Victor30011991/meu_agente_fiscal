@@ -1,120 +1,171 @@
-let db = JSON.parse(localStorage.getItem('fluxopro_enterprise')) || {
-    config: { nome: 'FluxoPro', theme: 'default' },
+let db = JSON.parse(localStorage.getItem('fluxopro_vfinal')) || {
+    config: { nome: 'Minha Empresa', logo: '', theme: 'default' },
     entries: []
 };
 
-let activeCharts = {};
+let charts = {};
 
-// 🔄 INICIALIZAÇÃO
-document.addEventListener('DOMContentLoaded', () => {
-    applyTheme(db.config.theme);
-    document.getElementById('theme-selector').value = db.config.theme;
-    document.getElementById('conf-nome').value = db.config.nome;
+// Inicialização
+window.onload = () => {
+    applyConfig();
     renderTable();
-    initUniversalImport();
-});
+    initImport();
+};
 
-// 📑 CONTROLE DE ABAS (CORREÇÃO DA TELA ÚNICA)
-function switchTab(tabId) {
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    
-    document.getElementById(`tab-${tabId}`).classList.add('active');
-    document.getElementById(`btn-${tabId}`).classList.add('active');
-    
-    if(tabId === 'dash') renderCharts();
+function switchTab(tab) {
+    document.querySelectorAll('.tab-content, .nav-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(`tab-${tab}`).classList.add('active');
+    document.getElementById(`btn-${tab}`).classList.add('active');
+    if(tab === 'dash') renderDashboards();
 }
 
-// 🎨 GESTÃO DE TEMA
-function applyTheme(theme) {
-    document.body.setAttribute('data-theme', theme);
-    db.config.theme = theme;
-    save();
-}
-
-// 📂 IMPORTAÇÃO UNIVERSAL (EXCEL / JSON)
-function initUniversalImport() {
-    const input = document.getElementById('universal-import');
-    input.onchange = (e) => {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-
-        if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-            reader.onload = (evt) => {
-                const data = new Uint8Array(evt.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                const json = XLSX.utils.sheet_to_json(sheet);
-                
-                // Mapeamento inteligente de colunas
-                json.forEach(row => {
-                    db.entries.push({
-                        id: Date.now() + Math.random(),
-                        data: row.Data || new Date().toISOString().split('T')[0],
-                        tipo: row.Tipo || 'Saída',
-                        categoria: row.Categoria || 'Importado',
-                        valor: parseFloat(row.Valor) || 0,
-                        dest: row.Destino || 'Empresa'
-                    });
-                });
-                save();
-                alert('Excel importado com sucesso!');
-            };
-            reader.readAsArrayBuffer(file);
-        } else {
-            reader.onload = (evt) => {
-                const imported = JSON.parse(evt.target.result);
-                db.entries = imported.entries || imported;
-                save();
-                location.reload();
-            };
-            reader.readAsText(file);
-        }
+// CRUD Core
+document.getElementById('entry-form').onsubmit = (e) => {
+    e.preventDefault();
+    const entry = {
+        id: Date.now(),
+        data: document.getElementById('f-date').value,
+        tipo: document.getElementById('f-tipo').value,
+        dest: document.getElementById('f-dest').value,
+        valor: parseFloat(document.getElementById('f-valor').value),
+        categoria: document.getElementById('f-cat').value || 'Diversos'
     };
+    db.entries.push(entry);
+    save();
+    closeModal('modal-entry');
+    renderTable();
+    e.target.reset();
+};
+
+function renderTable() {
+    const filter = document.getElementById('filter-dest').value;
+    const filtered = filter === 'todos' ? db.entries : db.entries.filter(e => e.dest === filter);
+    
+    document.getElementById('table-body').innerHTML = filtered.sort((a,b) => new Date(b.data) - new Date(a.data)).map(e => `
+        <tr>
+            <td>${e.data.split('-').reverse().join('/')}</td>
+            <td><span class="badge ${e.dest}">${e.dest}</span></td>
+            <td>${e.categoria}</td>
+            <td style="color:${e.tipo === 'Entrada' ? '#10b981' : '#ef4444'}">R$ ${e.valor.toFixed(2)}</td>
+            <td>
+                <button onclick="deleteEntry(${e.id})">🗑️</button>
+            </td>
+        </tr>
+    `).join('');
 }
 
-// 📥 EXPORTAÇÃO REAL (FIXED)
-function openExportModal() { document.getElementById('modal-export').style.display = 'flex'; }
-function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+// Motores de Dashboards (3 versões)
+function renderDashboards() {
+    const entries = db.entries;
+    
+    // 1. Geral
+    const inG = entries.filter(e => e.tipo === 'Entrada').reduce((a,b) => a+b.valor, 0);
+    const outG = entries.filter(e => e.tipo === 'Saída').reduce((a,b) => a+b.valor, 0);
+    updateChart('chartGeral', 'doughnut', ['Entradas', 'Saídas'], [inG, outG]);
 
-async function generateExport(type) {
-    if (type === 'excel') {
-        const ws = XLSX.utils.json_to_sheet(db.entries);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "FluxoFinanceiro");
-        XLSX.writeFile(wb, `FluxoPro_Export_${Date.now()}.xlsx`);
-    } else {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        doc.text(`Relatório: ${db.config.nome}`, 14, 20);
-        const rows = db.entries.map(e => [e.data, e.tipo, e.categoria, e.valor.toFixed(2)]);
-        doc.autoTable({ head: [['Data', 'Tipo', 'Categoria', 'Valor']], body: rows, startY: 30 });
-        doc.save("FluxoPro_Relatorio.pdf");
-    }
-    closeModal('modal-export');
+    // 2. MEI Fiscal
+    const faturadoMei = entries.filter(e => e.dest === 'Empresa' && e.tipo === 'Entrada').reduce((a,b) => a+b.valor, 0);
+    const limite = 81000;
+    const resto = Math.max(0, limite - faturadoMei);
+    updateChart('chartMei', 'bar', ['Consumido', 'Disponível'], [faturadoMei, resto]);
+    
+    document.getElementById('mei-alert-container').innerHTML = faturadoMei > (limite * 0.8) ? 
+        `<div style="color:red; font-weight:bold; margin-bottom:10px;">⚠️ ALERTA: 80% do limite MEI atingido!</div>` : '';
+
+    // 3. Categorias
+    const cats = [...new Set(entries.map(e => e.categoria))];
+    const catData = cats.map(c => entries.filter(e => e.categoria === c).reduce((a,b) => a+b.valor, 0));
+    updateChart('chartCats', 'pie', cats, catData);
 }
 
-// 📊 DASHBOARDS
-function renderCharts() {
-    const ctx1 = document.getElementById('chartGeral').getContext('2d');
-    const inSum = db.entries.filter(e => e.tipo === 'Entrada').reduce((a,b) => a+b.valor, 0);
-    const outSum = db.entries.filter(e => e.tipo === 'Saída').reduce((a,b) => a+b.valor, 0);
-
-    if(activeCharts.c1) activeCharts.c1.destroy();
-    activeCharts.c1 = new Chart(ctx1, {
-        type: 'doughnut',
-        data: { labels: ['Entradas', 'Saídas'], datasets: [{ data: [inSum, outSum], backgroundColor: ['#10b981', '#ef4444'] }] }
+function updateChart(id, type, labels, data) {
+    if(charts[id]) charts[id].destroy();
+    charts[id] = new Chart(document.getElementById(id), {
+        type: type,
+        data: { labels, datasets: [{ data, backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] }] },
+        options: { responsive: true, maintainAspectRatio: false }
     });
 }
 
-function save() { localStorage.setItem('fluxopro_enterprise', JSON.stringify(db)); renderTable(); }
-function renderTable() {
-    const corpo = document.getElementById('lista-corpo');
-    corpo.innerHTML = db.entries.map(e => `
-        <tr><td>${e.data}</td><td>${e.tipo}</td><td>${e.categoria}</td><td>R$ ${e.valor.toFixed(2)}</td>
-        <td><button onclick="deleteEntry(${e.id})">🗑️</button></td></tr>
-    `).join('');
+// Exportação Profissional (PDF & Excel)
+async function exportData(format) {
+    if(format === 'pdf') {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Header
+        doc.setFillColor(79, 70, 229);
+        doc.rect(0, 0, 210, 40, 'F');
+        doc.setTextColor(255);
+        doc.setFontSize(20);
+        doc.text(db.config.nome, 15, 25);
+        
+        doc.setTextColor(0);
+        doc.setFontSize(12);
+        doc.text("Relatório Gerencial de Fluxo de Caixa", 15, 50);
+
+        const rows = db.entries.map(e => [e.data, e.dest, e.categoria, `R$ ${e.valor.toFixed(2)}`]);
+        doc.autoTable({ head: [['Data', 'Conta', 'Categoria', 'Valor']], body: rows, startY: 60 });
+
+        // Nova Página: Dashboard do Relatório
+        doc.addPage();
+        doc.text("Dashboard Consolidado", 15, 20);
+        const chartImg = document.getElementById('chartGeral').toDataURL('image/png');
+        doc.addImage(chartImg, 'PNG', 15, 30, 180, 100);
+
+        doc.save("Relatorio_FluxoPro.pdf");
+    } else {
+        const ws = XLSX.utils.json_to_sheet(db.entries);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Financeiro");
+        XLSX.writeFile(wb, "Financeiro_FluxoPro.xlsx");
+    }
 }
-function deleteEntry(id) { db.entries = db.entries.filter(e => e.id !== id); save(); }
-function saveConfig() { save(); alert('Configurações aplicadas!'); }
-function updateBrand(val) { document.getElementById('user-brand-name').innerText = val || 'FluxoPro'; }
+
+// Configurações e Persistência
+function save() { localStorage.setItem('fluxopro_vfinal', JSON.stringify(db)); }
+function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+function openExportModal() { openModal('modal-export'); }
+
+function saveConfig() {
+    db.config.nome = document.getElementById('conf-nome').value;
+    save();
+    location.reload();
+}
+
+function applyConfig() {
+    document.body.setAttribute('data-theme', db.config.theme);
+    document.getElementById('conf-nome').value = db.config.nome;
+    document.getElementById('app-title').innerHTML = `${db.config.nome} <span>Brasil</span>`;
+    if(db.config.logo) {
+        document.getElementById('display-logo').src = db.config.logo;
+        document.getElementById('display-logo').style.display = 'block';
+    }
+}
+
+function handleLogo(input) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        db.config.logo = e.target.result;
+        save();
+        applyConfig();
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+
+function initImport() {
+    document.getElementById('universal-import').onchange = (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            if(file.name.endsWith('.json')) {
+                db.entries = JSON.parse(ev.target.result).entries || JSON.parse(ev.target.result);
+                save(); renderTable();
+            }
+        };
+        reader.readAsText(file);
+    };
+}
+function deleteEntry(id) { if(confirm("Remover lançamento?")) { db.entries = db.entries.filter(e => e.id !== id); save(); renderTable(); } }
+function clearAllData() { if(confirm("APAGAR TUDO?")) { localStorage.clear(); location.reload(); } }
