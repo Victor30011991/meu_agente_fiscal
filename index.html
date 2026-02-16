@@ -3,136 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FluxoPro Brasil | Gestão & Auditoria</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <title>FluxoPro Brasil | Enterprise Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-theme="default">
 
-    <header class="main-header">
-        <div class="container header-flex">
-            <div class="brand">
-                <div id="logo-placeholder" class="logo-box"></div>
-                <h1>FluxoPro <span>Brasil</span></h1>
-            </div>
-            <nav class="main-nav">
-                <button onclick="switchTab('config')" id="btn-config" class="nav-btn active">Configurações</button>
-                <button onclick="switchTab('list')" id="btn-list" class="nav-btn">Lançamentos</button>
-                <button onclick="switchTab('dash')" id="btn-dash" class="nav-btn">Dashboards</button>
-            </nav>
+<header class="main-header">
+    <div class="container header-flex">
+        <div class="brand">
+            <h1 id="user-brand-name">FluxoPro <span>Brasil</span></h1>
         </div>
-    </header>
-
-    <main class="container content-area">
-        <section id="tab-config" class="tab-content active">
-            <div class="card card-centered">
-                <header class="card-header">
-                    <h2>Perfil Fiscal & Personalização</h2>
-                </header>
-                <div class="card-body">
-                    <div class="form-group">
-                        <label for="logo-input">Logo da Empresa</label>
-                        <input type="file" id="logo-input" accept="image/*">
-                    </div>
-                    <div class="form-group">
-                        <label for="conf-nome">Razão Social / Nome</label>
-                        <input type="text" id="conf-nome" placeholder="Ex: Nome da Empresa LTDA">
-                    </div>
-                    <div class="form-group">
-                        <label for="conf-doc">CPF / CNPJ</label>
-                        <input type="text" id="conf-doc" placeholder="00.000.000/0001-00">
-                    </div>
-                    <div class="form-group">
-                        <label for="import-db">Restaurar Backup (JSON)</label>
-                        <input type="file" id="import-db" accept=".json">
-                    </div>
-                    <button onclick="saveConfig()" class="btn btn-primary btn-block">Salvar Perfil</button>
-                </div>
-            </div>
-        </section>
-
-        <section id="tab-list" class="tab-content">
-            <div class="action-bar">
-                <button onclick="openModal('modal-entry')" class="btn btn-primary">+ Novo Registro</button>
-                <button onclick="openExportModal()" class="btn btn-secondary">Gerar Relatório</button>
-            </div>
-            
-            <div class="card table-responsive">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Destinação</th>
-                            <th>Categoria</th>
-                            <th>Valor</th>
-                            <th>Obs</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="lista-corpo">
-                        </tbody>
-                </table>
-            </div>
-        </section>
-
-        <section id="tab-dash" class="tab-content">
-            <div class="dash-grid">
-                <div class="card chart-card">
-                    <h3>Fluxo de Caixa</h3>
-                    <div class="chart-container">
-                        <canvas id="chartGeral"></canvas>
-                    </div>
-                </div>
-                <div class="card chart-card">
-                    <h3>Limite MEI Fiscal</h3>
-                    <div id="mei-status" class="alert-area"></div>
-                    <div class="chart-container">
-                        <canvas id="chartMei"></canvas>
-                    </div>
-                </div>
-                <div class="card chart-card">
-                    <h3>Gastos por Categoria</h3>
-                    <div class="chart-container">
-                        <canvas id="chartCategorias"></canvas>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <div id="modal-entry" class="modal-overlay">
-        <div class="modal-box">
-            <button class="modal-close" onclick="closeModal('modal-entry')">&times;</button>
-            <h3>Novo Registro Financeiro</h3>
-            <form id="form-entry" class="styled-form">
-                <div class="form-row">
-                    <input type="date" id="f-data" required title="Data do lançamento">
-                    <select id="f-tipo">
-                        <option value="Entrada">Receita (+)</option>
-                        <option value="Saída">Despesa (-)</option>
-                    </select>
-                </div>
-                <select id="f-dest">
-                    <option value="Pessoal">Pessoal (CPF)</option>
-                    <option value="Empresa">Empresarial (CNPJ)</option>
-                </select>
-                <input type="number" id="f-valor" step="0.01" placeholder="Valor (Ex: 150,00)" required>
-                <input type="text" id="f-cat" placeholder="Categoria (Ex: Aluguel, Venda)">
-                <textarea id="f-obs" rows="3" placeholder="Observações adicionais..."></textarea>
-                <button type="submit" class="btn btn-primary btn-block">Confirmar Lançamento</button>
-            </form>
-        </div>
+        <nav class="main-nav">
+            <button onclick="switchTab('config')" id="btn-config" class="nav-btn active">Ajustes</button>
+            <button onclick="switchTab('list')" id="btn-list" class="nav-btn">Lançamentos</button>
+            <button onclick="switchTab('dash')" id="btn-dash" class="nav-btn">Dashboard</button>
+        </nav>
     </div>
+</header>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    
-    <script src="app.js"></script>
+<main class="container content-area">
+    <section id="tab-config" class="tab-content active">
+        <div class="card card-centered">
+            <h2>⚙️ Painel de Controle</h2>
+            <div class="form-group">
+                <label>Tema do Sistema</label>
+                <select id="theme-selector" onchange="applyTheme(this.value)">
+                    <option value="default">Padrão (Índigo)</option>
+                    <option value="dark">Modo Dark</option>
+                    <option value="emerald">Empresarial (Verde)</option>
+                    <option value="premium">Premium (Dourado/Preto)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Importar Dados (Excel, JSON)</label>
+                <input type="file" id="universal-import" accept=".json, .xlsx, .xls">
+                <small>O sistema lê automaticamente colunas de Data, Valor e Categoria.</small>
+            </div>
+            <div class="form-group">
+                <label>Razão Social</label>
+                <input type="text" id="conf-nome" oninput="updateBrand(this.value)">
+            </div>
+            <button onclick="saveConfig()" class="btn btn-primary btn-block">Salvar Preferências</button>
+        </div>
+    </section>
+
+    <section id="tab-list" class="tab-content">
+        <div class="action-bar">
+            <button onclick="openModal('modal-entry')" class="btn btn-primary">+ Novo Registro</button>
+            <button onclick="openExportModal()" class="btn btn-secondary">📥 Baixar Relatórios</button>
+        </div>
+        <div class="card table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr><th>Data</th><th>Tipo</th><th>Categoria</th><th>Valor</th><th>Ações</th></tr>
+                </thead>
+                <tbody id="lista-corpo"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="tab-dash" class="tab-content">
+        <div class="dash-grid">
+            <div class="card chart-card"><h3>Resumo de Caixa</h3><canvas id="chartGeral"></canvas></div>
+            <div class="card chart-card"><h3>Saúde Fiscal (MEI)</h3><canvas id="chartMei"></canvas></div>
+            <div class="card chart-card"><h3>Despesas por Categoria</h3><canvas id="chartCategorias"></canvas></div>
+        </div>
+    </section>
+</main>
+
+<div id="modal-export" class="modal-overlay">
+    <div class="modal-box">
+        <h3>Gerar Arquivo de Saída</h3>
+        <p>Selecione o formato desejado para download:</p>
+        <div class="export-options" style="display:grid; gap:10px; margin-top:20px;">
+            <button onclick="generateExport('excel')" class="btn btn-secondary">📊 Baixar em Excel (.xlsx)</button>
+            <button onclick="generateExport('pdf')" class="btn btn-primary">📄 Baixar em PDF (Relatório)</button>
+        </div>
+        <button class="btn-cancel" onclick="closeModal('modal-export')">Fechar</button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
