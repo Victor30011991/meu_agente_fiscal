@@ -12,7 +12,8 @@ body{font-family:Inter,system-ui;background:#f5f7fb;margin:0}
 .container{max-width:900px;margin:auto;padding:30px}
 table{width:100%;border-collapse:collapse}
 th,td{padding:8px;border-bottom:1px solid #ddd}
-button{padding:10px 14px;border:0;border-radius:8px;font-weight:700}
+button{padding:10px 14px;border:0;border-radius:8px;font-weight:700;cursor:pointer}
+.bad{color:#ef4444;font-weight:700}
 </style>
 </head>
 <body>
@@ -26,6 +27,8 @@ button{padding:10px 14px;border:0;border-radius:8px;font-weight:700}
 <br><br>
 
 <button onclick="confirmar()">Importar no perfil ativo</button>
+
+<br><br>
 
 <table>
 <thead>
@@ -54,11 +57,17 @@ function normalizeValue(v){
   if(typeof v==="number") return v;
   let s=String(v||"").trim().replace(/[^\d.,-]/g,"");
   if(!s) return null;
+
   if(s.includes(",") && s.includes(".")){
     if(s.lastIndexOf(",")>s.lastIndexOf(".")){
       s=s.replace(/\./g,"").replace(",",".");
-    }else s=s.replace(/,/g,"");
-  }else s=s.replace(",",".");
+    }else{
+      s=s.replace(/,/g,"");
+    }
+  }else{
+    s=s.replace(",",".");
+  }
+
   const n=parseFloat(s);
   return isNaN(n)?null:n;
 }
@@ -68,22 +77,26 @@ file.onchange=()=>{
   if(!f) return;
 
   const r=new FileReader();
+
   r.onload=e=>{
     const wb=XLSX.read(e.target.result,{type:"binary"});
-    const data=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    const sheet=wb.Sheets[wb.SheetNames[0]];
+
+    const data=XLSX.utils.sheet_to_json(sheet,{defval:""});
 
     buffer=data.map(l=>{
       return{
-        data:l.Data||"",
-        cat:l.Categoria||"",
-        tipo:l.Tipo||"Entrada",
-        valor:normalizeValue(l.Valor),
-        obs:l.Observacao||l.Observação||""
+        data:l.Data || l.data || "",
+        cat:l.Categoria || l.categoria || "",
+        tipo:(l.Tipo || l.tipo || "Entrada"),
+        valor:normalizeValue(l.Valor || l.valor),
+        obs:l.Observacao || l.Observação || l.obs || ""
       }
     }).filter(l=>l.valor!==null);
 
     render();
   };
+
   r.readAsBinaryString(f);
 };
 
@@ -100,7 +113,13 @@ function render(){
 }
 
 function confirmar(){
+
   const db=loadDB();
+
+  if(!db || !db.profiles || !db.profiles[db.active]){
+    alert("Perfil ativo não encontrado.");
+    return;
+  }
 
   buffer.forEach(l=>{
     db.profiles[db.active].push({
@@ -110,7 +129,9 @@ function confirmar(){
   });
 
   localStorage.setItem(KEY,JSON.stringify(db));
-  alert("Importação concluída.");
+
+  alert("Importação concluída com sucesso.");
+
   window.close();
 }
 </script>
