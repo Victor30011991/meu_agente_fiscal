@@ -153,7 +153,6 @@ select,input[type=file],input,textarea{
   <button id="importar">Alimentar perfil</button>
 </div>
 
-<!-- DADOS DA PESSOA / EMPRESA (SEPARADO DA TABELA) -->
 <div class="card">
   <h3>Dados do perfil</h3>
   <input id="perfilNome" placeholder="Nome / Razão social" style="width:100%;margin-bottom:8px">
@@ -266,6 +265,7 @@ function normalizeValue(v){
   if(s.includes(",") && s.includes(".")){
     if(s.lastIndexOf(",")>s.lastIndexOf(".")){
       s=s.replace(/\./g,"").replace(",",".");
+
     }else{
       s=s.replace(/,/g,"");
     }
@@ -496,71 +496,23 @@ document.querySelectorAll(".tabs button").forEach(b=>{
   };
 });
 
+/* ======================================================
+   >>>>>>  ÚNICAS ALTERAÇÕES (INTEGRAÇÃO)  <<<<<<
+   ====================================================== */
+
 importar.onclick=()=>{
-  const f=fileIn.files[0];
-  if(!f) return;
-
-  const r=new FileReader();
-  r.onload=e=>{
-    const wb=XLSX.read(e.target.result,{type:"binary"});
-    const data=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-    const db=loadDB();
-
-    data.forEach(l=>{
-      const v=normalizeValue(l.Valor);
-      if(v===null) return;
-      db.profiles[db.active].push({
-        id:crypto.randomUUID(),
-        data:l.Data||"",
-        cat:l.Categoria||"",
-        tipo:l.Tipo||"Entrada",
-        valor:v,
-        obs:l.Observacao||l.Observação||""
-      });
-    });
-
-    saveDB(db);
-    refresh();
-    renderDashboard();
-  };
-  r.readAsBinaryString(f);
+  window.open("import.html","_blank");
 };
 
 exportAll.onclick=()=>{
-  const db=loadDB();
-  const rows=[];
-  for(const p in db.profiles){
-    db.profiles[p].forEach(l=>rows.push({...l,perfil:p}));
-  }
-  const ws=XLSX.utils.json_to_sheet(rows);
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,"FluxoPro");
-  XLSX.writeFile(wb,"backup_fluxopro.xlsx");
+  window.open("export.html","_blank");
 };
 
 exportAllPdf.onclick=()=>{
-  const { jsPDF } = window.jspdf;
-  const db=loadDB();
-  const doc=new jsPDF();
-  let y=10;
-
-  doc.text("Backup global - FluxoPro",10,y);
-  y+=8;
-
-  for(const p in db.profiles){
-    doc.text(`Perfil: ${p}`,10,y); y+=6;
-
-    db.profiles[p].forEach(l=>{
-      if(y>280){doc.addPage();y=10;}
-      doc.text(`${l.data} | ${l.cat} | ${l.tipo} | ${l.valor}`,10,y);
-      y+=5;
-    });
-
-    y+=6;
-  }
-
-  doc.save("backup_fluxopro.pdf");
+  window.open("export.html","_blank");
 };
+
+/* ====================================================== */
 
 resetAll.onclick=()=>{
   if(confirm("Apagar todos os dados?")){
