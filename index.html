@@ -3,65 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FluxoPro Brasil | Inteligência de Dados</title>
+    <title>FluxoPro Brasil | Deluxe v6.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
+        /* --- DESIGN SYSTEM EXPANDIDO --- */
         :root {
             --primary: #4f46e5; --success: #10b981; --danger: #ef4444;
             --bg: #f9fafb; --card: #ffffff; --text: #1f2937; --border: #e5e7eb;
+            --accent: #6366f1;
         }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; width: 100%; }
-        header { background: var(--card); border-bottom: 1px solid var(--border); padding: 15px 0; flex-shrink: 0; }
+
+        /* TEMAS ADICIONAIS */
+        [data-theme="midnight"] { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --border: #334155; --primary: #38bdf8; }
+        [data-theme="emerald"] { --primary: #059669; --bg: #f0fdf4; --text: #064e3b; }
+        [data-theme="gold"] { --primary: #b45309; --bg: #fffbeb; --text: #78350f; --card: #ffffff; }
+        [data-theme="rose"] { --primary: #e11d48; --bg: #fff1f2; --text: #881337; }
+        [data-theme="royal"] { --primary: #6d28d9; --bg: #f5f3ff; --text: #4c1d95; }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; transition: 0.3s; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        
+        header { background: var(--card); border-bottom: 1px solid var(--border); padding: 15px 0; sticky: top; z-index: 100; }
         .nav-flex { display: flex; justify-content: space-between; align-items: center; }
         .logo { font-weight: 800; font-size: 1.4rem; letter-spacing: -1px; }
         .logo span { color: var(--primary); }
-        nav button { background: none; border: none; padding: 10px 20px; font-weight: 600; cursor: pointer; color: #6b7280; border-bottom: 2px solid transparent; }
+        
+        nav button { background: none; border: none; padding: 10px 15px; font-weight: 600; cursor: pointer; color: #6b7280; border-bottom: 2px solid transparent; transition: 0.2s; }
         nav button.active { color: var(--primary); border-bottom-color: var(--primary); }
-        main { flex-grow: 1; overflow-y: auto; padding: 30px 0; }
+
+        main { padding: 30px 0; }
         .tab-content { display: none; animation: fadeIn 0.4s ease; }
         .tab-content.active { display: block; }
-        .card { background: var(--card); border-radius: 12px; padding: 24px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .grid-dash { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
-        .chart-box { height: 300px; width: 100%; position: relative; }
-        .table-container { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th { background: #f9fafb; text-align: left; padding: 14px; font-size: 12px; color: #6b7280; text-transform: uppercase; }
-        td { padding: 14px; border-bottom: 1px solid var(--border); font-size: 14px; }
-        .btn { padding: 12px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; }
+
+        .card { background: var(--card); border-radius: 16px; padding: 24px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        
+        /* LAYOUTS ESPECÍFICOS */
+        .layout-grid { display: grid; gap: 20px; }
+        #aba-dash.layout-focus { grid-template-columns: 1fr; }
+        #aba-dash.layout-hybrid { grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); }
+
+        /* TABELA E EDIÇÃO */
+        .table-container { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; background: var(--card); }
+        th { background: #f9fafb; padding: 14px; font-size: 11px; color: #6b7280; text-transform: uppercase; text-align: left; }
+        [data-theme="midnight"] th { background: #1e293b; }
+        td { padding: 14px; border-bottom: 1px solid var(--border); font-size: 14px; outline: none; }
+        td[contenteditable="true"]:focus { background: rgba(99, 102, 241, 0.1); box-shadow: inset 0 0 0 2px var(--primary); }
+
+        .btn { padding: 12px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; font-size: 14px; }
         .btn-main { background: var(--primary); color: white; }
-        .btn-sec { background: #e5e7eb; color: #374151; }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: white; padding: 32px; border-radius: 20px; width: 420px; }
-        .form-group { margin-bottom: 18px; }
-        input, select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; box-sizing: border-box; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-sec { background: var(--border); color: var(--text); }
+
+        .chart-box { height: 350px; width: 100%; }
+
+        /* CONFIGS */
+        .config-item { margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+        .config-item label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 14px; }
+        select, input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); }
+
+        .indica-ia { background: linear-gradient(135deg, var(--primary), #a855f7); color: white; padding: 20px; border-radius: 12px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <header>
     <div class="container nav-flex">
-        <div class="logo">FluxoPro <span>Brasil</span></div>
+        <div class="logo">FluxoPro <span>Deluxe</span></div>
         <nav>
-            <button onclick="mudarAba('list')" id="nav-list" class="active">Lançamentos</button>
+            <button onclick="mudarAba('list')" id="nav-list" class="active">Dados</button>
             <button onclick="mudarAba('dash')" id="nav-dash">Dashboards</button>
-            <button onclick="mudarAba('config')" id="nav-config">Importar/Exportar</button>
+            <button onclick="mudarAba('config')" id="nav-config">Painel de Controle</button>
         </nav>
     </div>
 </header>
 
 <main class="container">
     <section id="aba-list" class="tab-content active">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 24px;">
-            <button class="btn btn-main" onclick="abrirModal()">+ Novo Lançamento Manual</button>
-            <button class="btn btn-sec" onclick="exportarExcel()">📥 Baixar Relatório Excel</button>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <button class="btn btn-main" onclick="abrirModal()">+ Novo Lançamento</button>
+            <button class="btn btn-sec" onclick="exportarExcel()">📥 Exportar Relatório</button>
         </div>
         <div class="card" style="padding:0; overflow:hidden;">
             <div class="table-container">
                 <table>
                     <thead>
-                        <tr><th>Data</th><th>Categoria</th><th>Tipo</th><th>Valor (R$)</th><th style="text-align:right">Ação</th></tr>
+                        <tr><th>Data</th><th>Categoria</th><th>Fluxo</th><th>Valor</th><th>Ação</th></tr>
                     </thead>
                     <tbody id="corpo-tabela"></tbody>
                 </table>
@@ -70,43 +98,74 @@
     </section>
 
     <section id="aba-dash" class="tab-content">
-        <div class="grid-dash">
-            <div class="card"><h3>Gastos por Categoria (%)</h3><div class="chart-box"><canvas id="chartPizza"></canvas></div></div>
-            <div class="card"><h3>Ganhos Mensais (Réguas)</h3><div class="chart-box"><canvas id="chartBarras"></canvas></div></div>
-            <div class="card"><h3>Top Despesas</h3><div class="chart-box"><canvas id="chartTop"></canvas></div></div>
+        <div id="dash-grid-system" class="layout-grid layout-hybrid">
+            <div class="card"><h3>🍕 Divisão de Gastos</h3><div class="chart-box"><canvas id="chartPizza"></canvas></div></div>
+            <div class="card"><h3>📊 Ganhos Mensais</h3><div class="chart-box"><canvas id="chartBarras"></canvas></div></div>
+            <div class="card"><h3>🔝 Maiores Custos (%)</h3><div class="chart-box"><canvas id="chartTop"></canvas></div></div>
         </div>
     </section>
 
     <section id="aba-config" class="tab-content">
-        <div class="grid-dash">
+        <div class="layout-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
             <div class="card">
-                <h3>📥 Alimentar Sistema (Arquivo)</h3>
-                <p style="color: #6b7280; font-size: 14px; margin-bottom: 20px;">
-                    Selecione um arquivo <b>Excel (.xlsx)</b> ou <b>JSON</b> para importar dados de gastos e ganhos.
-                </p>
-                <input type="file" id="input-arquivo" accept=".json, .xlsx, .xls, .csv" style="margin-bottom: 15px;">
-                <button class="btn btn-main" style="width: 100%;" onclick="processarArquivo()">Processar e Alimentar</button>
+                <h3>🎨 Personalização Visual</h3>
+                <div class="config-item">
+                    <label>Tema de Cores</label>
+                    <select onchange="aplicarTema(this.value)">
+                        <option value="default">Indigo Standard</option>
+                        <option value="midnight">Midnight Dark</option>
+                        <option value="emerald">Emerald Business</option>
+                        <option value="gold">Gold Management</option>
+                        <option value="rose">Rose Premium</option>
+                        <option value="royal">Royal Purple</option>
+                    </select>
+                </div>
+                <div class="config-item">
+                    <label>Modelo de Layout (Dashboard)</label>
+                    <select onchange="aplicarLayout(this.value)">
+                        <option value="layout-hybrid">Grade Híbrida (Lado a Lado)</option>
+                        <option value="layout-focus">Foco Total (Um por vez)</option>
+                    </select>
+                </div>
             </div>
+
             <div class="card">
-                <h3>📤 Salvar Backup</h3>
-                <p style="color: #6b7280; font-size: 14px;">Gere um arquivo de segurança com todas as informações atuais.</p>
-                <button class="btn btn-sec" style="width: 100%;" onclick="baixarSave()">Exportar Backup JSON</button>
+                <h3>📄 Configurações da Planilha</h3>
+                <div class="config-item">
+                    <label>Nome do Proprietário / CPF</label>
+                    <input type="text" id="prop-nome" placeholder="Digite seu nome ou documento" onblur="salvarPref()">
+                </div>
+                <div class="config-item">
+                    <label>Nome do Arquivo Exportado</label>
+                    <input type="text" id="prop-file" placeholder="Ex: Financeiro_2024" onblur="salvarPref()">
+                </div>
+                <div class="config-item">
+                    <label>Alimentar via Arquivo</label>
+                    <input type="file" id="input-upload" accept=".xlsx, .json" onchange="importarArquivo()">
+                </div>
+            </div>
+
+            <div class="card indica-ia">
+                <h3>💡 Indicação do Especialista</h3>
+                <p id="dica-texto">Carregue dados para receber uma análise de saúde financeira.</p>
+                <hr style="opacity: 0.2;">
+                <button class="btn" style="background: white; color: var(--primary); width:100%;" onclick="gerarDica()">Gerar Nova Indicação</button>
             </div>
         </div>
     </section>
 </main>
 
-<div class="modal" id="meuModal">
-    <div class="modal-content">
+<div class="modal" id="meuModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 1000;">
+    <div class="modal-content" style="background: white; padding: 32px; border-radius: 20px; width: 400px;">
         <h2 style="margin-top:0">Novo Registro</h2>
         <form id="form-registro">
-            <div class="form-group"><label>Data</label><input type="date" id="m-data" required></div>
-            <div class="form-group"><label>Categoria</label><input type="text" id="m-cat" placeholder="Ex: Mercado, Salário..." required></div>
-            <div class="form-group"><label>Tipo</label><select id="m-tipo"><option value="Entrada">Ganhos (+)</option><option value="Saída">Gastos (-)</option></select></div>
-            <div class="form-group"><label>Valor (R$)</label><input type="number" id="m-valor" step="0.01" required></div>
-            <div style="display: flex; gap: 10px; margin-top: 24px;">
-                <button type="button" class="btn btn-sec" style="flex:1" onclick="fecharModal()">Voltar</button>
-                <button type="submit" class="btn btn-main" style="flex:1">Gravar</button>
+            <input type="date" id="m-data" required style="margin-bottom:15px; width:100%; padding:10px;">
+            <input type="text" id="m-cat" placeholder="Categoria" required style="margin-bottom:15px; width:100%; padding:10px;">
+            <select id="m-tipo" style="margin-bottom:15px; width:100%; padding:10px;"><option value="Entrada">Ganhos (+)</option><option value="Saída">Gastos (-)</option></select>
+            <input type="text" id="m-valor" placeholder="Valor (Ex: 100,00)" required style="margin-bottom:15px; width:100%; padding:10px;">
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn btn-sec" style="flex:1" onclick="fecharModal()">Cancelar</button>
+                <button type="submit" class="btn btn-main" style="flex:1">Salvar</button>
             </div>
         </form>
     </div>
@@ -116,7 +175,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
-    let db = JSON.parse(localStorage.getItem('fluxopro_enterprise_v4')) || [];
+    let db = JSON.parse(localStorage.getItem('fluxopro_deluxe_v6')) || [];
+    let prefs = JSON.parse(localStorage.getItem('fluxopro_prefs')) || {tema: 'default', layout: 'layout-hybrid', nome: '', arquivo: 'Relatorio_FluxoPro'};
     let charts = {};
 
     function mudarAba(id) {
@@ -126,119 +186,124 @@
         if(id === 'dash') renderCharts();
     }
 
-    function abrirModal() { document.getElementById('meuModal').style.display = 'flex'; }
-    function fecharModal() { document.getElementById('meuModal').style.display = 'none'; }
-
-    // ALIMENTAÇÃO MANUAL
-    document.getElementById('form-registro').onsubmit = function(e) {
-        e.preventDefault();
-        db.push({
-            id: Date.now(),
-            data: document.getElementById('m-data').value,
-            cat: document.getElementById('m-cat').value,
-            tipo: document.getElementById('m-tipo').value,
-            valor: parseFloat(document.getElementById('m-valor').value)
-        });
-        sync(); fecharModal(); this.reset();
-    };
-
-    // ALIMENTAÇÃO POR ARQUIVO (Excel/JSON)
-    function processarArquivo() {
-        const fileInput = document.getElementById('input-arquivo');
-        if (!fileInput.files[0]) return alert("Selecione um arquivo primeiro.");
-        
-        const file = fileInput.files[0];
-        const reader = new FileReader();
-
-        reader.onload = (e) => {
-            if (file.name.endsWith('.json')) {
-                db = JSON.parse(e.target.result);
-            } else {
-                const workbook = XLSX.read(e.target.result, {type: 'binary'});
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(sheet);
-                
-                // MAPEAMENTO INTELIGENTE (Detecta colunas comuns de gastos/ganhos)
-                const novosDados = rows.map(r => ({
-                    id: Math.random(),
-                    data: r.Data || r.date || new Date().toISOString().split('T')[0],
-                    cat: r.Categoria || r.category || 'Outros',
-                    tipo: (r.Tipo || r.type || 'Saída').includes('Entrada') || (r.Tipo || r.type || '').includes('Ganho') ? 'Entrada' : 'Saída',
-                    valor: parseFloat(r.Valor || r.value || r.valor || 0)
-                }));
-                db = [...db, ...novosDados];
-            }
-            sync();
-            alert("Sistema alimentado com sucesso!");
-            mudarAba('list');
-        };
-
-        if (file.name.endsWith('.json')) reader.readAsText(file);
-        else reader.readAsBinaryString(file);
+    // --- CUSTOMIZAÇÃO ---
+    function aplicarTema(t) { document.body.setAttribute('data-theme', t); prefs.tema = t; salvarPref(); }
+    function aplicarLayout(l) { 
+        const grid = document.getElementById('dash-grid-system');
+        grid.className = 'layout-grid ' + l;
+        prefs.layout = l;
+        salvarPref();
+    }
+    function salvarPref() {
+        prefs.nome = document.getElementById('prop-nome').value;
+        prefs.arquivo = document.getElementById('prop-file').value;
+        localStorage.setItem('fluxopro_prefs', JSON.stringify(prefs));
     }
 
+    // --- MOTOR DE DADOS ---
     function sync() {
-        localStorage.setItem('fluxopro_enterprise_v4', JSON.stringify(db));
+        localStorage.setItem('fluxopro_deluxe_v6', JSON.stringify(db));
         renderTabela();
+    }
+
+    function editar(id, campo, valor) {
+        const i = db.findIndex(x => x.id === id);
+        if(campo === 'valor') {
+            db[i][campo] = parseFloat(valor.replace(',', '.')) || 0;
+        } else {
+            db[i][campo] = valor;
+        }
+        localStorage.setItem('fluxopro_deluxe_v6', JSON.stringify(db));
     }
 
     function renderTabela() {
         const corpo = document.getElementById('corpo-tabela');
         corpo.innerHTML = db.sort((a,b) => new Date(b.data) - new Date(a.data)).map(item => `
             <tr>
-                <td>${item.data.split('-').reverse().join('/')}</td>
-                <td>${item.cat}</td>
+                <td contenteditable="true" onblur="editar(${item.id}, 'data', this.innerText)">${item.data}</td>
+                <td contenteditable="true" onblur="editar(${item.id}, 'cat', this.innerText)">${item.cat}</td>
                 <td style="color:${item.tipo === 'Entrada' ? 'var(--success)' : 'var(--danger)'}; font-weight:700">${item.tipo}</td>
-                <td>R$ ${item.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                <td style="text-align:right"><button onclick="remover(${item.id})" style="border:none; background:none; cursor:pointer">🗑️</button></td>
+                <td contenteditable="true" onblur="editar(${item.id}, 'valor', this.innerText)" style="font-weight:700">R$ ${item.valor.toLocaleString('pt-BR')}</td>
+                <td><button onclick="remover(${item.id})" style="background:none; border:none; cursor:pointer">🗑️</button></td>
             </tr>
-        `).join('') || '<tr><td colspan="5" style="text-align:center; padding:30px;">Sem dados.</td></tr>';
+        `).join('') || '<tr><td colspan="5" style="text-align:center; padding:20px;">Nenhum dado encontrado.</td></tr>';
+    }
+
+    function importarArquivo() {
+        const file = document.getElementById('input-upload').files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const workbook = XLSX.read(e.target.result, {type: 'binary'});
+            const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+            const novos = rows.map(r => ({
+                id: Math.random(),
+                data: r.Data || new Date().toISOString().split('T')[0],
+                cat: r.Categoria || 'Importado',
+                tipo: (String(r.Tipo)).includes('Entrada') ? 'Entrada' : 'Saída',
+                valor: parseFloat(r.Valor) || 0
+            }));
+            db = [...db, ...novos]; sync(); alert("Planilha integrada com sucesso!");
+        };
+        reader.readAsBinaryString(file);
     }
 
     function renderCharts() {
         const gastos = db.filter(i => i.tipo === 'Saída');
         const ganhos = db.filter(i => i.tipo === 'Entrada');
-
-        // Pizza
-        const cats = {};
-        gastos.forEach(g => cats[g.cat] = (cats[g.cat] || 0) + g.valor);
+        const cats = {}; gastos.forEach(g => cats[g.cat] = (cats[g.cat] || 0) + g.valor);
+        
         initChart('chartPizza', 'pie', Object.keys(cats), Object.values(cats));
-
-        // Réguas
+        
         const ganhosMes = Array(12).fill(0);
         ganhos.forEach(g => { ganhosMes[new Date(g.data).getUTCMonth()] += g.valor; });
         initChart('chartBarras', 'bar', ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'], ganhosMes);
-
-        // Ranking
-        const ranking = Object.keys(cats).sort((a,b) => cats[b] - cats[a]).slice(0, 5);
-        initChart('chartTop', 'doughnut', ranking, ranking.map(r => cats[r]));
+        
+        initChart('chartTop', 'doughnut', Object.keys(cats), Object.values(cats));
     }
 
     function initChart(id, type, labels, data) {
         if(charts[id]) charts[id].destroy();
         charts[id] = new Chart(document.getElementById(id), {
-            type: type,
-            data: { labels, datasets: [{ data, backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] }]},
+            type, data: { labels, datasets: [{ data, backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'] }]},
             options: { responsive: true, maintainAspectRatio: false }
         });
-    }
-
-    function baixarSave() {
-        const blob = new Blob([JSON.stringify(db)], {type: 'application/json'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob); a.download = 'backup_fluxopro.json'; a.click();
     }
 
     function exportarExcel() {
         const ws = XLSX.utils.json_to_sheet(db);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Financeiro");
-        XLSX.writeFile(wb, "FluxoPro_Relatorio.xlsx");
+        XLSX.writeFile(wb, `${prefs.arquivo || 'Relatorio'}.xlsx`);
     }
 
+    function gerarDica() {
+        const gastosTotais = db.filter(i => i.tipo === 'Saída').reduce((a, b) => a + b.valor, 0);
+        const ganhosTotais = db.filter(i => i.tipo === 'Entrada').reduce((a, b) => a + b.valor, 0);
+        const texto = document.getElementById('dica-texto');
+        
+        if(gastosTotais > ganhosTotais) texto.innerText = "🚨 Alerta: Seus gastos superam os ganhos. Reduza despesas fixas em 15% este mês.";
+        else if(ganhosTotais === 0) texto.innerText = "💡 Indicação: Comece lançando seus ganhos para que eu possa analisar seu fluxo.";
+        else texto.innerText = "✅ Parabéns! Seu saldo é positivo. Recomendamos investir 20% do excedente em reserva de emergência.";
+    }
+
+    // Modal helpers
+    function abrirModal() { document.getElementById('meuModal').style.display = 'flex'; }
+    function fecharModal() { document.getElementById('meuModal').style.display = 'none'; }
+    document.getElementById('form-registro').onsubmit = function(e) {
+        e.preventDefault();
+        db.push({ id: Date.now(), data: document.getElementById('m-data').value, cat: document.getElementById('m-cat').value, tipo: document.getElementById('m-tipo').value, valor: parseFloat(document.getElementById('m-valor').value.replace(',', '.')) });
+        sync(); fecharModal(); this.reset();
+    };
     function remover(id) { db = db.filter(i => i.id !== id); sync(); }
 
-    renderTabela();
+    // Carregar Prefs
+    window.onload = () => {
+        document.getElementById('prop-nome').value = prefs.nome;
+        document.getElementById('prop-file').value = prefs.arquivo;
+        aplicarTema(prefs.tema);
+        aplicarLayout(prefs.layout);
+        renderTabela();
+    }
 </script>
 </body>
 </html>
