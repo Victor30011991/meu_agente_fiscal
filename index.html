@@ -5,73 +5,59 @@
 <title>FluxoPro Engine v11</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-:root{
-  --bg:#f5f7fb;
-  --card:#ffffff;
-  --primary:#4f46e5;
-  --success:#10b981;
-  --danger:#ef4444;
-  --text:#0f172a;
-}
-
+*{box-sizing:border-box}
 body{
   margin:0;
   font-family:Inter,system-ui;
-  background:var(--bg);
-  color:var(--text);
+  background:#f5f7fb;
+  color:#1f2937;
+}
+
+:root{
+  --p:#4f46e5;
+  --card:#fff;
+  --b:#e5e7eb;
+  --ok:#10b981;
+  --bad:#ef4444;
 }
 
 header{
   background:#fff;
-  padding:14px 24px;
+  border-bottom:1px solid var(--b);
+  padding:14px 20px;
   display:flex;
+  justify-content:space-between;
   align-items:center;
-  gap:16px;
-  box-shadow:0 10px 30px rgba(0,0,0,.05);
 }
 
-header h1{
-  font-size:20px;
-  margin:0;
-  flex:1;
-}
-
-nav button{
-  border:0;
-  padding:8px 14px;
+.tabs button{
+  border:none;
+  padding:10px 16px;
   border-radius:12px;
-  background:#eee;
   cursor:pointer;
-  font-weight:600;
+  font-weight:700;
+  background:#f3f4f6;
 }
 
-nav button.active{
-  background:var(--primary);
+.tabs button.active{
+  background:var(--p);
   color:#fff;
 }
 
-main{
-  padding:22px;
-}
+.container{max-width:1200px;margin:auto;padding:20px}
 
 .card{
   background:var(--card);
   border-radius:18px;
-  padding:18px;
-  box-shadow:0 10px 30px rgba(0,0,0,.06);
+  padding:20px;
+  border:1px solid var(--b);
   margin-bottom:20px;
-}
-
-.flex{
-  display:flex;
-  gap:18px;
-  flex-wrap:wrap;
+  box-shadow:0 10px 20px rgba(0,0,0,.04);
 }
 
 table{
@@ -80,95 +66,123 @@ table{
 }
 
 th,td{
-  padding:10px;
-  border-bottom:1px solid #e5e7eb;
-  text-align:left;
+  padding:12px 10px;
+  border-bottom:1px solid var(--b);
 }
 
 td[contenteditable]{
-  background:#fafafa;
-  border-radius:6px;
+  cursor:text;
+}
+
+td[contenteditable]:focus{
+  outline:2px solid var(--p);
+  background:#eef2ff;
 }
 
 .badge{
-  padding:5px 10px;
+  padding:6px 12px;
   border-radius:999px;
-  font-weight:600;
+  font-weight:700;
   cursor:pointer;
   display:inline-block;
 }
 
-.entrada{background:#dcfce7;color:#047857;}
-.saida{background:#fee2e2;color:#991b1b;}
+.entrada{background:#ecfdf5;color:var(--ok)}
+.saida{background:#fef2f2;color:var(--bad)}
 
-button.primary{
-  background:var(--primary);
-  color:#fff;
-  border:0;
-  padding:10px 14px;
+button{
+  border:none;
   border-radius:10px;
+  padding:10px 14px;
+  font-weight:700;
   cursor:pointer;
 }
 
-button.light{
-  background:#eee;
-  border:0;
-  padding:10px 14px;
-  border-radius:10px;
-  cursor:pointer;
+.main{background:var(--p);color:#fff}
+
+.actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
 }
 
-input,select{
-  padding:8px;
-  border-radius:8px;
-  border:1px solid #ddd;
+select,input[type=file],input,textarea{
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid var(--b);
+  font-family:inherit;
 }
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:20px;
+}
+
+.resume{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.resume div{
+  background:#f9fafb;
+  border-radius:12px;
+  padding:12px;
+  font-weight:700;
+}
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.5);
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+
+.modal .card{max-width:380px;width:90%}
 
 .hidden{display:none}
-
-.summary{
-  display:flex;
-  gap:18px;
-}
-
-.summary .box{
-  flex:1;
-  background:#f8fafc;
-  border-radius:12px;
-  padding:14px;
-}
 </style>
 </head>
 <body>
 
 <header>
-  <h1>FluxoPro Engine v11</h1>
+  <strong>FluxoPro Engine v11</strong>
 
-  <select id="perfilSelect"></select>
-  <button id="novoPerfil">+</button>
+  <div style="display:flex;gap:10px;align-items:center">
+    <select id="perfilSelect"></select>
+    <button id="novoPerfil">+</button>
 
-  <nav>
-    <button data-tab="lanc" class="active">Lançamentos</button>
-    <button data-tab="dash">Dashboard</button>
-    <button data-tab="cfg">Configurações</button>
-  </nav>
+    <div class="tabs">
+      <button data-tab="lanc" class="active">Lançamentos</button>
+      <button data-tab="dash">Dashboard</button>
+      <button data-tab="conf">Configurações</button>
+    </div>
+  </div>
 </header>
 
-<main>
+<div class="container">
 
-<!-- ================= LANCAMENTOS ================= -->
-
+<!-- Lançamentos -->
 <section id="tab-lanc">
 
-<div class="card flex">
-  <button class="primary" id="addLinha">Novo lançamento</button>
+<div class="actions">
+  <button class="main" id="novoLanc">Novo lançamento</button>
+  <input type="file" id="fileIn">
+  <button id="importar">Alimentar perfil</button>
+</div>
 
-  <input type="file" id="fileInput">
-  <button class="light" id="importar">Alimentar perfil</button>
+<div class="resume">
+  <div>Entradas<br><span id="sumEnt">R$ 0,00</span></div>
+  <div>Saídas<br><span id="sumSai">R$ 0,00</span></div>
+  <div>Resultado<br><span id="sumRes">R$ 0,00</span></div>
 </div>
 
 <div class="card">
-
 <table>
 <thead>
 <tr>
@@ -184,90 +198,94 @@ input,select{
 </thead>
 <tbody id="tbody"></tbody>
 </table>
-
-</div>
-
-<div class="card summary">
-  <div class="box">Entradas: <strong id="sumEnt">R$ 0,00</strong></div>
-  <div class="box">Saídas: <strong id="sumSai">R$ 0,00</strong></div>
-  <div class="box">Diferença: <strong id="sumRes">R$ 0,00</strong></div>
 </div>
 
 </section>
 
-<!-- ================= DASHBOARD ================= -->
-
+<!-- Dashboard -->
 <section id="tab-dash" class="hidden">
 
-<div class="card flex">
+<div class="grid">
 
-<div style="flex:1">
+<div class="card">
 <h4>Distribuição por categoria</h4>
 <canvas id="chartPizza"></canvas>
-<p id="resumoPizza"></p>
+<p id="txtPizza"></p>
 </div>
 
-<div style="flex:1">
-<h4>Entradas x Saídas (%)</h4>
-<canvas id="chartPercentual"></canvas>
-<p id="resumoPercentual"></p>
+<div class="card">
+<h4>Percentual Entradas x Saídas</h4>
+<canvas id="chartPerc"></canvas>
+<p id="txtPerc"></p>
 </div>
 
-<div style="flex:1">
-<h4>Resumo financeiro</h4>
+<div class="card">
+<h4>Resumo Financeiro</h4>
 <canvas id="chartResumo"></canvas>
-<p id="resumoResumo"></p>
+<p id="txtResumo"></p>
 </div>
 
 </div>
 
 </section>
 
-<!-- ================= CONFIG ================= -->
-
-<section id="tab-cfg" class="hidden">
+<!-- Config -->
+<section id="tab-conf" class="hidden">
 
 <div class="card">
 <h3>Painel de controle</h3>
 
-<button class="light" id="backup">Backup Excel (todos perfis)</button>
-<button class="light" id="reset">Reset de fábrica</button>
+<button id="exportAll">Backup global (Excel)</button>
+<button id="resetAll">Reset de fábrica</button>
 
 </div>
 
 </section>
 
-</main>
+</div>
+
+<!-- modal -->
+<div class="modal" id="modal">
+  <div class="card">
+    <h3>Novo lançamento</h3>
+
+    <form id="form">
+      <input type="text" id="pessoa" placeholder="CPF / CNPJ / Nome" required><br><br>
+      <input type="date" id="data" required><br><br>
+      <input type="text" id="cat" placeholder="Categoria" required><br><br>
+      <select id="tipo">
+        <option>Entrada</option>
+        <option>Saída</option>
+      </select><br><br>
+      <input type="text" id="valor" placeholder="Valor" required><br><br>
+      <textarea id="obs" placeholder="Observação"></textarea><br><br>
+      <button class="main">Salvar</button>
+    </form>
+  </div>
+</div>
 
 <script>
-const DB_KEY="fluxopro_v11";
-
-let charts={};
+const KEY="fluxopro_v11";
 
 function loadDB(){
-  return JSON.parse(localStorage.getItem(DB_KEY)) || {
-    profiles:{},
-    active:null
+  return JSON.parse(localStorage.getItem(KEY)) || {
+    active:"default",
+    profiles:{
+      default:[]
+    }
   };
 }
 
 function saveDB(db){
-  localStorage.setItem(DB_KEY,JSON.stringify(db));
+  localStorage.setItem(KEY,JSON.stringify(db));
 }
-
-function currentProfile(){
-  const db=loadDB();
-  return db.active;
-}
-
-/* ---------------- NORMALIZAÇÃO ---------------- */
 
 function normalizeValue(v){
   if(typeof v==="number") return v;
-
-  let s=String(v).replace(/[^\d,.-]/g,"");
-
-  if(s.indexOf(",")>-1 && s.indexOf(".")>-1){
+  let s=String(v).trim();
+  s=s.replace(/[^\d.,-]/g,"");
+  if(!s) return null;
+  if(s.includes(",") && s.includes(".")){
     if(s.lastIndexOf(",")>s.lastIndexOf(".")){
       s=s.replace(/\./g,"").replace(",",".");
     }else{
@@ -276,12 +294,15 @@ function normalizeValue(v){
   }else{
     s=s.replace(",",".");
   }
-
-  let n=parseFloat(s);
+  const n=parseFloat(s);
   return isNaN(n)?null:n;
 }
 
-/* ---------------- PERFIS ---------------- */
+function formatMoney(v){
+  return new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0);
+}
+
+let charts={};
 
 function renderPerfis(){
   const db=loadDB();
@@ -291,290 +312,285 @@ function renderPerfis(){
     .map(p=>`<option ${p===db.active?"selected":""}>${p}</option>`).join("");
 }
 
-document.getElementById("novoPerfil").onclick=()=>{
-  const n=prompt("Nome do perfil (CPF/CNPJ/Pessoa)");
-  if(!n) return;
-
+function list(){
   const db=loadDB();
-  db.profiles[n]=[];
-  db.active=n;
-  saveDB(db);
-  renderPerfis();
-  renderTable();
-  renderDashboard();
-};
-
-document.getElementById("perfilSelect").onchange=e=>{
-  const db=loadDB();
-  db.active=e.target.value;
-  saveDB(db);
-  renderTable();
-  renderDashboard();
-};
-
-/* ---------------- TABELA ---------------- */
+  return db.profiles[db.active]||[];
+}
 
 function renderTable(){
-  const db=loadDB();
-  const list=db.profiles[db.active]||[];
-  const tbody=document.getElementById("tbody");
+  const tb=document.getElementById("tbody");
+  const dados=list();
 
-  let ent=0,sai=0;
+  if(!dados.length){
+    tb.innerHTML='<tr><td colspan="8">Sem dados</td></tr>';
+    return;
+  }
 
   let html="";
 
-  list.forEach(l=>{
-    const v=l.valor||0;
-    if(l.tipo==="Entrada") ent+=v; else sai+=v;
-
+  for(const i of dados){
     html+=`
-<tr data-id="${l.id}">
-<td contenteditable data-f="pessoa">${l.pessoa||""}</td>
-<td contenteditable data-f="data">${l.data||""}</td>
-<td contenteditable data-f="categoria">${l.categoria||""}</td>
-<td><span class="badge ${l.tipo==="Entrada"?"entrada":"saida"}">${l.tipo}</span></td>
-<td contenteditable data-f="valor">${formatMoney(l.valor)}</td>
-<td contenteditable data-f="obs">${l.obs||""}</td>
-<td><button class="light editTipo">Trocar</button></td>
-<td><button class="light del">🗑</button></td>
+<tr data-id="${i.id}">
+<td contenteditable data-f="pessoa">${i.pessoa||""}</td>
+<td contenteditable data-f="data">${i.data||""}</td>
+<td contenteditable data-f="cat">${i.cat||""}</td>
+<td>
+<span class="badge ${i.tipo==="Entrada"?"entrada":"saida"} btnTipo">${i.tipo}</span>
+</td>
+<td contenteditable data-f="valor">${formatMoney(i.valor)}</td>
+<td contenteditable data-f="obs">${i.obs||""}</td>
+<td>✏️</td>
+<td><button class="del">🗑️</button></td>
 </tr>`;
+  }
+
+  tb.innerHTML=html;
+}
+
+function updateResumo(){
+  const dados=list();
+  let e=0,s=0;
+
+  dados.forEach(i=>{
+    if(i.tipo==="Entrada") e+=i.valor||0;
+    else s+=i.valor||0;
   });
 
-  tbody.innerHTML=html;
-
-  document.getElementById("sumEnt").innerText=formatMoney(ent);
-  document.getElementById("sumSai").innerText=formatMoney(sai);
-  document.getElementById("sumRes").innerText=formatMoney(ent-sai);
+  document.getElementById("sumEnt").innerText=formatMoney(e);
+  document.getElementById("sumSai").innerText=formatMoney(s);
+  document.getElementById("sumRes").innerText=formatMoney(e-s);
 }
 
-function formatMoney(v){
-  return new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0);
+function renderDashboard(){
+
+  const dados=list();
+
+  let ent=0,sai=0;
+  const mapa={};
+
+  dados.forEach(i=>{
+    if(i.tipo==="Entrada") ent+=i.valor||0;
+    else sai+=i.valor||0;
+
+    if(i.tipo==="Saída"){
+      mapa[i.cat||"Outros"]=(mapa[i.cat||"Outros"]||0)+(i.valor||0);
+    }
+  });
+
+  const total=ent+sai;
+
+  // pizza
+  if(charts.pizza) charts.pizza.destroy();
+  charts.pizza=new Chart(chartPizza,{
+    type:"doughnut",
+    data:{labels:Object.keys(mapa),datasets:[{data:Object.values(mapa)}]}
+  });
+
+  document.getElementById("txtPizza").innerText=
+    "Categorias com maiores saídas.";
+
+  // percentual
+  if(charts.perc) charts.perc.destroy();
+  charts.perc=new Chart(chartPerc,{
+    type:"pie",
+    data:{
+      labels:["Entradas","Saídas"],
+      datasets:[{data:[ent,sai]}]
+    }
+  });
+
+  document.getElementById("txtPerc").innerText=
+    total?`Entradas representam ${(ent/total*100).toFixed(1)}% do fluxo.`:"";
+
+  // resumo
+  if(charts.res) charts.res.destroy();
+  charts.res=new Chart(chartResumo,{
+    type:"bar",
+    data:{
+      labels:["Entradas","Saídas","Resultado"],
+      datasets:[{data:[ent,sai,ent-sai]}]
+    }
+  });
+
+  document.getElementById("txtResumo").innerText=
+    ent>=sai?"Saúde financeira positiva.":"Atenção: gastos maiores que entradas.";
 }
+
+function refresh(){
+  renderTable();
+  updateResumo();
+}
+
+document.getElementById("form").onsubmit=e=>{
+  e.preventDefault();
+
+  const n=normalizeValue(valor.value);
+  if(n===null){
+    alert("Valor inválido");
+    return;
+  }
+
+  const db=loadDB();
+  db.profiles[db.active].push({
+    id:crypto.randomUUID(),
+    pessoa:pessoa.value,
+    data:data.value,
+    cat:cat.value,
+    tipo:tipo.value,
+    valor:n,
+    obs:obs.value
+  });
+
+  saveDB(db);
+  modal.style.display="none";
+  e.target.reset();
+  refresh();
+  renderDashboard();
+};
 
 document.getElementById("tbody").addEventListener("click",e=>{
   const tr=e.target.closest("tr");
   if(!tr) return;
 
-  const id=tr.dataset.id;
   const db=loadDB();
-  const list=db.profiles[db.active];
-
-  const item=list.find(i=>i.id===id);
+  const item=db.profiles[db.active].find(i=>i.id===tr.dataset.id);
 
   if(e.target.classList.contains("del")){
-    db.profiles[db.active]=list.filter(i=>i.id!==id);
+    db.profiles[db.active]=db.profiles[db.active].filter(i=>i.id!==item.id);
+    saveDB(db);
+    refresh();
+    renderDashboard();
   }
 
-  if(e.target.classList.contains("editTipo")){
+  if(e.target.classList.contains("btnTipo")){
     item.tipo=item.tipo==="Entrada"?"Saída":"Entrada";
+    saveDB(db);
+    refresh();
+    renderDashboard();
   }
-
-  saveDB(db);
-  renderTable();
-  renderDashboard();
 });
 
 document.getElementById("tbody").addEventListener("blur",e=>{
   const td=e.target;
-  const tr=td.closest("tr");
   if(!td.dataset.f) return;
 
+  const tr=td.closest("tr");
   const db=loadDB();
   const item=db.profiles[db.active].find(i=>i.id===tr.dataset.id);
 
   if(td.dataset.f==="valor"){
     const n=normalizeValue(td.innerText);
     if(n===null){
-      renderTable();
+      td.innerText=formatMoney(item.valor);
       return;
     }
     item.valor=n;
+    td.innerText=formatMoney(n);
   }else{
-    item[td.dataset.f]=td.innerText;
+    item[td.dataset.f]=td.innerText.trim();
   }
 
   saveDB(db);
-  renderTable();
+  updateResumo();
   renderDashboard();
 
 },true);
 
-/* ---------------- NOVO ---------------- */
+novoLanc.onclick=()=>modal.style.display="flex";
 
-document.getElementById("addLinha").onclick=()=>{
+perfilSelect.onchange=e=>{
   const db=loadDB();
-  db.profiles[db.active].push({
-    id:crypto.randomUUID(),
-    pessoa:"",
-    data:"",
-    categoria:"",
-    tipo:"Entrada",
-    valor:0,
-    obs:""
-  });
+  db.active=e.target.value;
   saveDB(db);
-  renderTable();
+  refresh();
+  renderDashboard();
 };
 
-/* ---------------- IMPORTAÇÃO ---------------- */
-
-document.getElementById("importar").onclick=()=>{
-  const file=document.getElementById("fileInput").files[0];
-  if(!file) return;
-
+novoPerfil.onclick=()=>{
+  const n=prompt("Nome do perfil");
+  if(!n) return;
   const db=loadDB();
-  const list=db.profiles[db.active];
-
-  if(file.name.endsWith(".json")){
-    const fr=new FileReader();
-    fr.onload=()=>{
-      const arr=JSON.parse(fr.result);
-      arr.forEach(l=>{
-        list.push({
-          id:crypto.randomUUID(),
-          pessoa:l.Pessoa||"",
-          data:l.Data||"",
-          categoria:l.Categoria||"",
-          tipo:l.Tipo||"Entrada",
-          valor:normalizeValue(l.Valor)||0,
-          obs:l.Observacao||""
-        });
-      });
-      saveDB(db);
-      renderTable();
-      renderDashboard();
-    };
-    fr.readAsText(file);
-  }else{
-    const fr=new FileReader();
-    fr.onload=e=>{
-      const wb=XLSX.read(e.target.result,{type:"binary"});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws);
-
-      rows.forEach(r=>{
-        list.push({
-          id:crypto.randomUUID(),
-          pessoa:r.Pessoa||"",
-          data:r.Data||"",
-          categoria:r.Categoria||"",
-          tipo:r.Tipo||"Entrada",
-          valor:normalizeValue(r.Valor)||0,
-          obs:r.Observacao||""
-        });
-      });
-
-      saveDB(db);
-      renderTable();
-      renderDashboard();
-    };
-    fr.readAsBinaryString(file);
-  }
+  db.profiles[n]=[];
+  db.active=n;
+  saveDB(db);
+  renderPerfis();
+  refresh();
+  renderDashboard();
 };
 
-/* ---------------- DASHBOARD ---------------- */
-
-function renderDashboard(){
-  const db=loadDB();
-  const list=db.profiles[db.active]||[];
-
-  let ent=0,sai=0;
-  let cat={};
-
-  list.forEach(l=>{
-    const v=l.valor||0;
-    if(l.tipo==="Entrada") ent+=v; else sai+=v;
-
-    if(l.tipo==="Saída"){
-      cat[l.categoria||"Sem categoria"]=(cat[l.categoria||"Sem categoria"]||0)+v;
-    }
-  });
-
-  if(charts.pizza) charts.pizza.destroy();
-  if(charts.perc) charts.perc.destroy();
-  if(charts.res) charts.res.destroy();
-
-  charts.pizza=new Chart(chartPizza,{
-    type:"pie",
-    data:{labels:Object.keys(cat),datasets:[{data:Object.values(cat)}]}
-  });
-
-  document.getElementById("resumoPizza").innerText=
-    "Categorias: "+Object.keys(cat).length;
-
-  charts.perc=new Chart(chartPercentual,{
-    type:"doughnut",
-    data:{labels:["Entradas","Saídas"],datasets:[{data:[ent,sai]}]}
-  });
-
-  const t=ent+sai;
-  document.getElementById("resumoPercentual").innerText=
-    t?`Entradas ${(ent/t*100).toFixed(1)}% | Saídas ${(sai/t*100).toFixed(1)}%`:"Sem dados";
-
-  charts.res=new Chart(chartResumo,{
-    type:"bar",
-    data:{labels:["Entradas","Saídas","Resultado"],datasets:[{data:[ent,sai,ent-sai]}]}
-  });
-
-  document.getElementById("resumoResumo").innerText=
-    ent-sai>=0?"Saldo positivo.":"Saldo negativo.";
-}
-
-/* ---------------- CONFIG ---------------- */
-
-document.getElementById("backup").onclick=()=>{
-  const db=loadDB();
-  let rows=[];
-
-  Object.entries(db.profiles).forEach(([p,arr])=>{
-    arr.forEach(l=>{
-      rows.push({...l,perfil:p});
-    });
-  });
-
-  const ws=XLSX.utils.json_to_sheet(rows);
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,"DB");
-  XLSX.writeFile(wb,"fluxopro_backup.xlsx");
-};
-
-document.getElementById("reset").onclick=()=>{
-  if(confirm("Apagar todo o banco de dados?")){
-    localStorage.removeItem(DB_KEY);
-    location.reload();
-  }
-};
-
-/* ---------------- SPA ---------------- */
-
-document.querySelectorAll("nav button").forEach(b=>{
+document.querySelectorAll(".tabs button").forEach(b=>{
   b.onclick=()=>{
-    document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));
     b.classList.add("active");
 
-    document.querySelectorAll("main section").forEach(s=>s.classList.add("hidden"));
+    document.querySelectorAll("section").forEach(s=>s.classList.add("hidden"));
     document.getElementById("tab-"+b.dataset.tab).classList.remove("hidden");
 
     if(b.dataset.tab==="dash") renderDashboard();
   };
 });
 
-/* ---------------- INIT ---------------- */
+importar.onclick=()=>{
+  const f=fileIn.files[0];
+  if(!f) return;
 
-(function(){
-  const db=loadDB();
-  if(!db.active){
-    const p="Principal";
-    db.profiles[p]=[];
-    db.active=p;
+  const r=new FileReader();
+  r.onload=e=>{
+    const wb=XLSX.read(e.target.result,{type:"binary"});
+    const data=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+
+    const db=loadDB();
+
+    data.forEach(l=>{
+      const v=normalizeValue(l.Valor);
+      if(v===null) return;
+
+      db.profiles[db.active].push({
+        id:crypto.randomUUID(),
+        pessoa:l.Pessoa||"",
+        data:l.Data||"",
+        cat:l.Categoria||"",
+        tipo:l.Tipo||"Entrada",
+        valor:v,
+        obs:l.Observacao||""
+      });
+    });
+
     saveDB(db);
+    refresh();
+    renderDashboard();
+  };
+  r.readAsBinaryString(f);
+};
+
+exportAll.onclick=()=>{
+  const db=loadDB();
+  const rows=[];
+  for(const p in db.profiles){
+    db.profiles[p].forEach(l=>rows.push({...l,perfil:p}));
   }
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"FluxoPro");
+  XLSX.writeFile(wb,"backup_fluxopro.xlsx");
+};
 
+resetAll.onclick=()=>{
+  if(confirm("Apagar todos os dados?")){
+    localStorage.removeItem(KEY);
+    location.reload();
+  }
+};
+
+function init(){
+  const db=loadDB();
+  if(!db.profiles[db.active]) db.profiles[db.active]=[];
+  saveDB(db);
   renderPerfis();
-  renderTable();
-  renderDashboard();
-})();
-</script>
+  refresh();
+}
 
+init();
+</script>
 </body>
 </html>
