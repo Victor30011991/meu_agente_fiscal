@@ -5,11 +5,11 @@
 <title>FluxoPro Engine v11</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+<link id="themeLink" rel="stylesheet">
+
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 *{box-sizing:border-box}
@@ -55,14 +55,8 @@ header{
   margin-bottom:20px;
   box-shadow:0 10px 20px rgba(0,0,0,.04);
 }
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-th,td{
-  padding:12px 10px;
-  border-bottom:1px solid var(--b);
-}
+table{width:100%;border-collapse:collapse}
+th,td{padding:12px 10px;border-bottom:1px solid var(--b)}
 td[contenteditable]{cursor:text}
 td[contenteditable]:focus{
   outline:2px solid var(--p);
@@ -149,7 +143,6 @@ select,input[type=file],input,textarea{
 
 <div class="actions">
   <button class="main" id="novoLanc">Novo lançamento</button>
-  <input type="file" id="fileIn">
   <button id="importar">Alimentar perfil</button>
 </div>
 
@@ -214,8 +207,19 @@ select,input[type=file],input,textarea{
 <div class="card">
 <h3>Painel de controle</h3>
 
-<button id="exportAll">Backup global (Excel)</button>
-<button id="exportAllPdf">Backup global (PDF)</button>
+<div style="margin-bottom:14px">
+  <strong>Tema do sistema</strong><br>
+  <select id="themeSelect">
+    <option value="">Padrão</option>
+    <option value="indigo">Indigo</option>
+    <option value="emerald">Emerald</option>
+    <option value="gold">Gold</option>
+    <option value="rose">Rose</option>
+    <option value="dark">Dark</option>
+  </select>
+</div>
+
+<button id="exportAll">Backup (Excel / PDF)</button>
 <button id="resetAll">Reset de fábrica</button>
 
 </div>
@@ -249,7 +253,8 @@ function loadDB(){
   return JSON.parse(localStorage.getItem(KEY)) || {
     active:"default",
     profiles:{ default:[] },
-    profileInfo:{}
+    profileInfo:{},
+    theme:""
   };
 }
 
@@ -257,21 +262,27 @@ function saveDB(db){
   localStorage.setItem(KEY,JSON.stringify(db));
 }
 
+function applyTheme(){
+  const db=loadDB();
+  if(db.theme){
+    themeLink.href="themes/"+db.theme+".css";
+  }else{
+    themeLink.href="";
+  }
+  themeSelect.value=db.theme||"";
+}
+
 function normalizeValue(v){
   if(typeof v==="number") return v;
-  let s=String(v).trim();
-  s=s.replace(/[^\d.,-]/g,"");
+  let s=String(v).trim().replace(/[^\d.,-]/g,"");
   if(!s) return null;
   if(s.includes(",") && s.includes(".")){
     if(s.lastIndexOf(",")>s.lastIndexOf(".")){
       s=s.replace(/\./g,"").replace(",",".");
 
-    }else{
-      s=s.replace(/,/g,"");
-    }
-  }else{
-    s=s.replace(",",".");
-  }
+    }else s=s.replace(/,/g,"");
+  }else s=s.replace(",",".");
+
   const n=parseFloat(s);
   return isNaN(n)?null:n;
 }
@@ -318,9 +329,7 @@ function renderTable(){
     return;
   }
 
-  let html="";
-  for(const i of dados){
-    html+=`
+  tb.innerHTML=dados.map(i=>`
 <tr data-id="${i.id}">
 <td contenteditable data-f="data">${i.data||""}</td>
 <td contenteditable data-f="cat">${i.cat||""}</td>
@@ -328,9 +337,8 @@ function renderTable(){
 <td contenteditable data-f="valor">${formatMoney(i.valor)}</td>
 <td contenteditable data-f="obs">${i.obs||""}</td>
 <td><button class="del">🗑️</button></td>
-</tr>`;
-  }
-  tb.innerHTML=html;
+</tr>
+`).join("");
 }
 
 function updateResumo(){
@@ -366,15 +374,11 @@ function renderDashboard(){
     data:{labels:Object.keys(mapa),datasets:[{data:Object.values(mapa)}]}
   });
 
-  txtPizza.innerText="Categorias com maiores saídas.";
-
   if(charts.perc) charts.perc.destroy();
   charts.perc=new Chart(chartPerc,{
     type:"pie",
     data:{labels:["Entradas","Saídas"],datasets:[{data:[ent,sai]}]}
   });
-
-  txtPerc.innerText=total?`Entradas representam ${(ent/total*100).toFixed(1)}% do fluxo.`:"";
 
   if(charts.res) charts.res.destroy();
   charts.res=new Chart(chartResumo,{
@@ -382,6 +386,7 @@ function renderDashboard(){
     data:{labels:["Entradas","Saídas","Resultado"],datasets:[{data:[ent,sai,ent-sai]}]}
   });
 
+  txtPerc.innerText=total?`Entradas representam ${(ent/total*100).toFixed(1)}% do fluxo.`:"";
   txtResumo.innerText=ent>=sai?"Saúde financeira positiva.":"Atenção: gastos maiores que entradas.";
 }
 
@@ -393,6 +398,7 @@ function refresh(){
 
 form.onsubmit=e=>{
   e.preventDefault();
+
   const n=normalizeValue(valor.value);
   if(n===null){alert("Valor inválido");return;}
 
@@ -422,17 +428,15 @@ tbody.addEventListener("click",e=>{
 
   if(e.target.classList.contains("del")){
     db.profiles[db.active]=db.profiles[db.active].filter(i=>i.id!==item.id);
-    saveDB(db);
-    refresh();
-    renderDashboard();
   }
 
   if(e.target.classList.contains("btnTipo")){
     item.tipo=item.tipo==="Entrada"?"Saída":"Entrada";
-    saveDB(db);
-    refresh();
-    renderDashboard();
   }
+
+  saveDB(db);
+  refresh();
+  renderDashboard();
 });
 
 tbody.addEventListener("blur",e=>{
@@ -496,9 +500,7 @@ document.querySelectorAll(".tabs button").forEach(b=>{
   };
 });
 
-/* ======================================================
-   >>>>>>  ÚNICAS ALTERAÇÕES (INTEGRAÇÃO)  <<<<<<
-   ====================================================== */
+/* ===== INTEGRAÇÃO ===== */
 
 importar.onclick=()=>{
   window.open("import.html","_blank");
@@ -508,11 +510,14 @@ exportAll.onclick=()=>{
   window.open("export.html","_blank");
 };
 
-exportAllPdf.onclick=()=>{
-  window.open("export.html","_blank");
-};
+/* ====================== */
 
-/* ====================================================== */
+themeSelect.onchange=()=>{
+  const db=loadDB();
+  db.theme=themeSelect.value;
+  saveDB(db);
+  applyTheme();
+};
 
 resetAll.onclick=()=>{
   if(confirm("Apagar todos os dados?")){
@@ -528,6 +533,7 @@ function init(){
   saveDB(db);
   renderPerfis();
   refresh();
+  applyTheme();
 }
 
 init();
