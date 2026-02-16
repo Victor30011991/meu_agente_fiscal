@@ -2,246 +2,300 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>FluxoPro – Exportação</title>
+<title>FluxoPro – Relatório</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
 <style>
-body{
-  font-family:Inter,system-ui;
-  background:#f1f5f9;
-  margin:0;
-  padding:20px;
+:root{
+  --p:#4f46e5;
+  --bg:#f5f7fb;
+  --card:#ffffff;
+  --b:#e5e7eb;
+  --ok:#10b981;
+  --bad:#ef4444;
 }
-.card{
-  background:#fff;
-  border-radius:12px;
-  padding:20px;
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:Inter,system-ui;
+  background:var(--bg);
+  color:#1f2937;
+}
+
+.container{
   max-width:1100px;
   margin:auto;
-  box-shadow:0 10px 30px rgba(0,0,0,.08);
+  padding:30px;
 }
-h1{margin-top:0}
-table{
-  width:100%;
-  border-collapse:collapse;
-  font-size:13px;
+
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
 }
-th,td{
-  padding:8px;
-  border-bottom:1px solid #e5e7eb;
-}
-th{
-  background:#2563eb;
-  color:#fff;
-  text-align:left;
-}
-.resumo{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  margin-bottom:16px;
-}
-.box{
-  background:#f8fafc;
-  border-radius:10px;
-  padding:12px;
-  text-align:center;
-}
+
 button{
   padding:10px 14px;
   border:0;
-  border-radius:8px;
-  background:#2563eb;
-  color:#fff;
+  border-radius:10px;
+  font-weight:700;
   cursor:pointer;
-  margin-right:10px;
+  background:var(--p);
+  color:#fff;
+}
+
+.card{
+  background:var(--card);
+  border-radius:18px;
+  padding:20px;
+  border:1px solid var(--b);
+  box-shadow:0 10px 20px rgba(0,0,0,.05);
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:12px;
+  margin:15px 0;
+}
+
+.box{
+  background:#f9fafb;
+  padding:12px;
+  border-radius:12px;
+  font-weight:700;
+}
+
+.box.ent{color:var(--ok)}
+.box.sai{color:var(--bad)}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:15px;
+  font-size:14px;
+}
+
+th{
+  background:#eef2ff;
+  color:#1e1b4b;
+  text-align:left;
+  padding:10px;
+}
+
+td{
+  padding:10px;
+  border-bottom:1px solid var(--b);
+}
+
+.badge-ent{
+  background:#ecfdf5;
+  color:#065f46;
+  padding:4px 10px;
+  border-radius:999px;
+  font-weight:700;
+}
+
+.badge-sai{
+  background:#fef2f2;
+  color:#991b1b;
+  padding:4px 10px;
+  border-radius:999px;
+  font-weight:700;
+}
+
+.headerRel{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
 }
 </style>
 </head>
 <body>
 
-<div class="card">
-  <h1>Exportação – FluxoPro</h1>
+<div class="container">
 
-  <div id="perfilInfo"></div>
-
-  <div class="resumo">
-    <div class="box">
-      <strong>Entradas</strong>
-      <div id="ent"></div>
-    </div>
-    <div class="box">
-      <strong>Saídas</strong>
-      <div id="sai"></div>
-    </div>
-    <div class="box">
-      <strong>Resultado</strong>
-      <div id="res"></div>
+  <div class="top">
+    <h1>Relatório FluxoPro</h1>
+    <div>
+      <button onclick="exportExcel()">Excel</button>
+      <button onclick="exportPDF()">PDF</button>
     </div>
   </div>
 
-  <div style="margin-bottom:15px">
-    <button onclick="exportPDF()">Baixar PDF</button>
-    <button onclick="exportExcel()">Baixar Excel</button>
+  <div class="card" id="relatorio">
+
+    <div class="headerRel">
+      <div>
+        <h2 id="perfilTitulo"></h2>
+        <div id="perfilDados"></div>
+      </div>
+      <small id="dataGeracao"></small>
+    </div>
+
+    <div class="grid">
+      <div class="box ent">Entradas<br><span id="ent"></span></div>
+      <div class="box sai">Saídas<br><span id="sai"></span></div>
+      <div class="box">Resultado<br><span id="res"></span></div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Categoria</th>
+          <th>Tipo</th>
+          <th>Valor</th>
+          <th>Observação</th>
+        </tr>
+      </thead>
+      <tbody id="tb"></tbody>
+    </table>
+
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Data</th>
-        <th>Categoria</th>
-        <th>Tipo</th>
-        <th>Valor</th>
-        <th>Observação</th>
-      </tr>
-    </thead>
-    <tbody id="tbody"></tbody>
-  </table>
 </div>
 
 <script>
-const params = new URLSearchParams(location.search);
-const perfil = params.get("perfil");
+const KEY="fluxopro_v11";
 
-const db = JSON.parse(localStorage.getItem("fluxopro_db")||"{}");
-
-const dados = db?.profiles?.[perfil]?.lancamentos || [];
-const info  = db?.profiles?.[perfil]?.info || {};
-
-let totalEnt = 0;
-let totalSai = 0;
-
-dados.forEach(l=>{
-  if(l.tipo==="Entrada") totalEnt+=Number(l.valor||0);
-  if(l.tipo==="Saída")   totalSai+=Number(l.valor||0);
-});
-
-document.getElementById("perfilInfo").innerHTML = `
-<b>Perfil:</b> ${perfil}<br>
-<b>Nome / Razão social:</b> ${info.nome||""}<br>
-<b>Documento:</b> ${info.doc||""}
-`;
-
-document.getElementById("ent").innerText = money(totalEnt);
-document.getElementById("sai").innerText = money(totalSai);
-document.getElementById("res").innerText = money(totalEnt-totalSai);
-
-const tbody = document.getElementById("tbody");
-
-dados.forEach(l=>{
-  const tr = document.createElement("tr");
-  tr.innerHTML = `
-    <td>${l.data||""}</td>
-    <td>${l.cat||""}</td>
-    <td>${l.tipo||""}</td>
-    <td>${money(l.valor||0)}</td>
-    <td>${l.obs||""}</td>
-  `;
-  tbody.appendChild(tr);
-});
-
-function money(v){
-  return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+function loadDB(){
+  return JSON.parse(localStorage.getItem(KEY));
 }
 
-/* ---------------- PDF bonito ---------------- */
+function money(v){
+  return new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0);
+}
+
+const db=loadDB();
+if(!db){ alert("Base vazia."); throw ""; }
+
+const url=new URLSearchParams(location.search);
+const perfil=url.get("perfil") || db.active;
+
+const dados=db.profiles[perfil]||[];
+const info=db.profileInfo?.[perfil]||{};
+
+perfilTitulo.innerText="Perfil: "+perfil;
+
+perfilDados.innerHTML=`
+<strong>Nome:</strong> ${info.nome||""}<br>
+<strong>Documento:</strong> ${info.doc||""}
+`;
+
+dataGeracao.innerText="Gerado em: "+new Date().toLocaleString("pt-BR");
+
+let totalEnt=0,totalSai=0;
+
+dados.forEach(l=>{
+  if(l.tipo==="Entrada") totalEnt+=l.valor||0;
+  else totalSai+=l.valor||0;
+});
+
+ent.innerText=money(totalEnt);
+sai.innerText=money(totalSai);
+res.innerText=money(totalEnt-totalSai);
+
+tb.innerHTML=dados.map(l=>`
+<tr>
+<td>${l.data||""}</td>
+<td>${l.cat||""}</td>
+<td>
+  <span class="${l.tipo==="Entrada"?"badge-ent":"badge-sai"}">
+    ${l.tipo}
+  </span>
+</td>
+<td>${money(l.valor)}</td>
+<td>${l.obs||""}</td>
+</tr>
+`).join("");
+
+/* ================== EXCEL FORMATADO ================== */
+
+function exportExcel(){
+
+  const rows=dados.map(l=>({
+    Data:l.data||"",
+    Categoria:l.cat||"",
+    Tipo:l.tipo,
+    Valor:l.valor||0,
+    Observacao:l.obs||""
+  }));
+
+  const ws=XLSX.utils.json_to_sheet(rows);
+
+  ws["!cols"]=[
+    {wch:12},
+    {wch:20},
+    {wch:10},
+    {wch:14},
+    {wch:35}
+  ];
+
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Relatorio");
+
+  XLSX.writeFile(wb,`fluxopro_${perfil}.xlsx`);
+}
+
+/* ================== PDF COM LAYOUT ================== */
 
 function exportPDF(){
+  const { jsPDF }=window.jspdf;
+  const doc=new jsPDF("p","mm","a4");
 
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
+  let y=15;
 
-  doc.setFillColor(37,99,235);
-  doc.rect(0,0,210,28,"F");
-
-  doc.setTextColor(255,255,255);
   doc.setFontSize(16);
-  doc.text("FluxoPro – Relatório Financeiro",10,18);
-
-  doc.setTextColor(0,0,0);
-
-  let y=40;
-
-  doc.setFillColor(241,245,249);
-  doc.roundedRect(10,y-8,190,28,4,4,"F");
+  doc.text("Relatório FluxoPro",10,y); y+=8;
 
   doc.setFontSize(11);
-  doc.text(`Perfil: ${perfil}`,14,y); y+=6;
-  doc.text(`Nome: ${info.nome||""}`,14,y); y+=6;
-  doc.text(`Documento: ${info.doc||""}`,14,y);
+  doc.text(`Perfil: ${perfil}`,10,y); y+=6;
+  doc.text(`Nome: ${info.nome||""}`,10,y); y+=6;
+  doc.text(`Documento: ${info.doc||""}`,10,y); y+=6;
 
-  y+=16;
+  y+=4;
 
-  doc.autoTable({
-    startY:y,
-    head:[["Entradas","Saídas","Resultado"]],
-    body:[[money(totalEnt),money(totalSai),money(totalEnt-totalSai)]],
-    theme:"grid",
-    headStyles:{fillColor:[37,99,235]},
-    styles:{halign:"center"}
-  });
+  doc.text(`Entradas: ${money(totalEnt)}`,10,y); y+=6;
+  doc.text(`Saídas: ${money(totalSai)}`,10,y); y+=6;
+  doc.text(`Resultado: ${money(totalEnt-totalSai)}`,10,y); y+=10;
 
-  y = doc.lastAutoTable.finalY + 10;
+  doc.setFontSize(10);
+  doc.text("Data",10,y);
+  doc.text("Categoria",35,y);
+  doc.text("Tipo",85,y);
+  doc.text("Valor",105,y);
+  doc.text("Obs",135,y);
 
-  doc.autoTable({
-    startY:y,
-    head:[["Data","Categoria","Tipo","Valor","Observação"]],
-    body:dados.map(l=>[
-      l.data||"",
-      l.cat||"",
-      l.tipo||"",
-      money(l.valor||0),
-      l.obs||""
-    ]),
-    theme:"striped",
-    headStyles:{fillColor:[37,99,235],textColor:255},
-    alternateRowStyles:{fillColor:[241,245,249]},
-    styles:{fontSize:9}
+  y+=6;
+
+  dados.forEach(l=>{
+    if(y>280){
+      doc.addPage();
+      y=15;
+    }
+
+    doc.text(String(l.data||""),10,y);
+    doc.text(String(l.cat||""),35,y);
+    doc.text(String(l.tipo),85,y);
+    doc.text(money(l.valor),105,y);
+    doc.text(String(l.obs||"").substring(0,30),135,y);
+
+    y+=6;
   });
 
   doc.save(`fluxopro_${perfil}.pdf`);
 }
-
-/* ---------------- Excel organizado ---------------- */
-
-function exportExcel(){
-
-  const rows = [];
-
-  rows.push(["FluxoPro – Relatório Financeiro"]);
-  rows.push([]);
-  rows.push(["Perfil",perfil]);
-  rows.push(["Nome / Razão social",info.nome||""]);
-  rows.push(["Documento",info.doc||""]);
-  rows.push([]);
-  rows.push(["Entradas",totalEnt]);
-  rows.push(["Saídas",totalSai]);
-  rows.push(["Resultado",totalEnt-totalSai]);
-  rows.push([]);
-  rows.push(["Data","Categoria","Tipo","Valor","Observação"]);
-
-  dados.forEach(l=>{
-    rows.push([l.data||"",l.cat||"",l.tipo||"",Number(l.valor||0),l.obs||""]);
-  });
-
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-
-  ws["!cols"]=[
-    {wch:12},{wch:22},{wch:14},{wch:14},{wch:35}
-  ];
-
-  ws["!merges"]=[{s:{r:0,c:0},e:{r:0,c:4}}];
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,"Relatório");
-
-  XLSX.writeFile(wb,`fluxopro_${perfil}.xlsx`);
-}
 </script>
+
 </body>
 </html>
