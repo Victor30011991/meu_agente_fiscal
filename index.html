@@ -3,130 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FluxoPro Brasil | ERP Enterprise</title>
+    <title>FluxoPro Brasil | Enterprise v3.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body data-theme="default">
+<body>
 
-<header class="app-header">
-    <div class="container header-grid">
-        <div class="brand-area">
-            <img id="display-logo" src="" style="display:none; height:40px;">
-            <h1 id="app-title">FluxoPro <span>Brasil</span></h1>
-        </div>
-        <nav class="main-nav">
-            <button onclick="switchTab('config')" id="btn-config" class="nav-btn active">Configurações</button>
-            <button onclick="switchTab('list')" id="btn-list" class="nav-btn">Lançamentos</button>
-            <button onclick="switchTab('dash')" id="btn-dash" class="nav-btn">Dashboards</button>
+<header class="navbar">
+    <div class="container flex-nav">
+        <div class="logo">FluxoPro <span>Brasil</span></div>
+        <nav>
+            <button onclick="switchTab('list')" class="nav-item active" id="btn-list">Lançamentos</button>
+            <button onclick="switchTab('dash')" class="nav-item" id="btn-dash">Analytics</button>
+            <button onclick="switchTab('config')" class="nav-item" id="btn-config">Sistema</button>
         </nav>
     </div>
 </header>
 
 <main class="container">
-    <section id="tab-config" class="tab-content active">
-        <div class="grid-2">
-            <div class="card">
-                <h3>Perfil e Branding</h3>
-                <div class="form-group">
-                    <label>Logo da Empresa</label>
-                    <input type="file" id="logo-upload" accept="image/*" onchange="handleLogo(this)">
-                </div>
-                <div class="form-group">
-                    <label>Nome / Razão Social</label>
-                    <input type="text" id="conf-nome" placeholder="Nome da Empresa">
-                </div>
-                <div class="form-group">
-                    <label>Tema do Sistema</label>
-                    <select id="theme-select" onchange="setTheme(this.value)">
-                        <option value="default">Indigo Light</option>
-                        <option value="dark">Deep Night</option>
-                        <option value="emerald">Business Emerald</option>
-                    </select>
-                </div>
-                <button class="btn btn-primary" onclick="saveConfig()">Salvar Alterações</button>
-            </div>
-            <div class="card">
-                <h3>Importação de Dados</h3>
-                <p>Arraste seu arquivo JSON ou Excel para alimentar o sistema.</p>
-                <input type="file" id="universal-import" accept=".json, .xlsx">
-                <hr>
-                <button class="btn btn-danger" onclick="clearAllData()">Limpar Todo o Sistema</button>
+    <section id="tab-list" class="tab-pane active">
+        <div class="toolbar">
+            <button class="btn btn-main" onclick="openModal('entry-modal')">+ Lançar Manual</button>
+            <div class="upload-zone" id="drop-zone">
+                <span>Arraste ou clique para importar (JSON/Excel/Save)</span>
+                <input type="file" id="file-input" hidden accept=".json,.xlsx">
             </div>
         </div>
-    </section>
-
-    <section id="tab-list" class="tab-content">
-        <div class="action-bar">
-            <button class="btn btn-primary" onclick="openModal('modal-entry')">+ Novo Registro</button>
-            <div class="filters">
-                <select id="filter-dest" onchange="renderTable()">
-                    <option value="todos">Todas Contas</option>
-                    <option value="Pessoal">Pessoal</option>
-                    <option value="Empresa">Empresarial</option>
-                </select>
-                <button class="btn btn-sec" onclick="openExportModal()">Exportar Relatórios</button>
-            </div>
-        </div>
-        <div class="card table-container">
-            <table id="main-table">
+        <div class="table-card">
+            <table id="data-table">
                 <thead>
-                    <tr><th>Data</th><th>Conta</th><th>Categoria</th><th>Valor</th><th>Ações</th></tr>
+                    <tr><th>Data</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Ação</th></tr>
                 </thead>
                 <tbody id="table-body"></tbody>
             </table>
         </div>
     </section>
 
-    <section id="tab-dash" class="tab-content">
-        <div class="dashboard-grid">
-            <div class="card chart-card">
-                <h3>Resumo Operacional</h3>
-                <canvas id="chartGeral"></canvas>
+    <section id="tab-dash" class="tab-pane">
+        <div class="dashboard-container">
+            <div class="chart-box">
+                <header><h3>Distribuição de Gastos</h3><small>(Pizza)</small></header>
+                <div class="canvas-wrapper"><canvas id="chartPie"></canvas></div>
             </div>
-            <div class="card chart-card">
-                <h3>Saúde Fiscal MEI</h3>
-                <div id="mei-alert-container"></div>
-                <canvas id="chartMei"></canvas>
+            <div class="chart-box">
+                <header><h3>Desempenho de Ganhos</h3><small>(Réguas Mensais)</small></header>
+                <div class="canvas-wrapper"><canvas id="chartBars"></canvas></div>
             </div>
-            <div class="card chart-card">
-                <h3>Distribuição de Gastos</h3>
-                <canvas id="chartCats"></canvas>
+            <div class="chart-box">
+                <header><h3>Ranking de Despesas %</h3><small>(Top Categorias)</small></header>
+                <div class="canvas-wrapper"><canvas id="chartRanking"></canvas></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="tab-config" class="tab-pane">
+        <div class="config-grid">
+            <div class="card">
+                <h3>Exportar Dados (Save Game)</h3>
+                <p>Descarregue o ficheiro para alimentar o sistema futuramente.</p>
+                <button class="btn btn-sec" onclick="exportData('json')">Download .JSON (Save)</button>
+                <button class="btn btn-sec" onclick="exportData('xlsx')">Download .XLSX</button>
+            </div>
+            <div class="card">
+                <h3>Configurações de Exibição</h3>
+                <label>Moeda</label>
+                <select><option>BRL (R$)</option></select>
             </div>
         </div>
     </section>
 </main>
 
-<div id="modal-entry" class="modal">
-    <div class="modal-content">
+<div class="modal" id="entry-modal">
+    <div class="modal-body">
         <h3>Novo Lançamento</h3>
-        <form id="entry-form">
-            <input type="date" id="f-date" required>
-            <select id="f-tipo"><option value="Entrada">Entrada</option><option value="Saída">Saída</option></select>
-            <select id="f-dest"><option value="Empresa">Empresarial (CNPJ)</option><option value="Pessoal">Pessoal (CPF)</option></select>
-            <input type="number" id="f-valor" step="0.01" placeholder="R$ 0,00" required>
-            <input type="text" id="f-cat" placeholder="Categoria">
-            <button type="submit" class="btn btn-primary">Confirmar</button>
-            <button type="button" class="btn" onclick="closeModal('modal-entry')">Cancelar</button>
+        <form id="form-entry">
+            <input type="date" id="date" required>
+            <input type="text" id="cat" placeholder="Categoria (Ex: Marketing)" required>
+            <select id="type">
+                <option value="Entrada">Ganhos (+)</option>
+                <option value="Saída">Gastos (-)</option>
+            </select>
+            <input type="number" id="val" step="0.01" placeholder="Valor R$" required>
+            <div class="modal-footer">
+                <button type="button" class="btn" onclick="closeModal('entry-modal')">Cancelar</button>
+                <button type="submit" class="btn btn-main">Confirmar</button>
+            </div>
         </form>
     </div>
 </div>
 
-<div id="modal-export" class="modal">
-    <div class="modal-content">
-        <h3>Exportar Relatório Gerencial</h3>
-        <p>Selecione o formato para baixar seus dados consolidados.</p>
-        <div class="grid-2">
-            <button class="btn btn-primary" onclick="exportData('pdf')">PDF Profissional</button>
-            <button class="btn btn-primary" onclick="exportData('excel')">Excel Consolidado</button>
-        </div>
-        <button class="btn btn-block" onclick="closeModal('modal-export')">Fechar</button>
-    </div>
-</div>
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
