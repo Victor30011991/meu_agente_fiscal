@@ -4,81 +4,147 @@
 <meta charset="UTF-8">
 <title>FluxoPro – Importação</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <style>
 body{font-family:Inter;background:#f5f7fb;margin:0}
 .container{max-width:900px;margin:auto;padding:30px}
 table{width:100%;border-collapse:collapse}
-th,td{padding:8px;border-bottom:1px solid #ddd}
-button{padding:10px 14px;border:0;border-radius:8px;font-weight:700}
+th,td{padding:8px;border-bottom:1px solid #ddd;font-size:14px}
+button{padding:10px 14px;border:0;border-radius:8px;font-weight:700;cursor:pointer}
 </style>
 </head>
 <body>
 
 <div class="container">
+
 <h2>Importação assistida</h2>
-<input type="file" id="file"><br><br>
-<button onclick="confirmar()">Importar no perfil ativo</button>
+
+<input type="file" id="file" accept=".xlsx,.xls"><br><br>
+
+<button onclick="confirmar()">Importar no perfil</button>
+
+<br><br>
 
 <table>
 <thead>
 <tr>
-<th>Data</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Observação</th>
+<th>Data</th>
+<th>Categoria</th>
+<th>Tipo</th>
+<th>Valor</th>
+<th>Observação</th>
 </tr>
 </thead>
 <tbody id="tb"></tbody>
 </table>
+
 </div>
 
 <script>
-const KEY="fluxopro_v11";
-let buffer=[];
+const KEY = "fluxopro_v11";
 
-function normalizeValue(v){
-  let s=String(v||"").replace(/[^\d.,-]/g,"").replace(",",".");
-  let n=parseFloat(s);
-  return isNaN(n)?null:n;
+const params = new URLSearchParams(window.location.search);
+let perfil = params.get("perfil");
+
+let buffer = [];
+
+let db = JSON.parse(localStorage.getItem(KEY));
+
+if(!db || !db.profiles){
+  alert("Base não encontrada.");
+  throw new Error("DB inválida");
 }
 
-file.onchange=()=>{
-  const r=new FileReader();
-  r.onload=e=>{
-    const wb=XLSX.read(e.target.result,{type:"binary"});
-    const data=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+if(!perfil){
+  perfil = db.active;
+}
 
-    buffer=data.map(l=>({
-      data:l.Data||"",
-      cat:l.Categoria||"",
-      tipo:l.Tipo||"Entrada",
-      valor:normalizeValue(l.Valor),
-      obs:l.Observacao||l.Observação||""
-    })).filter(l=>l.valor!==null);
+if(!db.profiles[perfil]){
+  alert("Perfil não encontrado.");
+  throw new Error("Perfil inválido");
+}
+
+function normalizeValue(v){
+  if(v === null || v === undefined) return null;
+
+  if(typeof v === "number") return v;
+
+  let s = String(v)
+    .replace(/[^\d,.-]/g,"")
+    .replace(",", ".");
+
+  let n = parseFloat(s);
+  return isNaN(n) ? null : n;
+}
+
+file.onchange = () => {
+
+  const reader = new FileReader();
+
+  reader.onload = e => {
+
+    const wb = XLSX.read(e.target.result, {type:"binary"});
+
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+
+    const data = XLSX.utils.sheet_to_json(sheet,{defval:""});
+
+    buffer = data
+      .filter(l => l.Tipo && l.Valor !== "")
+      .map(l => ({
+        data: l.Data || "",
+        cat: l.Categoria || "",
+        tipo: l.Tipo || "Entrada",
+        valor: normalizeValue(l.Valor),
+        obs: l.Observacao || l.Observação || ""
+      }))
+      .filter(l => l.valor !== null);
 
     render();
   };
-  r.readAsBinaryString(file.files[0]);
+
+  reader.readAsBinaryString(file.files[0]);
 };
 
 function render(){
-  tb.innerHTML=buffer.map(l=>`
-<tr>
-<td>${l.data}</td>
-<td>${l.cat}</td>
-<td>${l.tipo}</td>
-<td>${l.valor}</td>
-<td>${l.obs}</td>
-</tr>`).join("");
+
+  tb.innerHTML = buffer.map(l=>`
+  <tr>
+    <td>${l.data}</td>
+    <td>${l.cat}</td>
+    <td>${l.tipo}</td>
+    <td>${l.valor}</td>
+    <td>${l.obs}</td>
+  </tr>
+  `).join("");
+
 }
 
 function confirmar(){
-  const db=JSON.parse(localStorage.getItem(KEY));
+
+  if(!buffer.length){
+    alert("Nenhum lançamento válido encontrado.");
+    return;
+  }
+
   buffer.forEach(l=>{
-    db.profiles[db.active].push({id:crypto.randomUUID(),...l});
+    db.profiles[perfil].push({
+      id: crypto.randomUUID(),
+      ...l
+    });
   });
-  localStorage.setItem(KEY,JSON.stringify(db));
-  alert("Importação concluída.");
+
+  localStorage.setItem(KEY, JSON.stringify(db));
+
+  alert("Importação concluída com sucesso.");
+
   window.close();
 }
 </script>
+
 </body>
 </html>
