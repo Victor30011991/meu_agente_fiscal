@@ -1,593 +1,529 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <title>FluxoPro Engine v11</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <style>
 :root{
-  --bg:#f6f7fb;
-  --card:#ffffff;
-  --text:#1f2937;
-  --primary:#4f46e5;
-  --success:#10b981;
-  --danger:#ef4444;
-  --border:#e5e7eb;
-  --shadow:0 10px 30px rgba(0,0,0,.08);
+--bg:#f4f6fb;
+--card:#ffffff;
+--primary:#4f46e5;
+--danger:#ef4444;
+--success:#22c55e;
+--text:#0f172a;
+--muted:#64748b;
+--radius:14px;
 }
 
-[data-theme="dark"]{
-  --bg:#0f172a;
-  --card:#1e293b;
-  --text:#f8fafc;
-  --border:#334155;
-  --primary:#38bdf8;
-}
-
-[data-theme="gold"]{--primary:#b45309;}
-[data-theme="emerald"]{--primary:#059669;}
-[data-theme="indigo"]{--primary:#4f46e5;}
-[data-theme="rose"]{--primary:#e11d48;}
-
-*{box-sizing:border-box}
 body{
-  margin:0;
-  font-family:Inter, sans-serif;
-  background:var(--bg);
-  color:var(--text);
+margin:0;
+font-family:Inter,system-ui;
+background:var(--bg);
+color:var(--text);
 }
 
 header{
-  position:sticky;top:0;
-  background:var(--card);
-  box-shadow:var(--shadow);
-  z-index:10;
+background:#fff;
+padding:14px 24px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+box-shadow:0 6px 18px rgba(0,0,0,.05);
+position:sticky;
+top:0;
+z-index:10;
 }
 
-.top{
-  max-width:1200px;
-  margin:auto;
-  padding:12px 20px;
-  display:flex;
-  gap:15px;
-  align-items:center;
-  justify-content:space-between;
+nav button{
+border:none;
+background:#eee;
+padding:10px 18px;
+border-radius:12px;
+cursor:pointer;
+font-weight:600;
 }
 
-.logo{
-  font-weight:800;
-  font-size:20px;
+nav button.active{
+background:var(--primary);
+color:#fff;
 }
 
-select,button,input{
-  font-family:inherit;
-}
-
-main{
-  max-width:1200px;
-  margin:auto;
-  padding:20px;
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-  gap:20px;
+.container{
+padding:24px;
+max-width:1400px;
+margin:auto;
 }
 
 .card{
-  background:var(--card);
-  border-radius:16px;
-  padding:18px;
-  box-shadow:var(--shadow);
+background:var(--card);
+border-radius:var(--radius);
+padding:18px;
+box-shadow:0 12px 30px rgba(15,23,42,.05);
+margin-bottom:20px;
 }
 
-h3{margin-top:0}
-
-.toolbar{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-bottom:12px;
+.controls{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
 }
 
-button{
-  border:none;
-  padding:10px 14px;
-  border-radius:10px;
-  cursor:pointer;
-  font-weight:600;
+button.primary{
+background:var(--primary);
+color:#fff;
+border:none;
+padding:10px 16px;
+border-radius:10px;
+cursor:pointer;
 }
 
-.primary{background:var(--primary);color:white;}
-.sec{background:#e5e7eb;}
+button.soft{
+background:#eee;
+border:none;
+padding:10px 16px;
+border-radius:10px;
+cursor:pointer;
+}
 
 table{
-  width:100%;
-  border-collapse:collapse;
-  background:var(--card);
-  border-radius:12px;
-  overflow:hidden;
+width:100%;
+border-collapse:collapse;
+font-size:14px;
 }
 
 th,td{
-  padding:10px;
-  border-bottom:1px solid var(--border);
-  font-size:14px;
+padding:10px;
+border-bottom:1px solid #e5e7eb;
+}
+
+th{
+background:#f8fafc;
+text-align:left;
 }
 
 td[contenteditable]{
-  outline:none;
+background:#f8fafc;
+border-radius:6px;
 }
 
-.badge-in{color:var(--success);font-weight:700}
-.badge-out{color:var(--danger);font-weight:700}
-
-.tabs button.active{
-  background:var(--primary);
-  color:white;
+.badge{
+padding:6px 12px;
+border-radius:999px;
+font-weight:600;
+font-size:12px;
+display:inline-block;
 }
 
-.hidden{display:none}
+.entrada{background:#dcfce7;color:#166534;}
+.saida{background:#fee2e2;color:#991b1b;}
 
-.health{
-  font-size:14px;
-  line-height:1.4;
+.flex{
+display:flex;
+gap:16px;
+flex-wrap:wrap;
 }
+
+.card-mini{
+flex:1;
+min-width:220px;
+padding:16px;
+border-radius:14px;
+background:#fff;
+box-shadow:0 8px 20px rgba(0,0,0,.05);
+}
+
+select,input{
+padding:8px 10px;
+border-radius:8px;
+border:1px solid #e5e7eb;
+}
+
+.theme-dark{--bg:#020617;--card:#020617;color:#fff;}
+.theme-gold{--primary:#d4af37;}
+.theme-emerald{--primary:#059669;}
+.theme-indigo{--primary:#4f46e5;}
+.theme-rose{--primary:#e11d48;}
 </style>
 </head>
-<body data-theme="indigo">
+<body>
 
 <header>
-  <div class="top">
-    <div class="logo">FluxoPro Engine v11</div>
+<strong>FluxoPro Engine v11</strong>
 
-    <div>
-      <select id="perfilSelect"></select>
-      <button id="novoPerfil">+</button>
-    </div>
-
-    <div class="tabs">
-      <button data-tab="lanc" class="active">Lançamentos</button>
-      <button data-tab="dash">Dashboard</button>
-      <button data-tab="cfg">Configurações</button>
-    </div>
-  </div>
-</header>
-
-<main>
-
-<section id="tab-lanc">
-
-<div class="toolbar">
-  <button class="primary" id="btnNovo">Novo lançamento</button>
-  <input type="file" id="fileInput">
-  <button class="sec" id="btnImport">Alimentar perfil</button>
+<div class="controls">
+<select id="profileSelect"></select>
+<button class="soft" onclick="addProfile()">+</button>
 </div>
 
+<nav>
+<button onclick="showTab('lancamentos')" class="active">Lançamentos</button>
+<button onclick="showTab('dashboard')">Dashboard</button>
+<button onclick="showTab('config')">Configurações</button>
+</nav>
+</header>
+
+<div class="container">
+
+<!-- ================= LANCAMENTOS ================= -->
+
+<div id="tab-lancamentos">
+
+<div class="card controls">
+<button class="primary" onclick="novoLancamento()">Novo lançamento</button>
+<input type="file" id="fileInput">
+<button class="soft" onclick="importarArquivo()">Alimentar perfil</button>
+</div>
+
+<div class="card">
 <table>
 <thead>
 <tr>
-<th>Data</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th></th>
+<th>Pessoa (CPF/CNPJ)</th>
+<th>Data</th>
+<th>Categoria</th>
+<th>Tipo</th>
+<th>Valor</th>
+<th>Observação</th>
+<th>Editar</th>
+<th>Apagar</th>
 </tr>
 </thead>
 <tbody id="tbody"></tbody>
 </table>
-
-</section>
-
-<section id="tab-dash" class="hidden">
-
-<div class="grid">
-  <div class="card">
-    <h3>Resumo</h3>
-    <div>Entradas: <b id="rEnt"></b></div>
-    <div>Saídas: <b id="rSai"></b></div>
-    <div>Saldo: <b id="rSaldo"></b></div>
-  </div>
-
-  <div class="card">
-    <h3>Saúde financeira</h3>
-    <div id="healthText" class="health"></div>
-  </div>
-
-  <div class="card">
-    <canvas id="pizza"></canvas>
-  </div>
-
-  <div class="card">
-    <canvas id="barras"></canvas>
-  </div>
 </div>
 
-</section>
-
-<section id="tab-cfg" class="hidden">
-
-<div class="grid">
-  <div class="card">
-    <h3>Tema</h3>
-    <select id="temaSel">
-      <option value="indigo">Indigo</option>
-      <option value="dark">Dark</option>
-      <option value="gold">Gold</option>
-      <option value="emerald">Emerald</option>
-      <option value="rose">Rose</option>
-    </select>
-  </div>
-
-  <div class="card">
-    <h3>Banco global</h3>
-    <button id="backup" class="primary">Backup Excel</button>
-    <button id="reset" class="sec">Reset de fábrica</button>
-  </div>
+<div class="card flex">
+<div class="card-mini">
+<strong>Total Entradas</strong>
+<h3 id="totalEntradas">R$ 0,00</h3>
+</div>
+<div class="card-mini">
+<strong>Total Saídas</strong>
+<h3 id="totalSaidas">R$ 0,00</h3>
+</div>
+<div class="card-mini">
+<strong>Resultado</strong>
+<h3 id="resultado">R$ 0,00</h3>
+</div>
 </div>
 
-</section>
+</div>
 
-</main>
+<!-- ================= DASHBOARD ================= -->
+
+<div id="tab-dashboard" style="display:none">
+
+<div class="card flex">
+<div class="card-mini">
+<strong>Saúde Financeira</strong>
+<p id="saude"></p>
+</div>
+</div>
+
+<div class="card">
+<canvas id="chart"></canvas>
+</div>
+
+</div>
+
+<!-- ================= CONFIG ================= -->
+
+<div id="tab-config" style="display:none">
+
+<div class="card">
+
+<h3>Painel de Controle</h3>
+
+<div class="controls">
+<select onchange="setTheme(this.value)">
+<option value="">Tema padrão</option>
+<option value="theme-dark">Dark</option>
+<option value="theme-gold">Gold</option>
+<option value="theme-emerald">Emerald</option>
+<option value="theme-indigo">Indigo</option>
+<option value="theme-rose">Rose</option>
+</select>
+
+<button class="soft" onclick="exportarTudo()">Backup global</button>
+<button class="soft" onclick="resetar()">Reset de fábrica</button>
+</div>
+
+</div>
+
+</div>
+
+</div>
 
 <script>
-const FluxoPro = (()=>{
+const DB_KEY="fluxopro_v11";
+let chart;
 
-const KEYS={
-  db:'fpro_v11_db',
-  perfis:'fpro_v11_perfis',
-  ativo:'fpro_v11_ativo',
-  cfg:'fpro_v11_cfg'
-};
-
-const state={
-  db:JSON.parse(localStorage.getItem(KEYS.db))||[],
-  perfis:JSON.parse(localStorage.getItem(KEYS.perfis))||[],
-  ativo:localStorage.getItem(KEYS.ativo)||'',
-  cfg:JSON.parse(localStorage.getItem(KEYS.cfg))||{tema:'indigo'}
-};
-
-if(!state.ativo && state.perfis.length)
-  state.ativo=state.perfis[0];
-
-let chartPizza, chartBarras;
-
-/* ===================== utils ====================== */
-
-function uuid(){
-  return crypto.randomUUID();
+function loadDB(){
+return JSON.parse(localStorage.getItem(DB_KEY) || '{"profiles":{},"theme":""}');
+}
+function saveDB(db){
+localStorage.setItem(DB_KEY,JSON.stringify(db));
 }
 
-function normalize(v){
-  if(typeof v==='number') return v;
-
-  let s=String(v).trim();
-
-  s=s.replace(/[R$\s]/g,'');
-  if(s.includes('.') && s.includes(',')){
-    if(s.lastIndexOf(',')>s.lastIndexOf('.')){
-      s=s.replace(/\./g,'').replace(',','.');
-    }else{
-      s=s.replace(/,/g,'');
-    }
-  }else if(s.includes(',')){
-    s=s.replace(',','.');
-  }
-
-  const n=parseFloat(s);
-  return isNaN(n)?null:n;
+function currentProfile(){
+return document.getElementById("profileSelect").value;
 }
 
-function money(v){
-  return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v);
+function normalizeValue(v){
+if(v===undefined||v===null)return 0;
+let s=String(v).replace(/[R$\s]/g,'');
+if(s.includes(",") && s.includes(".")){
+if(s.lastIndexOf(",")>s.lastIndexOf(".")){
+s=s.replace(/\./g,"").replace(",",".");
+}else{
+s=s.replace(/,/g,"");
+}
+}else{
+s=s.replace(",",".");
+}
+let n=parseFloat(s);
+return isNaN(n)?null:n;
 }
 
-function save(){
-  localStorage.setItem(KEYS.db,JSON.stringify(state.db));
-  localStorage.setItem(KEYS.perfis,JSON.stringify(state.perfis));
-  localStorage.setItem(KEYS.ativo,state.ativo);
-  localStorage.setItem(KEYS.cfg,JSON.stringify(state.cfg));
+function renderProfiles(){
+let db=loadDB();
+let sel=document.getElementById("profileSelect");
+sel.innerHTML="";
+Object.keys(db.profiles).forEach(p=>{
+let o=document.createElement("option");
+o.value=p;
+o.textContent=p;
+sel.appendChild(o);
+});
+if(sel.options.length) sel.value=sel.options[0].value;
+renderTable();
 }
 
-/* ===================== dados ====================== */
-
-function list(){
-  return state.db.filter(l=>l.perfil===state.ativo)
-    .sort((a,b)=>new Date(b.data)-new Date(a.data));
+function addProfile(){
+let nome=prompt("CPF / CNPJ / Identificador:");
+if(!nome) return;
+let db=loadDB();
+db.profiles[nome]=[];
+saveDB(db);
+renderProfiles();
 }
 
-/* ===================== UI ====================== */
+document.getElementById("profileSelect").addEventListener("change",renderTable);
 
-const tbody=document.getElementById('tbody');
+function novoLancamento(){
+let db=loadDB();
+db.profiles[currentProfile()].push({
+pessoa:"",
+data:"",
+categoria:"",
+tipo:"Entrada",
+valor:0,
+obs:""
+});
+saveDB(db);
+renderTable();
+}
 
 function renderTable(){
-  const dados=list();
-  if(!dados.length){
-    tbody.innerHTML='<tr><td colspan="5">Sem dados</td></tr>';
-    return;
-  }
+let db=loadDB();
+let list=db.profiles[currentProfile()]||[];
+let tbody=document.getElementById("tbody");
+tbody.innerHTML="";
+let frag=document.createDocumentFragment();
 
-  let html='';
-  for(const l of dados){
-    html+=`
-    <tr data-id="${l.id}">
-      <td contenteditable data-f="data">${l.data}</td>
-      <td contenteditable data-f="cat">${l.cat}</td>
-      <td><button class="tipo ${l.tipo==='Entrada'?'badge-in':'badge-out'}">${l.tipo}</button></td>
-      <td contenteditable data-f="valor">${money(l.valor)}</td>
-      <td><button class="del">🗑️</button></td>
-    </tr>`;
-  }
-  tbody.innerHTML=html;
-}
+list.forEach((r,i)=>{
+let tr=document.createElement("tr");
 
-function renderResumo(){
-  let ent=0,sai=0;
-  list().forEach(l=>{
-    if(l.tipo==='Entrada') ent+=l.valor;
-    else sai+=l.valor;
-  });
+tr.innerHTML=`
+<td contenteditable data-f="pessoa">${r.pessoa||""}</td>
+<td contenteditable data-f="data">${r.data||""}</td>
+<td contenteditable data-f="categoria">${r.categoria||""}</td>
+<td data-f="tipo">
+<span class="badge ${r.tipo==="Entrada"?"entrada":"saida"}">${r.tipo}</span>
+</td>
+<td contenteditable data-f="valor">R$ ${Number(r.valor).toFixed(2).replace(".",",")}</td>
+<td contenteditable data-f="obs">${r.obs||""}</td>
+<td><button class="soft" onclick="toggleTipo(${i})">Editar</button></td>
+<td><button class="soft" onclick="remover(${i})">🗑</button></td>
+`;
 
-  const saldo=ent-sai;
-
-  rEnt.textContent=money(ent);
-  rSai.textContent=money(sai);
-  rSaldo.textContent=money(saldo);
-  rSaldo.style.color=saldo<0?'var(--danger)':'var(--success)';
-
-  renderHealth(ent,sai);
-}
-
-function renderHealth(ent,sai){
-  let txt='';
-  if(ent===0 && sai===0){
-    txt='Sem dados suficientes para análise.';
-  }else{
-    const p=sai/(ent||1)*100;
-
-    if(p<60){
-      txt='Situação saudável. Seus gastos estão bem controlados.';
-    }else if(p<85){
-      txt='Atenção: seus gastos estão se aproximando da sua renda.';
-    }else{
-      txt='Risco financeiro. Suas saídas estão comprometendo sua renda.';
-    }
-
-    txt+=`<br><small>Comprometimento: ${p.toFixed(1)}%</small>`;
-  }
-  healthText.innerHTML=txt;
-}
-
-function renderCharts(){
-  const dados=list();
-
-  const map={};
-  dados.filter(l=>l.tipo==='Saída')
-    .forEach(l=>map[l.cat]=(map[l.cat]||0)+l.valor);
-
-  const labels=Object.keys(map);
-  const values=Object.values(map);
-
-  if(chartPizza) chartPizza.destroy();
-  chartPizza=new Chart(pizza,{
-    type:'doughnut',
-    data:{labels,datasets:[{data:values}]},
-    options:{responsive:true}
-  });
-
-  const meses=Array(12).fill(0);
-  dados.filter(l=>l.tipo==='Entrada')
-    .forEach(l=>{
-      const m=new Date(l.data).getMonth();
-      meses[m]+=l.valor;
-    });
-
-  if(chartBarras) chartBarras.destroy();
-  chartBarras=new Chart(barras,{
-    type:'bar',
-    data:{
-      labels:['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],
-      datasets:[{data:meses}]
-    },
-    options:{responsive:true}
-  });
-}
-
-function renderPerfis(){
-  perfilSelect.innerHTML=state.perfis
-    .map(p=>`<option ${p===state.ativo?'selected':''}>${p}</option>`).join('');
-}
-
-/* ===================== eventos ====================== */
-
-tbody.addEventListener('click',e=>{
-  const tr=e.target.closest('tr');
-  if(!tr) return;
-  const id=tr.dataset.id;
-
-  if(e.target.classList.contains('del')){
-    state.db=state.db.filter(l=>l.id!==id);
-    save();
-    refresh();
-  }
-
-  if(e.target.classList.contains('tipo')){
-    const l=state.db.find(l=>l.id===id);
-    l.tipo=l.tipo==='Entrada'?'Saída':'Entrada';
-    save();
-    refresh();
-  }
+tr.querySelectorAll("[contenteditable]").forEach(td=>{
+td.onblur=()=>updateCell(i,td.dataset.f,td.innerText);
 });
 
-tbody.addEventListener('blur',e=>{
-  const td=e.target;
-  if(!td.dataset.f) return;
-  const tr=td.closest('tr');
-  const l=state.db.find(l=>l.id===tr.dataset.id);
-
-  if(td.dataset.f==='valor'){
-    const n=normalize(td.innerText);
-    if(n===null){
-      td.innerText=money(l.valor);
-      return;
-    }
-    l.valor=n;
-  }else{
-    l[td.dataset.f]=td.innerText.trim();
-  }
-
-  save();
-  refresh(false);
-
-},true);
-
-btnNovo.onclick=()=>{
-  if(!state.ativo){
-    alert('Crie um perfil primeiro.');
-    return;
-  }
-
-  state.db.push({
-    id:uuid(),
-    perfil:state.ativo,
-    data:new Date().toISOString().slice(0,10),
-    cat:'',
-    tipo:'Entrada',
-    valor:0
-  });
-
-  save();
-  refresh();
-};
-
-perfilSelect.onchange=e=>{
-  state.ativo=e.target.value;
-  save();
-  refresh();
-};
-
-novoPerfil.onclick=()=>{
-  const n=prompt('Nome do perfil');
-  if(!n) return;
-  state.perfis.push(n);
-  state.ativo=n;
-  save();
-  renderPerfis();
-  refresh();
-};
-
-btnImport.onclick=importFile;
-
-async function importFile(){
-  const f=fileInput.files[0];
-  if(!f) return;
-
-  if(f.name.endsWith('.json')){
-    const arr=JSON.parse(await f.text());
-    absorb(arr);
-  }else{
-    const buf=await f.arrayBuffer();
-    const wb=XLSX.read(buf,{type:'array'});
-    const ws=wb.Sheets[wb.SheetNames[0]];
-    const arr=XLSX.utils.sheet_to_json(ws);
-    absorb(arr);
-  }
-}
-
-function absorb(arr){
-  const mapCol=o=>({
-    data:o.Data||o.data||o.DATA,
-    cat:o.Categoria||o.categoria,
-    tipo:o.Tipo||o.tipo,
-    valor:o.Valor||o.valor
-  });
-
-  const batch=[];
-
-  for(const r of arr){
-    const m=mapCol(r);
-    const v=normalize(m.valor);
-    if(!m.data || !m.cat || !m.tipo || v===null) continue;
-
-    batch.push({
-      id:uuid(),
-      perfil:state.ativo,
-      data:String(m.data).slice(0,10),
-      cat:String(m.cat),
-      tipo:m.tipo==='Saída'||m.tipo==='Saida'?'Saída':'Entrada',
-      valor:v
-    });
-  }
-
-  state.db.push(...batch);
-  save();
-  refresh();
-}
-
-temaSel.onchange=e=>{
-  document.body.setAttribute('data-theme',e.target.value);
-  state.cfg.tema=e.target.value;
-  save();
-};
-
-backup.onclick=()=>{
-  const ws=XLSX.utils.json_to_sheet(state.db);
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'BancoGlobal');
-  XLSX.writeFile(wb,'FluxoPro_BancoGlobal.xlsx');
-};
-
-reset.onclick=()=>{
-  if(confirm('Apagar todos os dados?')){
-    localStorage.clear();
-    location.reload();
-  }
-};
-
-/* ===================== abas ====================== */
-
-document.querySelectorAll('.tabs button').forEach(b=>{
-  b.onclick=()=>{
-    document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
-
-    document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));
-    document.getElementById('tab-'+b.dataset.tab).classList.remove('hidden');
-
-    if(b.dataset.tab==='dash'){
-      setTimeout(()=>{
-        renderResumo();
-        renderCharts();
-      },50);
-    }
-  };
+frag.appendChild(tr);
 });
 
-/* ===================== init ====================== */
-
-function refresh(charts=true){
-  renderTable();
-  renderResumo();
-  if(charts){
-    renderCharts();
-  }
+tbody.appendChild(frag);
+calcularTotais();
+renderChart();
 }
 
-function init(){
-  document.body.setAttribute('data-theme',state.cfg.tema||'indigo');
-  temaSel.value=state.cfg.tema||'indigo';
-  renderPerfis();
-  refresh();
+function updateCell(i,field,value){
+let db=loadDB();
+let row=db.profiles[currentProfile()][i];
+
+if(field==="valor"){
+let n=normalizeValue(value);
+if(n===null){
+alert("Valor inválido");
+renderTable();
+return;
+}
+row.valor=n;
+}else{
+row[field]=value.trim();
+}
+saveDB(db);
+renderTable();
 }
 
-return{init};
+function toggleTipo(i){
+let db=loadDB();
+let r=db.profiles[currentProfile()][i];
+r.tipo = r.tipo==="Entrada"?"Saída":"Entrada";
+saveDB(db);
+renderTable();
+}
 
+function remover(i){
+let db=loadDB();
+db.profiles[currentProfile()].splice(i,1);
+saveDB(db);
+renderTable();
+}
+
+function calcularTotais(){
+let db=loadDB();
+let list=db.profiles[currentProfile()]||[];
+let ent=0, sai=0;
+
+list.forEach(r=>{
+if(r.tipo==="Entrada") ent+=Number(r.valor)||0;
+else sai+=Number(r.valor)||0;
+});
+
+document.getElementById("totalEntradas").textContent=ent.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+document.getElementById("totalSaidas").textContent=sai.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+document.getElementById("resultado").textContent=(ent-sai).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+
+let saude=document.getElementById("saude");
+if(ent===0 && sai===0) saude.textContent="Perfil sem dados.";
+else if(ent>sai) saude.textContent="Boa saúde financeira. Continue controlando os custos.";
+else saude.textContent="Atenção: suas saídas superam as entradas.";
+}
+
+function renderChart(){
+let db=loadDB();
+let list=db.profiles[currentProfile()]||[];
+
+let cat={};
+list.forEach(r=>{
+let k=r.categoria||"Sem categoria";
+let v=Number(r.valor)||0;
+if(r.tipo==="Saída") v*=-1;
+cat[k]=(cat[k]||0)+v;
+});
+
+let labels=Object.keys(cat);
+let data=Object.values(cat);
+
+if(chart) chart.destroy();
+
+chart=new Chart(document.getElementById("chart"),{
+type:"bar",
+data:{
+labels,
+datasets:[{label:"Resultado por categoria",data}]
+}
+});
+}
+
+function importarArquivo(){
+let f=document.getElementById("fileInput").files[0];
+if(!f) return;
+
+let reader=new FileReader();
+reader.onload=e=>{
+let data=new Uint8Array(e.target.result);
+let wb=XLSX.read(data,{type:"array"});
+let ws=wb.Sheets[wb.SheetNames[0]];
+let json=XLSX.utils.sheet_to_json(ws);
+
+let db=loadDB();
+
+json.forEach(l=>{
+let valor=normalizeValue(l.Valor||l.valor);
+if(valor===null) return;
+
+db.profiles[currentProfile()].push({
+pessoa:l.Pessoa||l.CPF||l.CNPJ||"",
+data:l.Data||"",
+categoria:l.Categoria||"",
+tipo:(String(l.Tipo).toLowerCase().includes("sa")?"Saída":"Entrada"),
+valor,
+obs:l.Observacao||l.Observação||""
+});
+});
+
+saveDB(db);
+renderTable();
+};
+reader.readAsArrayBuffer(f);
+}
+
+function exportarTudo(){
+let db=loadDB();
+let rows=[];
+Object.entries(db.profiles).forEach(([p,arr])=>{
+arr.forEach(r=>rows.push({...r,Perfil:p}));
+});
+let ws=XLSX.utils.json_to_sheet(rows);
+let wb=XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb,ws,"Banco");
+XLSX.writeFile(wb,"fluxopro_backup.xlsx");
+}
+
+function resetar(){
+if(confirm("Apagar todos os dados?")){
+localStorage.removeItem(DB_KEY);
+location.reload();
+}
+}
+
+function setTheme(t){
+document.body.className=t;
+let db=loadDB();
+db.theme=t;
+saveDB(db);
+}
+
+function showTab(t){
+document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+event.target.classList.add("active");
+
+["lancamentos","dashboard","config"].forEach(id=>{
+document.getElementById("tab-"+id).style.display=id===t?"block":"none";
+});
+renderChart();
+}
+
+(function init(){
+let db=loadDB();
+if(!Object.keys(db.profiles).length){
+db.profiles["Perfil 1"]=[];
+saveDB(db);
+}
+if(db.theme) document.body.className=db.theme;
+renderProfiles();
 })();
-
-window.onload=FluxoPro.init;
 </script>
 
 </body>
