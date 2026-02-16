@@ -32,12 +32,32 @@ th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left}
   justify-content:space-between;
   align-items:center;
   margin-bottom:20px;
+  gap:10px;
+  flex-wrap:wrap;
 }
 button{
   padding:10px 14px;
   border:0;
   border-radius:10px;
   cursor:pointer;
+  font-weight:700;
+}
+.info{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:10px;
+  margin-bottom:10px;
+}
+.resumo{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:10px;
+  margin:10px 0 20px 0;
+}
+.resumo div{
+  background:#f3f4f6;
+  padding:10px;
+  border-radius:10px;
   font-weight:700;
 }
 </style>
@@ -49,31 +69,36 @@ button{
 <div class="top">
   <h1>Relatório FluxoPro</h1>
   <div>
-    <button onclick="exportExcel()">Excel</button>
-    <button onclick="exportPDF()">PDF</button>
+    <button onclick="exportExcel()">Exportar Excel</button>
+    <button onclick="exportPDF()">Exportar PDF</button>
   </div>
 </div>
 
 <div class="card">
-  <h2 id="perfilTitulo"></h2>
-  <div id="perfilDados"></div>
 
-  <p><strong>Entradas:</strong> <span id="ent"></span></p>
-  <p><strong>Saídas:</strong> <span id="sai"></span></p>
-  <p><strong>Resultado:</strong> <span id="res"></span></p>
+<h2 id="perfilTitulo"></h2>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Data</th>
-        <th>Categoria</th>
-        <th>Tipo</th>
-        <th>Valor</th>
-        <th>Observação</th>
-      </tr>
-    </thead>
-    <tbody id="tb"></tbody>
-  </table>
+<div class="info" id="perfilDados"></div>
+
+<div class="resumo">
+  <div>Entradas<br><span id="ent"></span></div>
+  <div>Saídas<br><span id="sai"></span></div>
+  <div>Resultado<br><span id="res"></span></div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Data</th>
+      <th>Categoria</th>
+      <th>Tipo</th>
+      <th>Valor</th>
+      <th>Observação</th>
+    </tr>
+  </thead>
+  <tbody id="tb"></tbody>
+</table>
+
 </div>
 
 </div>
@@ -90,25 +115,33 @@ function money(v){
 }
 
 const db=loadDB();
+
+if(!db){
+  alert("Nenhum dado encontrado.");
+  throw new Error("DB vazio");
+}
+
 const perfil=db.active;
 const dados=db.profiles[perfil]||[];
 const info=db.profileInfo?.[perfil]||{};
 
 perfilTitulo.innerText="Perfil: "+perfil;
+
 perfilDados.innerHTML=`
-<p><strong>Nome:</strong> ${info.nome||""}</p>
-<p><strong>Documento:</strong> ${info.doc||""}</p>
+  <div><strong>Nome / Razão social</strong><br>${info.nome||""}</div>
+  <div><strong>CPF / CNPJ</strong><br>${info.doc||""}</div>
 `;
 
-let ent=0,sai=0;
+let totalEnt=0,totalSai=0;
+
 dados.forEach(l=>{
-  if(l.tipo==="Entrada") ent+=l.valor||0;
-  else sai+=l.valor||0;
+  if(l.tipo==="Entrada") totalEnt+=l.valor||0;
+  else totalSai+=l.valor||0;
 });
 
-ent.innerText=money(ent);
-sai.innerText=money(sai);
-res.innerText=money(ent-sai);
+ent.innerText=money(totalEnt);
+sai.innerText=money(totalSai);
+res.innerText=money(totalEnt-totalSai);
 
 tb.innerHTML=dados.map(l=>`
 <tr>
@@ -120,45 +153,105 @@ tb.innerHTML=dados.map(l=>`
 </tr>
 `).join("");
 
-/* Tema (se futuramente você salvar tema no DB) */
+
+/* tema do perfil (se existir) */
 if(db.theme){
   themeLink.href="themes/"+db.theme+".css";
 }
 
+
+/* =========================
+   EXCEL
+========================= */
 function exportExcel(){
-  const rows=dados.map(l=>({
-    Data:l.data,
-    Categoria:l.cat,
-    Tipo:l.tipo,
-    Valor:l.valor,
-    Observacao:l.obs
-  }));
+
+  const rows = [];
+
+  rows.push({
+    Data:"",
+    Categoria:"Perfil",
+    Tipo:perfil,
+    Valor:"",
+    Observacao:""
+  });
+
+  rows.push({
+    Data:"",
+    Categoria:"Nome",
+    Tipo:info.nome||"",
+    Valor:"",
+    Observacao:""
+  });
+
+  rows.push({
+    Data:"",
+    Categoria:"Documento",
+    Tipo:info.doc||"",
+    Valor:"",
+    Observacao:""
+  });
+
+  rows.push({});
+  
+  dados.forEach(l=>{
+    rows.push({
+      Data:l.data,
+      Categoria:l.cat,
+      Tipo:l.tipo,
+      Valor:l.valor,
+      Observacao:l.obs
+    });
+  });
 
   const ws=XLSX.utils.json_to_sheet(rows);
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,perfil);
+
   XLSX.writeFile(wb,`fluxopro_${perfil}.xlsx`);
 }
 
+
+/* =========================
+   PDF
+========================= */
 function exportPDF(){
+
   const { jsPDF }=window.jspdf;
   const doc=new jsPDF();
 
   let y=10;
 
-  doc.text(`Relatório - ${perfil}`,10,y); y+=8;
-  doc.text(`Entradas: ${money(ent)}`,10,y); y+=6;
-  doc.text(`Saídas: ${money(sai)}`,10,y); y+=6;
-  doc.text(`Resultado: ${money(ent-sai)}`,10,y); y+=10;
+  doc.setFontSize(14);
+  doc.text(`Relatório - ${perfil}`,10,y); 
+  y+=8;
+
+  doc.setFontSize(10);
+  doc.text(`Nome: ${info.nome||""}`,10,y); y+=6;
+  doc.text(`Documento: ${info.doc||""}`,10,y); y+=8;
+
+  doc.text(`Entradas: ${money(totalEnt)}`,10,y); y+=6;
+  doc.text(`Saídas: ${money(totalSai)}`,10,y); y+=6;
+  doc.text(`Resultado: ${money(totalEnt-totalSai)}`,10,y); 
+  y+=10;
+
+  doc.setFontSize(9);
 
   dados.forEach(l=>{
-    if(y>280){doc.addPage();y=10;}
-    doc.text(`${l.data} | ${l.cat} | ${l.tipo} | ${money(l.valor)}`,10,y);
-    y+=6;
+    if(y>280){
+      doc.addPage();
+      y=10;
+    }
+
+    const linha =
+      `${l.data||""} | ${l.cat||""} | ${l.tipo} | ${money(l.valor)} | ${l.obs||""}`;
+
+    doc.text(linha.substring(0,120),10,y);
+    y+=5;
   });
 
   doc.save(`fluxopro_${perfil}.pdf`);
 }
 </script>
+
 </body>
 </html>
