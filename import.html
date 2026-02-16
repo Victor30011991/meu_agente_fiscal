@@ -3,152 +3,183 @@
 <head>
 <meta charset="UTF-8">
 <title>FluxoPro – Importação</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-body{font-family:Inter,system-ui;background:#f1f5f9;padding:20px}
+body{
+  font-family:Inter,system-ui;
+  background:#f5f7fb;
+  margin:0;
+  color:#1f2937;
+}
+
+.container{
+  max-width:1000px;
+  margin:auto;
+  padding:30px;
+}
+
 .card{
   background:#fff;
-  max-width:900px;
-  margin:auto;
+  border-radius:16px;
   padding:20px;
-  border-radius:12px;
+  box-shadow:0 10px 20px rgba(0,0,0,.05);
 }
-table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{padding:6px;border-bottom:1px solid #e5e7eb}
-th{background:#2563eb;color:#fff}
-button{padding:10px;border:0;border-radius:8px;background:#2563eb;color:#fff}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:15px;
+  font-size:14px;
+}
+
+th{
+  background:#eef2ff;
+  padding:8px;
+  text-align:left;
+}
+
+td{
+  padding:8px;
+  border-bottom:1px solid #ddd;
+}
+
+button{
+  padding:10px 14px;
+  border:0;
+  border-radius:10px;
+  font-weight:700;
+  cursor:pointer;
+  background:#4f46e5;
+  color:#fff;
+}
 </style>
 </head>
 <body>
 
-<div class="card">
-<h2>Importar dados</h2>
+<div class="container">
 
-<input type="file" id="file" accept=".xlsx,.json">
+  <div class="card">
 
-<div style="margin:15px 0">
-<button onclick="confirmar()">Confirmar importação</button>
-</div>
+    <h2>Importação assistida</h2>
 
-<table>
-<thead>
-<tr>
-<th>Data</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Obs</th>
-</tr>
-</thead>
-<tbody id="tbody"></tbody>
-</table>
+    <input type="file" id="file">
+
+    <br><br>
+
+    <button onclick="confirmar()">Importar no perfil ativo</button>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Categoria</th>
+          <th>Tipo</th>
+          <th>Valor</th>
+          <th>Observação</th>
+        </tr>
+      </thead>
+      <tbody id="tb"></tbody>
+    </table>
+
+  </div>
+
 </div>
 
 <script>
-const params = new URLSearchParams(location.search);
-const perfil = params.get("perfil");
+const KEY="fluxopro_v11";
+let buffer=[];
 
-let buffer = [];
+function loadDB(){
+  return JSON.parse(localStorage.getItem(KEY));
+}
 
-document.getElementById("file").addEventListener("change",load);
+function normalizeValue(v){
+  if(typeof v==="number") return v;
 
-function load(e){
+  let s=String(v||"").trim().replace(/[^\d.,-]/g,"");
+  if(!s) return null;
 
-  const file = e.target.files[0];
-  if(!file) return;
-
-  if(file.name.endsWith(".json")){
-    const r = new FileReader();
-    r.onload = ev=>{
-      const data = JSON.parse(ev.target.result);
-      preparar(data);
-    };
-    r.readAsText(file);
+  if(s.includes(",") && s.includes(".")){
+    if(s.lastIndexOf(",")>s.lastIndexOf(".")){
+      s=s.replace(/\./g,"").replace(",",".");
+    }else{
+      s=s.replace(/,/g,"");
+    }
   }else{
-    const r = new FileReader();
-    r.onload = ev=>{
-      const wb = XLSX.read(ev.target.result,{type:"binary"});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(ws,{defval:""});
-      preparar(data);
-    };
-    r.readAsBinaryString(file);
+    s=s.replace(",",".");
   }
+
+  const n=parseFloat(s);
+  return isNaN(n)?null:n;
 }
 
-function preparar(rows){
+file.onchange=()=>{
+  const f=file.files[0];
+  if(!f) return;
 
-  buffer = rows.map(r=>{
+  const r=new FileReader();
 
-    return {
-      data: r.Data || r.data || "",
-      cat: r.Categoria || r.categoria || "",
-      tipo: normalizarTipo(r.Tipo || r.tipo || ""),
-      valor: normalizarValor(r.Valor || r.valor || 0),
-      obs: r.Observação || r.obs || r.observacao || ""
-    };
+  r.onload=e=>{
+    const wb=XLSX.read(e.target.result,{type:"binary"});
+    const data=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
 
-  });
+    buffer=data.map(l=>{
 
-  render();
-}
+      const tipo=(l.Tipo||l.tipo||"Entrada").toString().trim();
+
+      return{
+        data:l.Data||l.data||"",
+        cat:l.Categoria||l.categoria||"",
+        tipo:(tipo==="Saída"||tipo==="Entrada")?tipo:"Entrada",
+        valor:normalizeValue(l.Valor||l.valor),
+        obs:l.Observacao||l.Observação||l.obs||""
+      }
+
+    }).filter(l=>l.valor!==null);
+
+    render();
+  };
+
+  r.readAsBinaryString(f);
+};
 
 function render(){
-
-  const tb=document.getElementById("tbody");
-  tb.innerHTML="";
-
-  buffer.forEach(l=>{
-    const tr=document.createElement("tr");
-    tr.innerHTML=`
-      <td>${l.data}</td>
-      <td>${l.cat}</td>
-      <td>${l.tipo}</td>
-      <td>${l.valor}</td>
-      <td>${l.obs}</td>
-    `;
-    tb.appendChild(tr);
-  });
-
+  tb.innerHTML=buffer.map(l=>`
+<tr>
+<td>${l.data}</td>
+<td>${l.cat}</td>
+<td>${l.tipo}</td>
+<td>${l.valor}</td>
+<td>${l.obs}</td>
+</tr>
+`).join("");
 }
 
 function confirmar(){
 
-  const db = JSON.parse(localStorage.getItem("fluxopro_db")||"{}");
-
-  if(!db.profiles) db.profiles={};
-  if(!db.profiles[perfil]){
-    alert("Perfil não encontrado.");
+  const db=loadDB();
+  if(!db || !db.profiles || !db.active){
+    alert("Base não encontrada.");
     return;
   }
 
-  db.profiles[perfil].lancamentos.push(...buffer);
+  buffer.forEach(l=>{
+    db.profiles[db.active].push({
+      id:crypto.randomUUID(),
+      ...l
+    });
+  });
 
-  localStorage.setItem("fluxopro_db",JSON.stringify(db));
+  localStorage.setItem(KEY,JSON.stringify(db));
 
-  alert("Importação concluída.");
+  alert("Importação concluída com sucesso.");
   window.close();
 }
-
-/* -------- utilidades -------- */
-
-function normalizarValor(v){
-
-  if(typeof v==="number") return v;
-
-  let s = String(v)
-    .replace(/\s/g,"")
-    .replace("R$","")
-    .replace(/\./g,"")
-    .replace(",",".");
-  const n = parseFloat(s);
-  return isNaN(n)?0:n;
-}
-
-function normalizarTipo(t){
-  t=String(t||"").toLowerCase();
-  if(t.includes("ent")) return "Entrada";
-  if(t.includes("sai")) return "Saída";
-  return "";
-}
 </script>
+
 </body>
 </html>
