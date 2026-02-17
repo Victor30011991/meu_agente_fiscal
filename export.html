@@ -382,280 +382,149 @@ function exportPDF(){
       
       const W = 210;
       const H = 297;
-      const M = 15;
+      const M = 12;
       
       // ===========================================
-      // SLIDE 1: CAPA PROFISSIONAL
+      // PAGINA 1: CAPA COMPLETA (TUDO EM 1 PAGINA)
       // ===========================================
       
+      // CABEÇALHO
       doc.setFillColor(...colors.primary);
-      doc.rect(0, 0, W, 60, 'F');
+      doc.rect(0, 0, W, 45, 'F');
       
       doc.setTextColor(...colors.textLight);
-      doc.setFontSize(32);
+      doc.setFontSize(26);
       doc.setFont(undefined, 'bold');
-      doc.text("RELATORIO FINANCEIRO", W/2, 30, {align: 'center'});
-      
-      doc.setFontSize(14);
-      doc.setFont(undefined, 'normal');
-      doc.text("FluxoPro Engine", W/2, 42, {align: 'center'});
-      
-      if(theme){
-        doc.setFontSize(9);
-        const tNames = {dark:"Dark Mode",emerald:"Emerald",gold:"Gold",indigo:"Indigo",rose:"Rose"};
-        doc.text("Tema: " + (tNames[theme] || theme), W/2, 52, {align: 'center'});
-      }
-      
-      doc.setFillColor(...colors.card);
-      doc.roundedRect(M, 75, W-2*M, 70, 3, 3, 'F');
-      
-      doc.setTextColor(...colors.text);
-      doc.setFontSize(16);
-      doc.setFont(undefined, 'bold');
-      doc.text("DADOS DO PERFIL", M+5, 88);
+      doc.text("RELATORIO FINANCEIRO", W/2, 20, {align: 'center'});
       
       doc.setFontSize(11);
       doc.setFont(undefined, 'normal');
-      doc.text("Perfil:", M+5, 100);
-      doc.setFont(undefined, 'bold');
-      doc.text(perfil, M+25, 100);
+      doc.text("FluxoPro Engine", W/2, 30, {align: 'center'});
       
-      doc.setFont(undefined, 'normal');
-      doc.text("Nome:", M+5, 108);
-      doc.text(info.nome || "Nao informado", M+25, 108);
+      if(theme){
+        doc.setFontSize(8);
+        const tNames = {dark:"Dark",emerald:"Emerald",gold:"Gold",indigo:"Indigo",rose:"Rose"};
+        doc.text("Tema: " + (tNames[theme] || theme), W/2, 38, {align: 'center'});
+      }
       
-      doc.text("Documento:", M+5, 116);
-      doc.text(info.doc || "Nao informado", M+25, 116);
-      
-      doc.setDrawColor(200, 200, 200);
-      doc.line(M+5, 122, W-M-5, 122);
-      
-      doc.setFontSize(10);
-      doc.setFont(undefined, 'normal');
-      doc.setTextColor(100, 100, 100);
-      doc.text("Gerado em: " + new Date().toLocaleString('pt-BR'), M+5, 136);
-      
-      doc.setFillColor(...colors.accent);
-      doc.roundedRect(M, 155, W-2*M, 50, 3, 3, 'F');
+      // DADOS DO PERFIL (COMPACTO)
+      doc.setFillColor(...colors.card);
+      doc.roundedRect(M, 50, W-2*M, 35, 2, 2, 'F');
       
       doc.setTextColor(...colors.text);
-      doc.setFontSize(14);
+      doc.setFontSize(10);
       doc.setFont(undefined, 'bold');
-      doc.text("RESUMO FINANCEIRO", M+5, 168);
+      doc.text("Perfil: " + perfil, M+3, 58);
       
-      const boxW = (W - 2*M - 20) / 3;
-      const boxY = 175;
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'normal');
+      doc.text("Nome: " + (info.nome || "Nao informado"), M+3, 65);
+      doc.text("Documento: " + (info.doc || "Nao informado"), M+3, 71);
+      doc.text("Data: " + new Date().toLocaleDateString('pt-BR'), M+3, 77);
+      
+      // RESUMO FINANCEIRO (3 BOXES LADO A LADO)
+      let yBox = 92;
+      const boxW = (W - 2*M - 10) / 3;
+      
+      doc.setFillColor(...colors.accent);
+      doc.roundedRect(M, yBox, W-2*M, 28, 2, 2, 'F');
       
       doc.setFillColor(255, 255, 255);
-      doc.roundedRect(M+5, boxY, boxW, 22, 2, 2, 'F');
-      doc.roundedRect(M+10+boxW, boxY, boxW, 22, 2, 2, 'F');
-      doc.roundedRect(M+15+2*boxW, boxY, boxW, 22, 2, 2, 'F');
+      doc.roundedRect(M+3, yBox+3, boxW, 22, 2, 2, 'F');
+      doc.roundedRect(M+8+boxW, yBox+3, boxW, 22, 2, 2, 'F');
+      doc.roundedRect(M+13+2*boxW, yBox+3, boxW, 22, 2, 2, 'F');
       
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       doc.setFont(undefined, 'normal');
       doc.setTextColor(100, 100, 100);
-      doc.text("ENTRADAS", M+5+boxW/2, boxY+6, {align: 'center'});
+      doc.text("ENTRADAS", M+3+boxW/2, yBox+9, {align: 'center'});
       
-      doc.setFontSize(13);
+      doc.setFontSize(11);
       doc.setFont(undefined, 'bold');
       doc.setTextColor(...colors.entrada);
-      doc.text(money(totalEnt), M+5+boxW/2, boxY+16, {align: 'center'});
+      doc.text(money(totalEnt), M+3+boxW/2, yBox+18, {align: 'center'});
       
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       doc.setFont(undefined, 'normal');
       doc.setTextColor(100, 100, 100);
-      doc.text("SAIDAS", M+10+boxW+boxW/2, boxY+6, {align: 'center'});
+      doc.text("SAIDAS", M+8+boxW+boxW/2, yBox+9, {align: 'center'});
       
-      doc.setFontSize(13);
+      doc.setFontSize(11);
       doc.setFont(undefined, 'bold');
       doc.setTextColor(...colors.saida);
-      doc.text(money(totalSai), M+10+boxW+boxW/2, boxY+16, {align: 'center'});
+      doc.text(money(totalSai), M+8+boxW+boxW/2, yBox+18, {align: 'center'});
       
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       doc.setFont(undefined, 'normal');
       doc.setTextColor(100, 100, 100);
-      doc.text("RESULTADO", M+15+2*boxW+boxW/2, boxY+6, {align: 'center'});
+      doc.text("RESULTADO", M+13+2*boxW+boxW/2, yBox+9, {align: 'center'});
       
-      doc.setFontSize(13);
+      doc.setFontSize(11);
       doc.setFont(undefined, 'bold');
       const resC = (totalEnt - totalSai) >= 0 ? colors.entrada : colors.saida;
       doc.setTextColor(...resC);
-      doc.text(money(totalEnt - totalSai), M+15+2*boxW+boxW/2, boxY+16, {align: 'center'});
+      doc.text(money(totalEnt - totalSai), M+13+2*boxW+boxW/2, yBox+18, {align: 'center'});
       
-      const percEnt = totalEnt + totalSai > 0 ? (totalEnt / (totalEnt + totalSai) * 100).toFixed(1) : 0;
-      const percSai = totalEnt + totalSai > 0 ? (totalSai / (totalEnt + totalSai) * 100).toFixed(1) : 0;
-      
-      doc.setFontSize(9);
+      // MINI ANALISE
+      doc.setFontSize(8);
       doc.setFont(undefined, 'normal');
       doc.setTextColor(...colors.text);
-      doc.text(`Entradas representam ${percEnt}% do total`, M+5, 218);
-      doc.text(`Saidas representam ${percSai}% do total`, M+5, 225);
+      const percEnt = totalEnt + totalSai > 0 ? (totalEnt / (totalEnt + totalSai) * 100).toFixed(1) : 0;
+      doc.text(`Entradas: ${percEnt}% | Saidas: ${(100-percEnt).toFixed(1)}%`, W/2, 127, {align: 'center'});
       
-      if(totalEnt >= totalSai){
-        doc.setTextColor(...colors.entrada);
-        doc.text("Situacao: Saude financeira positiva", M+5, 232);
-      } else {
-        doc.setTextColor(...colors.saida);
-        doc.text("Situacao: Atencao, gastos maiores que entradas", M+5, 232);
-      }
-      
-      // ===========================================
-      // SLIDE 2: GRAFICOS
-      // ===========================================
-      doc.addPage();
-      
-      doc.setFillColor(...colors.primary);
-      doc.rect(0, 0, W, 35, 'F');
-      
-      doc.setTextColor(...colors.textLight);
-      doc.setFontSize(22);
+      // GRAFICOS (3 LADO A LADO, MENORES E SEM DISTORÇÃO)
+      doc.setTextColor(...colors.text);
+      doc.setFontSize(10);
       doc.setFont(undefined, 'bold');
-      doc.text("DASHBOARD VISUAL", W/2, 22, {align: 'center'});
+      doc.text("DASHBOARD VISUAL", M, 140);
       
       const imgPizza = chartPizza.toDataURL('image/png', 1.0);
       const imgPerc = chartPerc.toDataURL('image/png', 1.0);
       const imgResumo = chartResumo.toDataURL('image/png', 1.0);
       
-      doc.setTextColor(...colors.text);
-      doc.setFontSize(12);
-      doc.setFont(undefined, 'bold');
-      
-      doc.text("Distribuicao por Categoria", M, 52);
-      doc.addImage(imgPizza, 'PNG', M, 56, 85, 85);
-      
-      doc.text("Proporcao Entradas x Saidas", W/2 + 5, 52);
-      doc.addImage(imgPerc, 'PNG', W/2 + 5, 56, 85, 85);
-      
-      doc.text("Resumo Comparativo", M, 152);
-      doc.addImage(imgResumo, 'PNG', M, 156, W - 2*M, 90);
-      
-      doc.setFontSize(9);
-      doc.setFont(undefined, 'normal');
-      doc.setTextColor(100, 100, 100);
-      doc.text("Graficos gerados automaticamente pelo sistema FluxoPro Engine", W/2, 260, {align: 'center'});
-      
-      // ===========================================
-      // SLIDE 3: TABELA DE LANCAMENTOS
-      // ===========================================
-      doc.addPage();
-      
-      doc.setFillColor(...colors.primary);
-      doc.rect(0, 0, W, 35, 'F');
-      
-      doc.setTextColor(...colors.textLight);
-      doc.setFontSize(22);
-      doc.setFont(undefined, 'bold');
-      doc.text("LANCAMENTOS DETALHADOS", W/2, 22, {align: 'center'});
-      
-      let y = 48;
-      
-      doc.setFillColor(...colors.accent);
-      doc.rect(M, y-5, W-2*M, 8, 'F');
-      
-      doc.setTextColor(...colors.text);
-      doc.setFontSize(9);
-      doc.setFont(undefined, 'bold');
-      doc.text("DATA", M+2, y);
-      doc.text("CATEGORIA", M+32, y);
-      doc.text("TIPO", M+85, y);
-      doc.text("VALOR", M+115, y);
-      doc.text("OBSERVACAO", M+150, y);
-      
-      y += 8;
-      doc.setFont(undefined, 'normal');
-      
-      dados.forEach((l, idx) => {
-        
-        if(y > 270){
-          doc.addPage();
-          
-          doc.setFillColor(...colors.primary);
-          doc.rect(0, 0, W, 20, 'F');
-          doc.setTextColor(...colors.textLight);
-          doc.setFontSize(14);
-          doc.setFont(undefined, 'bold');
-          doc.text("LANCAMENTOS (continuacao)", W/2, 13, {align: 'center'});
-          
-          y = 30;
-          doc.setTextColor(...colors.text);
-          doc.setFontSize(9);
-          doc.setFont(undefined, 'normal');
-        }
-        
-        if(idx % 2 === 0){
-          doc.setFillColor(...colors.zebra);
-          doc.rect(M, y-5, W-2*M, 6, 'F');
-        }
-        
-        doc.setTextColor(...colors.text);
-        doc.text(l.data || "-", M+2, y);
-        doc.text((l.cat || "-").substring(0, 18), M+32, y);
-        
-        if(l.tipo === "Entrada"){
-          doc.setTextColor(...colors.entrada);
-        } else {
-          doc.setTextColor(...colors.saida);
-        }
-        doc.setFont(undefined, 'bold');
-        doc.text(l.tipo || "-", M+85, y);
-        
-        doc.setTextColor(...colors.text);
-        doc.text(money(l.valor), M+115, y);
-        
-        doc.setFont(undefined, 'normal');
-        doc.text((l.obs || "-").substring(0, 22), M+150, y);
-        
-        y += 6;
-      });
+      const gSize = 55; // Tamanho dos gráficos (reduzido)
+      const gY = 145;
       
       doc.setFontSize(8);
-      doc.setTextColor(120, 120, 120);
-      doc.text(`Total de lancamentos: ${dados.length}`, M, H - 10);
-      doc.text(`Documento gerado em ${new Date().toLocaleDateString('pt-BR')}`, W - M, H - 10, {align: 'right'});
-      
-      // ===========================================
-      // SLIDE 4: INSIGHTS E ANALISES
-      // ===========================================
-      doc.addPage();
-      
-      doc.setFillColor(...colors.primary);
-      doc.rect(0, 0, W, 35, 'F');
-      
-      doc.setTextColor(...colors.textLight);
-      doc.setFontSize(22);
-      doc.setFont(undefined, 'bold');
-      doc.text("ANALISES E INSIGHTS", W/2, 22, {align: 'center'});
-      
-      doc.setTextColor(...colors.text);
-      doc.setFontSize(14);
-      doc.setFont(undefined, 'bold');
-      doc.text("Resumo Executivo", M, 50);
-      
-      doc.setFontSize(10);
       doc.setFont(undefined, 'normal');
       
-      let texto = `Este relatorio apresenta a situacao financeira do perfil "${perfil}" `;
-      texto += `com base em ${dados.length} lancamento(s) registrado(s). `;
+      // Pizza
+      doc.text("Por Categoria", M, gY-2);
+      doc.addImage(imgPizza, 'PNG', M, gY, gSize, gSize);
       
+      // Percentual
+      doc.text("Entradas x Saidas", M + gSize + 8, gY-2);
+      doc.addImage(imgPerc, 'PNG', M + gSize + 8, gY, gSize, gSize);
+      
+      // Barras (mais largo)
+      doc.text("Resumo", M + 2*gSize + 16, gY-2);
+      doc.addImage(imgResumo, 'PNG', M + 2*gSize + 16, gY, gSize, gSize*0.75);
+      
+      // INSIGHTS RAPIDOS
+      let yInsight = gY + gSize + 8;
+      
+      doc.setFillColor(...colors.accent);
+      doc.roundedRect(M, yInsight, W-2*M, 30, 2, 2, 'F');
+      
+      doc.setTextColor(...colors.text);
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'bold');
+      doc.text("RESUMO EXECUTIVO", M+3, yInsight+7);
+      
+      doc.setFontSize(8);
+      doc.setFont(undefined, 'normal');
+      
+      let texto = `Perfil com ${dados.length} lancamento(s). `;
       if(totalEnt >= totalSai){
-        texto += `O periodo analisado apresenta saude financeira positiva, `;
-        texto += `com superavit de ${money(totalEnt - totalSai)}. `;
+        texto += `Saude financeira positiva, superavit de ${money(totalEnt - totalSai)}.`;
       } else {
-        texto += `O periodo analisado apresenta deficit de ${money(totalSai - totalEnt)}, `;
-        texto += `indicando que as saidas superam as entradas. `;
+        texto += `Atencao: deficit de ${money(totalSai - totalEnt)}.`;
       }
       
-      const linhas = doc.splitTextToSize(texto, W - 2*M);
-      doc.text(linhas, M, 58);
+      const linhas = doc.splitTextToSize(texto, W - 2*M - 6);
+      doc.text(linhas, M+3, yInsight+14);
       
-      let yAnalise = 58 + linhas.length * 5 + 10;
-      
-      doc.setFontSize(12);
-      doc.setFont(undefined, 'bold');
-      doc.text("Principais Categorias de Gastos", M, yAnalise);
-      
-      yAnalise += 8;
-      
+      // TOP 3 GASTOS
       let mapaGastos = {};
       dados.forEach(l => {
         if(l.tipo === "Saída") {
@@ -663,77 +532,111 @@ function exportPDF(){
         }
       });
       
-      const topCats = Object.entries(mapaGastos).sort((a,b) => b[1] - a[1]).slice(0, 5);
-      
-      doc.setFontSize(10);
-      doc.setFont(undefined, 'normal');
+      const topCats = Object.entries(mapaGastos).sort((a,b) => b[1] - a[1]).slice(0, 3);
       
       if(topCats.length > 0){
-        topCats.forEach(([cat, val], idx) => {
-          const perc = (val / totalSai * 100).toFixed(1);
-          doc.setTextColor(...colors.text);
-          doc.text(`${idx+1}. ${cat}:`, M+5, yAnalise);
-          doc.setTextColor(...colors.saida);
-          doc.setFont(undefined, 'bold');
-          doc.text(`${money(val)} (${perc}%)`, M+70, yAnalise);
-          doc.setFont(undefined, 'normal');
-          yAnalise += 6;
+        doc.setFont(undefined, 'bold');
+        doc.text("Top 3 Gastos:", M+3, yInsight+22);
+        doc.setFont(undefined, 'normal');
+        
+        let xTop = M + 25;
+        topCats.forEach(([cat, val]) => {
+          doc.text(`${cat}: ${money(val)}`, xTop, yInsight+22);
+          xTop += 45;
         });
-      } else {
-        doc.text("Nenhuma saida registrada no periodo", M+5, yAnalise);
-        yAnalise += 6;
       }
       
-      yAnalise += 10;
+      // ===========================================
+      // PAGINA 2: TABELA DE LANCAMENTOS
+      // ===========================================
+      doc.addPage();
       
-      doc.setTextColor(...colors.text);
-      doc.setFontSize(12);
+      // CABEÇALHO
+      doc.setFillColor(...colors.primary);
+      doc.rect(0, 0, W, 25, 'F');
+      
+      doc.setTextColor(...colors.textLight);
+      doc.setFontSize(16);
       doc.setFont(undefined, 'bold');
-      doc.text("Recomendacoes", M, yAnalise);
+      doc.text("LANCAMENTOS DETALHADOS", W/2, 16, {align: 'center'});
       
-      yAnalise += 8;
+      let y = 35;
       
-      doc.setFontSize(10);
-      doc.setFont(undefined, 'normal');
-      
-      if(totalEnt >= totalSai){
-        doc.text("- Manter o controle de gastos atual", M+5, yAnalise);
-        yAnalise += 6;
-        doc.text("- Considerar investir o superavit", M+5, yAnalise);
-        yAnalise += 6;
-        doc.text("- Criar uma reserva de emergencia se ainda nao possui", M+5, yAnalise);
-      } else {
-        doc.text("- Revisar as principais categorias de gastos", M+5, yAnalise);
-        yAnalise += 6;
-        doc.text("- Buscar reduzir despesas nao essenciais", M+5, yAnalise);
-        yAnalise += 6;
-        doc.text("- Explorar oportunidades de aumentar as receitas", M+5, yAnalise);
-      }
-      
-      yAnalise += 15;
-      
+      // CABEÇALHO DA TABELA
       doc.setFillColor(...colors.accent);
-      doc.roundedRect(M, yAnalise, W-2*M, 40, 3, 3, 'F');
+      doc.rect(M, y-4, W-2*M, 7, 'F');
       
       doc.setTextColor(...colors.text);
-      doc.setFontSize(11);
+      doc.setFontSize(8);
       doc.setFont(undefined, 'bold');
-      doc.text("Sobre este Relatorio", M+5, yAnalise+10);
+      doc.text("DATA", M+2, y);
+      doc.text("CATEGORIA", M+28, y);
+      doc.text("TIPO", M+75, y);
+      doc.text("VALOR", M+105, y);
+      doc.text("OBSERVACAO", M+140, y);
       
-      doc.setFontSize(9);
+      y += 6;
       doc.setFont(undefined, 'normal');
-      doc.text("Este documento foi gerado automaticamente pelo FluxoPro Engine,", M+5, yAnalise+18);
-      doc.text("um sistema completo de controle financeiro desenvolvido em tecnologia web.", M+5, yAnalise+24);
-      doc.text("Para mais informacoes ou suporte, visite a area de configuracoes do sistema.", M+5, yAnalise+30);
       
+      // LINHAS
+      dados.forEach((l, idx) => {
+        
+        if(y > 270){
+          doc.addPage();
+          
+          doc.setFillColor(...colors.primary);
+          doc.rect(0, 0, W, 18, 'F');
+          doc.setTextColor(...colors.textLight);
+          doc.setFontSize(12);
+          doc.setFont(undefined, 'bold');
+          doc.text("LANCAMENTOS (cont.)", W/2, 11, {align: 'center'});
+          
+          y = 25;
+          doc.setTextColor(...colors.text);
+          doc.setFontSize(8);
+          doc.setFont(undefined, 'normal');
+        }
+        
+        // Zebrado
+        if(idx % 2 === 0){
+          doc.setFillColor(...colors.zebra);
+          doc.rect(M, y-4, W-2*M, 5, 'F');
+        }
+        
+        doc.setTextColor(...colors.text);
+        doc.text(l.data || "-", M+2, y);
+        doc.text((l.cat || "-").substring(0, 15), M+28, y);
+        
+        // Tipo colorido
+        if(l.tipo === "Entrada"){
+          doc.setTextColor(...colors.entrada);
+        } else {
+          doc.setTextColor(...colors.saida);
+        }
+        doc.setFont(undefined, 'bold');
+        doc.text(l.tipo || "-", M+75, y);
+        
+        // Valor
+        doc.setTextColor(...colors.text);
+        doc.text(money(l.valor), M+105, y);
+        
+        // Obs
+        doc.setFont(undefined, 'normal');
+        doc.text((l.obs || "-").substring(0, 18), M+140, y);
+        
+        y += 5;
+      });
+      
+      // RODAPE
       doc.setFontSize(7);
       doc.setTextColor(120, 120, 120);
-      doc.text("FluxoPro Engine v12 - Relatorio confidencial", W/2, H - 8, {align: 'center'});
+      doc.text(`Total: ${dados.length} lancamento(s)`, M, H - 8);
+      doc.text(`FluxoPro Engine v12 | ${new Date().toLocaleDateString('pt-BR')}`, W - M, H - 8, {align: 'right'});
       
       doc.save(`fluxopro_${perfil}_${Date.now()}.pdf`);
       
       loading.classList.remove("show");
-      alert(`PDF profissional gerado com tema ${theme || "padrao"}!`);
+      alert(`PDF minimalista gerado (2 paginas)!`);
       
     }catch(err){
       loading.classList.remove("show");
