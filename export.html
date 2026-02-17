@@ -16,10 +16,9 @@ body{margin:0;font-family:Inter;background:#f5f7fb;color:#1f2937}
 .container{max-width:1000px;margin:auto;padding:30px}
 .card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 10px 20px rgba(0,0,0,.04)}
 table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left}
+th,td{padding:8px;border-bottom:1px solid #e5e7eb;text-align:left}
 .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px}
-button{padding:10px 14px;border:0;border-radius:10px;font-weight:700;cursor:pointer;transition:all .2s}
-button:hover{opacity:.8;transform:translateY(-1px)}
+button{padding:10px 14px;border:0;border-radius:10px;font-weight:700;cursor:pointer}
 .btn-excel{background:#10b981;color:#fff}
 .btn-pdf{background:#ef4444;color:#fff}
 .resumo{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}
@@ -41,7 +40,7 @@ button:hover{opacity:.8;transform:translateY(-1px)}
 
 <div class="container">
   <div class="top">
-    <h1>Relatorio FluxoPro</h1>
+    <h1>Relatório FluxoPro</h1>
     <div style="display:flex;gap:10px">
       <button class="btn-excel" onclick="exportExcel()">Baixar Excel</button>
       <button class="btn-pdf" onclick="exportPDF()">Baixar PDF</button>
@@ -54,7 +53,7 @@ button:hover{opacity:.8;transform:translateY(-1px)}
 
     <div class="resumo">
       <div class="box">Entradas<br><span id="ent" class="entrada"></span></div>
-      <div class="box">Saidas<br><span id="sai" class="saida"></span></div>
+      <div class="box">Saídas<br><span id="sai" class="saida"></span></div>
       <div class="box">Resultado<br><span id="res"></span></div>
     </div>
 
@@ -66,7 +65,7 @@ button:hover{opacity:.8;transform:translateY(-1px)}
             <th>Categoria</th>
             <th>Tipo</th>
             <th>Valor</th>
-            <th>Observacao</th>
+            <th>Observação</th>
           </tr>
         </thead>
         <tbody id="tb"></tbody>
@@ -76,9 +75,9 @@ button:hover{opacity:.8;transform:translateY(-1px)}
 </div>
 
 <div style="position:absolute;left:-9999px;width:400px">
-  <canvas id="chartPizza" width="400" height="400"></canvas>
-  <canvas id="chartPerc" width="400" height="400"></canvas>
-  <canvas id="chartResumo" width="400" height="300"></canvas>
+  <canvas id="chartPizza" width="500" height="500"></canvas>
+  <canvas id="chartPerc" width="500" height="500"></canvas>
+  <canvas id="chartResumo" width="500" height="400"></canvas>
 </div>
 
 <script>
@@ -86,21 +85,20 @@ const KEY="fluxopro_v12";
 
 let db, perfil, dados, info, theme;
 
-try {
+try{
   db = JSON.parse(localStorage.getItem(KEY));
-  if(!db || !db.profiles) throw new Error("Base de dados nao encontrada");
+  if(!db || !db.profiles) throw new Error("Base não encontrada");
   perfil = db.active;
   theme = db.theme || "";
-  if(!perfil || !db.profiles[perfil]) throw new Error("Perfil ativo nao encontrado");
+  if(!perfil || !db.profiles[perfil]) throw new Error("Perfil ativo não encontrado");
   dados = db.profiles[perfil] || [];
   info = db.profileInfo?.[perfil] || {};
-} catch(err) {
-  document.querySelector('.container').innerHTML = `
-    <div class="card empty">
-      <h2>Erro ao carregar dados</h2>
-      <p>${err.message}</p>
-    </div>
-  `;
+}catch(err){
+  document.querySelector('.container').innerHTML=`
+  <div class="card empty">
+    <h2>Erro ao carregar dados</h2>
+    <p>${err.message}</p>
+  </div>`;
   throw err;
 }
 
@@ -108,108 +106,97 @@ function money(v){
   return new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0);
 }
 
-let totalEnt = 0;
-let totalSai = 0;
+let totalEnt=0,totalSai=0;
 
 dados.forEach(l=>{
-  const val = Number(l.valor||0);
-  if(l.tipo==="Entrada") totalEnt += val;
-  else if(l.tipo==="Saída") totalSai += val;
+  const val=Number(l.valor||0);
+  if(l.tipo==="Entrada") totalEnt+=val;
+  else if(l.tipo==="Saída") totalSai+=val;
 });
 
-perfilTitulo.innerText = "Perfil: " + perfil;
+perfilTitulo.innerText="Perfil: "+perfil;
 
-perfilDados.innerHTML = `
-<p><b>Nome:</b> ${info.nome||"Nao informado"}</p>
-<p><b>Documento:</b> ${info.doc||"Nao informado"}</p>
+perfilDados.innerHTML=`
+<p><b>Nome:</b> ${info.nome||"Não informado"}</p>
+<p><b>Documento:</b> ${info.doc||"Não informado"}</p>
 `;
 
-ent.innerText = money(totalEnt);
-sai.innerText = money(totalSai);
+ent.innerText=money(totalEnt);
+sai.innerText=money(totalSai);
 
-const resultado = totalEnt - totalSai;
-res.innerText = money(resultado);
-res.style.color = resultado >= 0 ? "#10b981" : "#ef4444";
+const resultado=totalEnt-totalSai;
+res.innerText=money(resultado);
+res.style.color=resultado>=0?"#10b981":"#ef4444";
 
 if(!dados.length){
-  document.getElementById("conteudo").innerHTML = `
-    <div class="empty">
-      <p>Nenhum lancamento encontrado</p>
-    </div>
-  `;
+  document.getElementById("conteudo").innerHTML=`<div class="empty">Nenhum lançamento encontrado</div>`;
 }else{
-  tb.innerHTML = dados.map(l=>`
+  tb.innerHTML=dados.map(l=>`
     <tr>
       <td>${l.data||"-"}</td>
       <td>${l.cat||"-"}</td>
       <td>${l.tipo||"-"}</td>
       <td>${money(l.valor)}</td>
       <td>${l.obs||"-"}</td>
-    </tr>
-  `).join("");
+    </tr>`).join("");
 }
 
-/* ---------- GRÁFICOS ---------- */
+/* ---------------- GRAFICOS ---------------- */
 
 let charts={};
 
 function createCharts(){
+
   if(!dados.length) return;
 
   let mapa={};
   dados.forEach(l=>{
     if(l.tipo==="Saída"){
-      mapa[l.cat||"Outros"]=(mapa[l.cat||"Outros"]||0)+l.valor;
+      mapa[l.cat||"Outros"]=(mapa[l.cat||"Outros"]||0)+Number(l.valor||0);
     }
   });
 
   charts.pizza=new Chart(chartPizza,{
     type:"doughnut",
     data:{labels:Object.keys(mapa),datasets:[{data:Object.values(mapa)}]},
-    options:{responsive:false,plugins:{legend:{position:'bottom'}}}
+    options:{responsive:false,plugins:{legend:{position:"bottom"}}}
   });
 
   charts.perc=new Chart(chartPerc,{
     type:"pie",
-    data:{labels:["Entradas","Saidas"],datasets:[{data:[totalEnt,totalSai]}]},
-    options:{responsive:false,plugins:{legend:{position:'bottom'}}}
+    data:{labels:["Entradas","Saídas"],datasets:[{data:[totalEnt,totalSai]}]},
+    options:{responsive:false,plugins:{legend:{position:"bottom"}}}
   });
 
   charts.resumo=new Chart(chartResumo,{
     type:"bar",
-    data:{labels:["Entradas","Saidas","Resultado"],datasets:[{data:[totalEnt,totalSai,totalEnt-totalSai]}]},
+    data:{labels:["Entradas","Saídas","Resultado"],datasets:[{data:[totalEnt,totalSai,totalEnt-totalSai]}]},
     options:{responsive:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}
   });
 }
 
 createCharts();
 
-/* ---------- CORES ---------- */
+/* ---------------- CORES ---------------- */
 
-const themePalettes = {
-  "":{
-    primary:[79,70,229],
-    text:[31,41,55],
-    textLight:[255,255,255],
-    entrada:[16,185,129],
-    saida:[239,68,68]
-  }
+const colors={
+  primary:[79,70,229],
+  text:[31,41,55],
+  textLight:[255,255,255],
+  entrada:[16,185,129],
+  saida:[239,68,68]
 };
 
-const colors = themePalettes[theme] || themePalettes[""];
-
-/* ---------- EXCEL ---------- */
-
 function exportExcel(){
-  alert("Exportação Excel mantida igual ao seu código original.");
+  alert("Exportação Excel mantida igual ao original.");
 }
 
-/* ---------- PDF ---------- */
+/* ---------------- PDF ---------------- */
 
 function exportPDF(){
 
 if(!dados.length){
-  alert("Nao ha dados para exportar");
+  alert("Não há dados para exportar");
   return;
 }
 
@@ -219,90 +206,92 @@ setTimeout(()=>{
 
 try{
 
-const {jsPDF} = window.jspdf;
-const doc = new jsPDF("p","mm","a4");
+const {jsPDF}=window.jspdf;
+const doc=new jsPDF("p","mm","a4");
 
-const W=210,H=297,M=10;
-
+const W=210,H=297,M=12;
 let y=0;
 
-function novaPaginaSePreciso(altura){
-  if(y + altura > H - 15){
+function novaPaginaSePreciso(h){
+  if(y+h>H-15){
     doc.addPage();
-    y = 20;
+    y=20;
     desenharCabecalhoTabela();
   }
 }
 
-/* ---------- CAPA ---------- */
+function linhaDivisoria(){
+  doc.setDrawColor(220,220,220);
+  doc.setLineWidth(0.2);
+  doc.line(M,y,W-M,y);
+  y+=6;
+}
+
+/* -------- CAPA -------- */
 
 doc.setFillColor(...colors.primary);
-doc.rect(0,0,W,35,'F');
+doc.rect(0,0,W,32,"F");
 
 doc.setTextColor(...colors.textLight);
-doc.setFontSize(22);
-doc.setFont(undefined,"bold");
-doc.text("RELATORIO FINANCEIRO",W/2,20,{align:"center"});
+doc.setFontSize(18);
+doc.text("RELATÓRIO FINANCEIRO",W/2,20,{align:"center"});
 
-doc.setFontSize(10);
-doc.setFont(undefined,"normal");
-doc.text("FluxoPro Engine",W/2,28,{align:"center"});
+doc.setFontSize(9);
+doc.text("FluxoPro Engine",W/2,26,{align:"center"});
 
-/* ---------- PERFIL ---------- */
-
-doc.setFillColor(255,255,255);
-doc.roundedRect(M,42,W-2*M,28,2,2,'F');
+/* -------- PERFIL -------- */
 
 doc.setTextColor(...colors.text);
 doc.setFontSize(9);
-doc.setFont(undefined,"bold");
-doc.text("Perfil: "+perfil,M+3,50);
+y=42;
 
-doc.setFont(undefined,"normal");
-doc.text("Nome: "+(info.nome||"-"),M+3,56);
-doc.text("Documento: "+(info.doc||"-"),M+3,61);
-doc.text("Data: "+new Date().toLocaleDateString("pt-BR"),M+3,66);
+doc.text("Perfil: "+perfil,M,y);
+y+=5;
+doc.text("Nome: "+(info.nome||"-"),M,y);
+y+=5;
+doc.text("Documento: "+(info.doc||"-"),M,y);
+y+=5;
+doc.text("Data: "+new Date().toLocaleDateString("pt-BR"),M,y);
 
-/* ---------- RESUMO ---------- */
+y+=6;
+linhaDivisoria();
 
-y=78;
+/* -------- RESUMO INICIAL -------- */
 
-doc.setFontSize(9);
-doc.setFont(undefined,"bold");
+doc.setFontSize(8);
 doc.text("Entradas:",M,y);
 doc.setTextColor(...colors.entrada);
 doc.text(money(totalEnt),M+25,y);
 
 doc.setTextColor(...colors.text);
-doc.text("Saidas:",M+70,y);
+doc.text("Saídas:",M+65,y);
 doc.setTextColor(...colors.saida);
-doc.text(money(totalSai),M+90,y);
+doc.text(money(totalSai),M+85,y);
 
 doc.setTextColor(...colors.text);
-doc.text("Resultado:",M+135,y);
+doc.text("Resultado:",M+125,y);
 
-const corResultado = (totalEnt - totalSai) >= 0 ? colors.entrada : colors.saida;
-doc.setTextColor(...corResultado);
-doc.text(money(totalEnt-totalSai),M+160,y);
+doc.setTextColor(...((totalEnt-totalSai)>=0?colors.entrada:colors.saida));
+doc.text(money(totalEnt-totalSai),M+150,y);
 
-/* ---------- TABELA ---------- */
+y+=6;
+linhaDivisoria();
 
-y+=10;
+/* -------- TABELA -------- */
 
 function desenharCabecalhoTabela(){
 
-  doc.setFillColor(245,245,245);
-  doc.rect(M,y-4,W-2*M,6,'F');
+  doc.setFillColor(246,246,246);
+  doc.rect(M,y-4,W-2*M,6,"F");
 
   doc.setTextColor(...colors.text);
   doc.setFontSize(7.5);
-  doc.setFont(undefined,"normal");
 
   doc.text("DATA",M+2,y);
-  doc.text("CATEGORIA",M+28,y);
-  doc.text("TIPO",M+75,y);
-  doc.text("VALOR",M+105,y);
-  doc.text("OBSERVACAO",M+140,y);
+  doc.text("CATEGORIA",M+30,y);
+  doc.text("TIPO",M+78,y);
+  doc.text("VALOR",M+108,y);
+  doc.text("OBSERVAÇÃO",M+138,y);
 
   y+=6;
 }
@@ -313,69 +302,102 @@ doc.setFontSize(7.5);
 
 dados.forEach((l,idx)=>{
 
-  const obs = doc.splitTextToSize(l.obs||"-",45);
-  const alturaLinha = Math.max(4, obs.length*3.5);
+  const obs=doc.splitTextToSize(l.obs||"-",45);
+  const h=Math.max(4,obs.length*3.5);
 
-  novaPaginaSePreciso(alturaLinha+2);
+  novaPaginaSePreciso(h+2);
 
   if(idx%2===0){
-    doc.setFillColor(250,250,250);
-    doc.rect(M,y-3.5,W-2*M,alturaLinha+1,'F');
+    doc.setFillColor(252,252,252);
+    doc.rect(M,y-3.5,W-2*M,h+1,"F");
   }
 
   doc.setTextColor(...colors.text);
   doc.text(l.data||"-",M+2,y);
-  doc.text((l.cat||"-").substring(0,18),M+28,y);
+  doc.text((l.cat||"-").substring(0,18),M+30,y);
 
-  doc.setTextColor(...(l.tipo==="Entrada" ? colors.entrada : colors.saida));
-  doc.text(l.tipo||"-",M+75,y);
+  doc.setTextColor(...(l.tipo==="Entrada"?colors.entrada:colors.saida));
+  doc.text(l.tipo||"-",M+78,y);
 
   doc.setTextColor(...colors.text);
-  doc.text(money(l.valor),M+105,y);
+  doc.text(money(l.valor),M+108,y);
+  doc.text(obs,M+138,y);
 
-  doc.text(obs,M+140,y);
-
-  y+=alturaLinha+1;
+  y+=h+1;
 });
 
-/* ---------- GRÁFICOS (APÓS TABELA) ---------- */
-
-const alturaGraficos=60;
-novaPaginaSePreciso(alturaGraficos);
-
-doc.setTextColor(...colors.text);
-doc.setFontSize(9);
-doc.setFont(undefined,"bold");
-doc.text("Resumo visual",M,y);
+/* -------- GRAFICOS -------- */
 
 y+=4;
+linhaDivisoria();
 
-const imgPizza=chartPizza.toDataURL("image/png",1);
-const imgPerc=chartPerc.toDataURL("image/png",1);
-const imgResumo=chartResumo.toDataURL("image/png",1);
+const alturaGraficos=75;
+novaPaginaSePreciso(alturaGraficos+15);
 
-const g=42;
+doc.setFontSize(9);
+doc.setTextColor(...colors.text);
+doc.text("Resumo visual",M,y);
+
+y+=6;
+
+const imgPizza=chartPizza.toDataURL("image/png",1.0);
+const imgPerc=chartPerc.toDataURL("image/png",1.0);
+const imgResumo=chartResumo.toDataURL("image/png",1.0);
+
+const gW=50,gH=50,gap=8;
+const startX=M,startY=y;
 
 doc.setFontSize(7);
-doc.setFont(undefined,"normal");
+doc.setTextColor(120,120,120);
 
-doc.text("Categorias",M,y-1);
-doc.addImage(imgPizza,"PNG",M,y,g,g);
+doc.text("Categorias",startX,startY-2);
+doc.text("Entradas x Saídas",startX+gW+gap,startY-2);
+doc.text("Resumo geral",startX+(gW+gap)*2,startY-2);
 
-doc.text("Entradas x Saidas",M+g+8,y-1);
-doc.addImage(imgPerc,"PNG",M+g+8,y,g,g);
+doc.addImage(imgPizza,"PNG",startX,startY,gW,gH,undefined,"FAST");
+doc.addImage(imgPerc,"PNG",startX+gW+gap,startY,gW,gH,undefined,"FAST");
+doc.addImage(imgResumo,"PNG",startX+(gW+gap)*2,startY,gW,gH*0.9,undefined,"FAST");
 
-doc.text("Resumo",M+2*g+16,y-1);
-doc.addImage(imgResumo,"PNG",M+2*g+16,y,g,g*0.75);
+y=startY+gH+10;
+linhaDivisoria();
 
-/* ---------- PAGINAÇÃO ---------- */
+/* -------- RESUMO FINAL (APÓS GRÁFICOS) -------- */
 
-const pages = doc.getNumberOfPages();
+novaPaginaSePreciso(20);
+
+doc.setFontSize(9);
+doc.setTextColor(...colors.text);
+doc.text("Resumo financeiro",M,y);
+
+y+=6;
+doc.setFontSize(8);
+
+doc.text("Entradas:",M,y);
+doc.setTextColor(...colors.entrada);
+doc.text(money(totalEnt),M+25,y);
+
+doc.setTextColor(...colors.text);
+doc.text("Saídas:",M+65,y);
+doc.setTextColor(...colors.saida);
+doc.text(money(totalSai),M+85,y);
+
+doc.setTextColor(...colors.text);
+doc.text("Resultado:",M+125,y);
+
+doc.setTextColor(...((totalEnt-totalSai)>=0?colors.entrada:colors.saida));
+doc.text(money(totalEnt-totalSai),M+150,y);
+
+y+=6;
+linhaDivisoria();
+
+/* -------- PAGINAÇÃO -------- */
+
+const pages=doc.getNumberOfPages();
 for(let i=1;i<=pages;i++){
   doc.setPage(i);
   doc.setFontSize(7);
-  doc.setTextColor(150,150,150);
-  doc.text(`Pagina ${i} de ${pages}`,W/2,H-6,{align:"center"});
+  doc.setTextColor(160,160,160);
+  doc.text(`Página ${i} de ${pages}`,W/2,H-6,{align:"center"});
 }
 
 doc.save(`fluxopro_${perfil}_${Date.now()}.pdf`);
@@ -389,7 +411,6 @@ loading.classList.remove("show");
 }
 
 },300);
-
 }
 </script>
 
