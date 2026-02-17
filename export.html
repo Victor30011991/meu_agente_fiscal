@@ -9,6 +9,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body{margin:0;font-family:Inter;background:#f5f7fb;color:#1f2937}
@@ -76,11 +77,18 @@ button:hover{opacity:.8;transform:translateY(-1px)}
   </div>
 </div>
 
+<!-- ✅ GRÁFICOS OCULTOS PARA CAPTURA -->
+<div style="position:absolute;left:-9999px;width:400px">
+  <canvas id="chartPizza" width="400" height="400"></canvas>
+  <canvas id="chartPerc" width="400" height="400"></canvas>
+  <canvas id="chartResumo" width="400" height="300"></canvas>
+</div>
+
 <script>
 const KEY="fluxopro_v12";
 
 // ✅ VALIDAÇÃO ROBUSTA
-let db, perfil, dados, info;
+let db, perfil, dados, info, theme;
 
 try {
   db = JSON.parse(localStorage.getItem(KEY));
@@ -90,6 +98,7 @@ try {
   }
   
   perfil = db.active;
+  theme = db.theme || ""; // ✅ TEMA ATIVO
   
   if(!perfil || !db.profiles[perfil]){
     throw new Error("Perfil ativo não encontrado");
@@ -161,6 +170,153 @@ if(!dados.length){
   `).join("");
 }
 
+// ✅ CRIAR GRÁFICOS PARA CAPTURA
+let charts = {};
+
+function createCharts(){
+  
+  if(!dados.length) return;
+  
+  // Mapa de categorias (saídas)
+  let mapa = {};
+  dados.forEach(l => {
+    if(l.tipo === "Saída") {
+      mapa[l.cat || "Outros"] = (mapa[l.cat || "Outros"] || 0) + l.valor;
+    }
+  });
+  
+  // Gráfico Pizza (Categorias)
+  charts.pizza = new Chart(chartPizza, {
+    type: "doughnut",
+    data: {
+      labels: Object.keys(mapa),
+      datasets: [{
+        data: Object.values(mapa),
+        backgroundColor: [
+          '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'
+        ]
+      }]
+    },
+    options: {
+      responsive: false,
+      plugins: {
+        legend: {
+          position: 'bottom'
+        }
+      }
+    }
+  });
+  
+  // Gráfico Percentual (Entradas x Saídas)
+  charts.perc = new Chart(chartPerc, {
+    type: "pie",
+    data: {
+      labels: ["Entradas", "Saídas"],
+      datasets: [{
+        data: [totalEnt, totalSai],
+        backgroundColor: ['#10b981', '#ef4444']
+      }]
+    },
+    options: {
+      responsive: false,
+      plugins: {
+        legend: {
+          position: 'bottom'
+        }
+      }
+    }
+  });
+  
+  // Gráfico Resumo (Barras)
+  charts.resumo = new Chart(chartResumo, {
+    type: "bar",
+    data: {
+      labels: ["Entradas", "Saídas", "Resultado"],
+      datasets: [{
+        data: [totalEnt, totalSai, totalEnt - totalSai],
+        backgroundColor: ['#10b981', '#ef4444', totalEnt >= totalSai ? '#10b981' : '#ef4444']
+      }]
+    },
+    options: {
+      responsive: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      }
+    }
+  });
+}
+
+createCharts();
+
+// ✅ PALETAS DE CORES POR TEMA
+const themePalettes = {
+  "": { // Padrão
+    primary: [79, 70, 229],      // #4f46e5
+    bg: [255, 255, 255],          // #fff
+    text: [31, 41, 55],           // #1f2937
+    textLight: [255, 255, 255],   // #fff
+    card: [255, 255, 255],        // #fff
+    entrada: [16, 185, 129],      // #10b981
+    saida: [239, 68, 68],         // #ef4444
+    zebra: [249, 250, 251]        // #f9fafb
+  },
+  "dark": { // Dark
+    primary: [30, 41, 59],        // #1e293b
+    bg: [15, 23, 42],             // #0f172a
+    text: [241, 245, 249],        // #f1f5f9
+    textLight: [241, 245, 249],   // #f1f5f9
+    card: [30, 41, 59],           // #1e293b
+    entrada: [16, 185, 129],      // #10b981
+    saida: [239, 68, 68],         // #ef4444
+    zebra: [15, 23, 42]           // #0f172a
+  },
+  "emerald": { // Emerald
+    primary: [16, 185, 129],      // #10b981
+    bg: [236, 253, 245],          // #ecfdf5
+    text: [6, 95, 70],            // #065f46
+    textLight: [255, 255, 255],   // #fff
+    card: [255, 255, 255],        // #fff
+    entrada: [5, 150, 105],       // #059669
+    saida: [239, 68, 68],         // #ef4444
+    zebra: [209, 250, 229]        // #d1fae5
+  },
+  "gold": { // Gold
+    primary: [245, 158, 11],      // #f59e0b
+    bg: [255, 247, 237],          // #fff7ed
+    text: [120, 53, 15],          // #78350f
+    textLight: [255, 255, 255],   // #fff
+    card: [255, 255, 255],        // #fff
+    entrada: [16, 185, 129],      // #10b981
+    saida: [239, 68, 68],         // #ef4444
+    zebra: [254, 243, 199]        // #fef3c7
+  },
+  "indigo": { // Indigo
+    primary: [99, 102, 241],      // #6366f1
+    bg: [238, 242, 255],          // #eef2ff
+    text: [55, 48, 163],          // #3730a3
+    textLight: [255, 255, 255],   // #fff
+    card: [255, 255, 255],        // #fff
+    entrada: [16, 185, 129],      // #10b981
+    saida: [239, 68, 68],         // #ef4444
+    zebra: [224, 231, 255]        // #e0e7ff
+  },
+  "rose": { // Rose
+    primary: [251, 113, 133],     // #fb7185
+    bg: [255, 241, 242],          // #fff1f2
+    text: [136, 19, 55],          // #881337
+    textLight: [255, 255, 255],   // #fff
+    card: [255, 255, 255],        // #fff
+    entrada: [16, 185, 129],      // #10b981
+    saida: [239, 68, 68],         // #ef4444
+    zebra: [255, 228, 230]        // #ffe4e6
+  }
+};
+
+// ✅ OBTER PALETA ATIVA
+const colors = themePalettes[theme] || themePalettes[""];
+
 /* =========================================================
    EXCEL — SEM FÓRMULAS (valores já calculados)
 ========================================================= */
@@ -228,7 +384,7 @@ function exportExcel(){
 
 
 /* =========================================================
-   PDF — mantém o modelo aprovado + melhorias
+   PDF — ESTILO POWERPOINT COM TEMA DINÂMICO
 ========================================================= */
 function exportPDF(){
   
@@ -243,56 +399,202 @@ function exportPDF(){
     try{
       const {jsPDF} = window.jspdf;
       const doc = new jsPDF("p","mm","a4");
-
-      let y = 12;
-
-      doc.setFontSize(16);
+      
+      const pageWidth = 210;
+      const pageHeight = 297;
+      
+      // ========================================
+      // SLIDE 1: CAPA COM DADOS DO PERFIL
+      // ========================================
+      
+      // Fundo com cor do tema
+      doc.setFillColor(...colors.primary);
+      doc.rect(0, 0, pageWidth, 80, 'F');
+      
+      // Título
+      doc.setTextColor(...colors.textLight);
+      doc.setFontSize(28);
       doc.setFont(undefined, 'bold');
-      doc.text(`Relatório FluxoPro`,10,y);
-      y+=10;
-
+      doc.text("Relatório Financeiro", pageWidth/2, 35, {align: 'center'});
+      
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'normal');
+      doc.text("FluxoPro Engine", pageWidth/2, 50, {align: 'center'});
+      
+      // Nome do tema (se não for padrão)
+      if(theme){
+        doc.setFontSize(10);
+        const themeNames = {dark:"Dark",emerald:"Emerald",gold:"Gold",indigo:"Indigo",rose:"Rose"};
+        doc.text(`Tema: ${themeNames[theme]}`, pageWidth/2, 62, {align: 'center'});
+      }
+      
+      // Box com dados do perfil
+      doc.setFillColor(...colors.card);
+      doc.roundedRect(20, 100, 170, 90, 5, 5, 'F');
+      
+      doc.setTextColor(...colors.text);
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'bold');
+      doc.text("📁 Perfil: " + perfil, 30, 115);
+      
       doc.setFontSize(11);
       doc.setFont(undefined, 'normal');
-      doc.text(`Perfil: ${perfil}`,10,y); y+=6;
-      doc.text(`Nome: ${info.nome||"Não informado"}`,10,y); y+=6;
-      doc.text(`Documento: ${info.doc||"Não informado"}`,10,y); y+=8;
-
-      doc.setFont(undefined, 'bold');
-      doc.text(`Entradas: ${money(totalEnt)}`,10,y); y+=6;
-      doc.text(`Saídas: ${money(totalSai)}`,10,y); y+=6;
+      doc.text("Nome: " + (info.nome || "Não informado"), 30, 130);
+      doc.text("Documento: " + (info.doc || "Não informado"), 30, 140);
       
-      const resColor = (totalEnt-totalSai) >= 0 ? [16, 185, 129] : [239, 68, 68];
+      // Linha divisória
+      doc.setDrawColor(229, 231, 235);
+      doc.line(30, 150, 180, 150);
+      
+      // Resumo financeiro
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      
+      doc.setTextColor(...colors.entrada); // Verde
+      doc.text("Entradas:", 30, 165);
+      doc.text(money(totalEnt), 100, 165);
+      
+      doc.setTextColor(...colors.saida); // Vermelho
+      doc.text("Saídas:", 30, 175);
+      doc.text(money(totalSai), 100, 175);
+      
+      const resColor = (totalEnt - totalSai) >= 0 ? colors.entrada : colors.saida;
       doc.setTextColor(...resColor);
-      doc.text(`Resultado: ${money(totalEnt-totalSai)}`,10,y); 
-      doc.setTextColor(0,0,0);
-      y+=10;
-
-      doc.setFontSize(10);
+      doc.text("Resultado:", 30, 185);
+      doc.text(money(totalEnt - totalSai), 100, 185);
+      
+      // Data do relatório
+      doc.setTextColor(107, 114, 128);
+      doc.setFontSize(9);
       doc.setFont(undefined, 'normal');
-
-      dados.forEach(l=>{
-
+      doc.text("Gerado em: " + new Date().toLocaleString('pt-BR'), pageWidth/2, 280, {align: 'center'});
+      
+      // ========================================
+      // SLIDE 2: GRÁFICOS
+      // ========================================
+      doc.addPage();
+      
+      doc.setFillColor(...colors.primary);
+      doc.rect(0, 0, pageWidth, 30, 'F');
+      
+      doc.setTextColor(...colors.textLight);
+      doc.setFontSize(18);
+      doc.setFont(undefined, 'bold');
+      doc.text("📊 Dashboard Visual", pageWidth/2, 20, {align: 'center'});
+      
+      // Capturar gráficos como imagens
+      const imgPizza = chartPizza.toDataURL('image/png');
+      const imgPerc = chartPerc.toDataURL('image/png');
+      const imgResumo = chartResumo.toDataURL('image/png');
+      
+      doc.setTextColor(...colors.text);
+      doc.setFontSize(11);
+      doc.setFont(undefined, 'bold');
+      
+      // Gráfico Pizza
+      doc.text("Distribuição por Categoria", 20, 45);
+      doc.addImage(imgPizza, 'PNG', 15, 50, 80, 80);
+      
+      // Gráfico Percentual
+      doc.text("Entradas x Saídas", 115, 45);
+      doc.addImage(imgPerc, 'PNG', 110, 50, 80, 80);
+      
+      // Gráfico Resumo
+      doc.text("Resumo Financeiro", 20, 145);
+      doc.addImage(imgResumo, 'PNG', 15, 150, 180, 100);
+      
+      // ========================================
+      // SLIDE 3+: TABELA DE LANÇAMENTOS
+      // ========================================
+      doc.addPage();
+      
+      doc.setFillColor(...colors.primary);
+      doc.rect(0, 0, pageWidth, 30, 'F');
+      
+      doc.setTextColor(...colors.textLight);
+      doc.setFontSize(18);
+      doc.setFont(undefined, 'bold');
+      doc.text("📋 Lançamentos Detalhados", pageWidth/2, 20, {align: 'center'});
+      
+      let y = 45;
+      
+      doc.setTextColor(...colors.text);
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'normal');
+      
+      // Cabeçalho da tabela
+      doc.setFillColor(...colors.zebra);
+      doc.rect(10, y-5, 190, 8, 'F');
+      
+      doc.setFont(undefined, 'bold');
+      doc.text("Data", 15, y);
+      doc.text("Categoria", 45, y);
+      doc.text("Tipo", 95, y);
+      doc.text("Valor", 125, y);
+      doc.text("Obs", 160, y);
+      
+      y += 10;
+      doc.setFont(undefined, 'normal');
+      
+      dados.forEach((l, index) => {
+        
         if(y > 270){
           doc.addPage();
-          y = 12;
+          
+          // Cabeçalho repetido
+          doc.setFillColor(...colors.primary);
+          doc.rect(0, 0, pageWidth, 15, 'F');
+          doc.setTextColor(...colors.textLight);
+          doc.setFontSize(12);
+          doc.setFont(undefined, 'bold');
+          doc.text("📋 Lançamentos (continuação)", pageWidth/2, 10, {align: 'center'});
+          
+          y = 25;
+          doc.setTextColor(...colors.text);
+          doc.setFontSize(9);
+          doc.setFont(undefined, 'normal');
         }
-
-        const linha = `${l.data||"-"} | ${l.cat||"-"} | ${l.tipo||"-"} | ${money(l.valor)} | ${l.obs||"-"}`;
-        doc.text(linha, 10, y);
-
-        y += 6;
+        
+        // Linha zebrada com cor do tema
+        if(index % 2 === 0){
+          doc.setFillColor(...colors.zebra);
+          doc.rect(10, y-5, 190, 7, 'F');
+        }
+        
+        doc.setTextColor(...colors.text);
+        doc.text(l.data || "-", 15, y);
+        doc.text(l.cat || "-", 45, y);
+        
+        // Cor do tipo
+        if(l.tipo === "Entrada"){
+          doc.setTextColor(...colors.entrada);
+        } else {
+          doc.setTextColor(...colors.saida);
+        }
+        doc.text(l.tipo || "-", 95, y);
+        
+        doc.setTextColor(...colors.text);
+        doc.setFont(undefined, 'bold');
+        doc.text(money(l.valor), 125, y);
+        doc.setFont(undefined, 'normal');
+        
+        const obsText = (l.obs || "-").substring(0, 20);
+        doc.text(obsText, 160, y);
+        
+        y += 7;
       });
-
+      
       doc.save(`fluxopro_${perfil}_${Date.now()}.pdf`);
       
       loading.classList.remove("show");
-      alert("✅ PDF gerado com sucesso!");
+      alert(`✅ PDF gerado com tema ${theme || "padrão"}!`);
       
     }catch(err){
       loading.classList.remove("show");
       alert("❌ Erro ao gerar PDF: " + err.message);
+      console.error(err);
     }
-  }, 100);
+  }, 500); // Aguardar gráficos renderizarem
 }
 </script>
 </body>
