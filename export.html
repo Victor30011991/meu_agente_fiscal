@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>FluxoPro – Relatório</title>
+<title>FluxoPro - Relatório</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -41,10 +41,10 @@ button:hover{opacity:.8;transform:translateY(-1px)}
 
 <div class="container">
   <div class="top">
-    <h1>📊 Relatório FluxoPro</h1>
+    <h1>Relatorio FluxoPro</h1>
     <div style="display:flex;gap:10px">
-      <button class="btn-excel" onclick="exportExcel()">📥 Baixar Excel</button>
-      <button class="btn-pdf" onclick="exportPDF()">📄 Baixar PDF</button>
+      <button class="btn-excel" onclick="exportExcel()">Baixar Excel</button>
+      <button class="btn-pdf" onclick="exportPDF()">Baixar PDF</button>
     </div>
   </div>
 
@@ -55,7 +55,7 @@ button:hover{opacity:.8;transform:translateY(-1px)}
 
     <div class="resumo">
       <div class="box">Entradas<br><span id="ent" class="entrada"></span></div>
-      <div class="box">Saídas<br><span id="sai" class="saida"></span></div>
+      <div class="box">Saidas<br><span id="sai" class="saida"></span></div>
       <div class="box">Resultado<br><span id="res"></span></div>
     </div>
 
@@ -67,7 +67,7 @@ button:hover{opacity:.8;transform:translateY(-1px)}
             <th>Categoria</th>
             <th>Tipo</th>
             <th>Valor</th>
-            <th>Observação</th>
+            <th>Observacao</th>
           </tr>
         </thead>
         <tbody id="tb"></tbody>
@@ -77,7 +77,7 @@ button:hover{opacity:.8;transform:translateY(-1px)}
   </div>
 </div>
 
-<!-- ✅ GRÁFICOS OCULTOS PARA CAPTURA -->
+<!-- GRAFICOS OCULTOS PARA CAPTURA -->
 <div style="position:absolute;left:-9999px;width:400px">
   <canvas id="chartPizza" width="400" height="400"></canvas>
   <canvas id="chartPerc" width="400" height="400"></canvas>
@@ -87,21 +87,20 @@ button:hover{opacity:.8;transform:translateY(-1px)}
 <script>
 const KEY="fluxopro_v12";
 
-// ✅ VALIDAÇÃO ROBUSTA
 let db, perfil, dados, info, theme;
 
 try {
   db = JSON.parse(localStorage.getItem(KEY));
   
   if(!db || !db.profiles){
-    throw new Error("Base de dados não encontrada");
+    throw new Error("Base de dados nao encontrada");
   }
   
   perfil = db.active;
-  theme = db.theme || ""; // ✅ TEMA ATIVO
+  theme = db.theme || "";
   
   if(!perfil || !db.profiles[perfil]){
-    throw new Error("Perfil ativo não encontrado");
+    throw new Error("Perfil ativo nao encontrado");
   }
   
   dados = db.profiles[perfil] || [];
@@ -110,9 +109,9 @@ try {
 } catch(err) {
   document.querySelector('.container').innerHTML = `
     <div class="card empty">
-      <h2>⚠️ Erro ao carregar dados</h2>
+      <h2>Erro ao carregar dados</h2>
       <p>${err.message}</p>
-      <p>Verifique se o sistema FluxoPro está configurado corretamente.</p>
+      <p>Verifique se o sistema FluxoPro esta configurado corretamente.</p>
       <button onclick="window.close()">Fechar</button>
     </div>
   `;
@@ -126,7 +125,6 @@ function money(v){
 let totalEnt = 0;
 let totalSai = 0;
 
-// ✅ VALIDAÇÃO DE TIPOS
 dados.forEach(l=>{
   const val = Number(l.valor||0);
   if(l.tipo==="Entrada") {
@@ -136,11 +134,11 @@ dados.forEach(l=>{
   }
 });
 
-perfilTitulo.innerText = "📁 Perfil: " + perfil;
+perfilTitulo.innerText = "Perfil: " + perfil;
 
 perfilDados.innerHTML = `
-<p><b>Nome:</b> ${info.nome||"Não informado"}</p>
-<p><b>Documento:</b> ${info.doc||"Não informado"}</p>
+<p><b>Nome:</b> ${info.nome||"Nao informado"}</p>
+<p><b>Documento:</b> ${info.doc||"Nao informado"}</p>
 `;
 
 ent.innerText = money(totalEnt);
@@ -150,12 +148,11 @@ const resultado = totalEnt - totalSai;
 res.innerText = money(resultado);
 res.style.color = resultado >= 0 ? "#10b981" : "#ef4444";
 
-// ✅ VERIFICAR SE HÁ DADOS
 if(!dados.length){
   document.getElementById("conteudo").innerHTML = `
     <div class="empty">
-      <p>📭 Nenhum lançamento encontrado neste perfil</p>
-      <p>Adicione lançamentos no sistema para gerar relatórios.</p>
+      <p>Nenhum lancamento encontrado neste perfil</p>
+      <p>Adicione lancamentos no sistema para gerar relatorios.</p>
     </div>
   `;
 } else {
@@ -170,14 +167,12 @@ if(!dados.length){
   `).join("");
 }
 
-// ✅ CRIAR GRÁFICOS PARA CAPTURA
 let charts = {};
 
 function createCharts(){
   
   if(!dados.length) return;
   
-  // Mapa de categorias (saídas)
   let mapa = {};
   dados.forEach(l => {
     if(l.tipo === "Saída") {
@@ -185,33 +180,27 @@ function createCharts(){
     }
   });
   
-  // Gráfico Pizza (Categorias)
   charts.pizza = new Chart(chartPizza, {
     type: "doughnut",
     data: {
       labels: Object.keys(mapa),
       datasets: [{
         data: Object.values(mapa),
-        backgroundColor: [
-          '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'
-        ]
+        backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899']
       }]
     },
     options: {
       responsive: false,
       plugins: {
-        legend: {
-          position: 'bottom'
-        }
+        legend: {position: 'bottom', labels: {font: {size: 11}}}
       }
     }
   });
   
-  // Gráfico Percentual (Entradas x Saídas)
   charts.perc = new Chart(chartPerc, {
     type: "pie",
     data: {
-      labels: ["Entradas", "Saídas"],
+      labels: ["Entradas", "Saidas"],
       datasets: [{
         data: [totalEnt, totalSai],
         backgroundColor: ['#10b981', '#ef4444']
@@ -220,18 +209,15 @@ function createCharts(){
     options: {
       responsive: false,
       plugins: {
-        legend: {
-          position: 'bottom'
-        }
+        legend: {position: 'bottom', labels: {font: {size: 11}}}
       }
     }
   });
   
-  // Gráfico Resumo (Barras)
   charts.resumo = new Chart(chartResumo, {
     type: "bar",
     data: {
-      labels: ["Entradas", "Saídas", "Resultado"],
+      labels: ["Entradas", "Saidas", "Resultado"],
       datasets: [{
         data: [totalEnt, totalSai, totalEnt - totalSai],
         backgroundColor: ['#10b981', '#ef4444', totalEnt >= totalSai ? '#10b981' : '#ef4444']
@@ -239,91 +225,89 @@ function createCharts(){
     },
     options: {
       responsive: false,
-      plugins: {
-        legend: {
-          display: false
-        }
-      }
+      plugins: {legend: {display: false}},
+      scales: {y: {beginAtZero: true}}
     }
   });
 }
 
 createCharts();
 
-// ✅ PALETAS DE CORES POR TEMA
 const themePalettes = {
-  "": { // Padrão
-    primary: [79, 70, 229],      // #4f46e5
-    bg: [255, 255, 255],          // #fff
-    text: [31, 41, 55],           // #1f2937
-    textLight: [255, 255, 255],   // #fff
-    card: [255, 255, 255],        // #fff
-    entrada: [16, 185, 129],      // #10b981
-    saida: [239, 68, 68],         // #ef4444
-    zebra: [249, 250, 251]        // #f9fafb
+  "": {
+    primary: [79, 70, 229],
+    bg: [255, 255, 255],
+    text: [31, 41, 55],
+    textLight: [255, 255, 255],
+    card: [255, 255, 255],
+    entrada: [16, 185, 129],
+    saida: [239, 68, 68],
+    zebra: [249, 250, 251],
+    accent: [238, 242, 255]
   },
-  "dark": { // Dark
-    primary: [30, 41, 59],        // #1e293b
-    bg: [15, 23, 42],             // #0f172a
-    text: [241, 245, 249],        // #f1f5f9
-    textLight: [241, 245, 249],   // #f1f5f9
-    card: [30, 41, 59],           // #1e293b
-    entrada: [16, 185, 129],      // #10b981
-    saida: [239, 68, 68],         // #ef4444
-    zebra: [15, 23, 42]           // #0f172a
+  "dark": {
+    primary: [30, 41, 59],
+    bg: [15, 23, 42],
+    text: [241, 245, 249],
+    textLight: [241, 245, 249],
+    card: [30, 41, 59],
+    entrada: [16, 185, 129],
+    saida: [239, 68, 68],
+    zebra: [15, 23, 42],
+    accent: [51, 65, 85]
   },
-  "emerald": { // Emerald
-    primary: [16, 185, 129],      // #10b981
-    bg: [236, 253, 245],          // #ecfdf5
-    text: [6, 95, 70],            // #065f46
-    textLight: [255, 255, 255],   // #fff
-    card: [255, 255, 255],        // #fff
-    entrada: [5, 150, 105],       // #059669
-    saida: [239, 68, 68],         // #ef4444
-    zebra: [209, 250, 229]        // #d1fae5
+  "emerald": {
+    primary: [16, 185, 129],
+    bg: [236, 253, 245],
+    text: [6, 95, 70],
+    textLight: [255, 255, 255],
+    card: [255, 255, 255],
+    entrada: [5, 150, 105],
+    saida: [239, 68, 68],
+    zebra: [209, 250, 229],
+    accent: [167, 243, 208]
   },
-  "gold": { // Gold
-    primary: [245, 158, 11],      // #f59e0b
-    bg: [255, 247, 237],          // #fff7ed
-    text: [120, 53, 15],          // #78350f
-    textLight: [255, 255, 255],   // #fff
-    card: [255, 255, 255],        // #fff
-    entrada: [16, 185, 129],      // #10b981
-    saida: [239, 68, 68],         // #ef4444
-    zebra: [254, 243, 199]        // #fef3c7
+  "gold": {
+    primary: [245, 158, 11],
+    bg: [255, 247, 237],
+    text: [120, 53, 15],
+    textLight: [255, 255, 255],
+    card: [255, 255, 255],
+    entrada: [16, 185, 129],
+    saida: [239, 68, 68],
+    zebra: [254, 243, 199],
+    accent: [253, 230, 138]
   },
-  "indigo": { // Indigo
-    primary: [99, 102, 241],      // #6366f1
-    bg: [238, 242, 255],          // #eef2ff
-    text: [55, 48, 163],          // #3730a3
-    textLight: [255, 255, 255],   // #fff
-    card: [255, 255, 255],        // #fff
-    entrada: [16, 185, 129],      // #10b981
-    saida: [239, 68, 68],         // #ef4444
-    zebra: [224, 231, 255]        // #e0e7ff
+  "indigo": {
+    primary: [99, 102, 241],
+    bg: [238, 242, 255],
+    text: [55, 48, 163],
+    textLight: [255, 255, 255],
+    card: [255, 255, 255],
+    entrada: [16, 185, 129],
+    saida: [239, 68, 68],
+    zebra: [224, 231, 255],
+    accent: [199, 210, 254]
   },
-  "rose": { // Rose
-    primary: [251, 113, 133],     // #fb7185
-    bg: [255, 241, 242],          // #fff1f2
-    text: [136, 19, 55],          // #881337
-    textLight: [255, 255, 255],   // #fff
-    card: [255, 255, 255],        // #fff
-    entrada: [16, 185, 129],      // #10b981
-    saida: [239, 68, 68],         // #ef4444
-    zebra: [255, 228, 230]        // #ffe4e6
+  "rose": {
+    primary: [251, 113, 133],
+    bg: [255, 241, 242],
+    text: [136, 19, 55],
+    textLight: [255, 255, 255],
+    card: [255, 255, 255],
+    entrada: [16, 185, 129],
+    saida: [239, 68, 68],
+    zebra: [255, 228, 230],
+    accent: [254, 205, 211]
   }
 };
 
-// ✅ OBTER PALETA ATIVA
 const colors = themePalettes[theme] || themePalettes[""];
 
-/* =========================================================
-   EXCEL — SEM FÓRMULAS (valores já calculados)
-========================================================= */
 function exportExcel(){
   
   if(!dados.length){
-    alert("⚠️ Não há dados para exportar");
+    alert("Nao ha dados para exportar");
     return;
   }
   
@@ -333,7 +317,7 @@ function exportExcel(){
     try{
       const rows = [];
 
-      rows.push(["Relatório FluxoPro"]);
+      rows.push(["Relatorio FluxoPro"]);
       rows.push([]);
       rows.push(["Perfil", perfil]);
       rows.push(["Nome", info.nome||""]);
@@ -341,11 +325,11 @@ function exportExcel(){
       rows.push([]);
 
       rows.push(["Entradas", totalEnt]);
-      rows.push(["Saídas", totalSai]);
+      rows.push(["Saidas", totalSai]);
       rows.push(["Resultado", totalEnt - totalSai]);
       rows.push([]);
 
-      rows.push(["Data","Categoria","Tipo","Valor","Observação"]);
+      rows.push(["Data","Categoria","Tipo","Valor","Observacao"]);
 
       dados.forEach(l=>{
         rows.push([
@@ -373,23 +357,19 @@ function exportExcel(){
       XLSX.writeFile(wb, `fluxopro_${perfil}_${Date.now()}.xlsx`);
       
       loading.classList.remove("show");
-      alert("✅ Excel gerado com sucesso!");
+      alert("Excel gerado com sucesso!");
       
     }catch(err){
       loading.classList.remove("show");
-      alert("❌ Erro ao gerar Excel: " + err.message);
+      alert("Erro ao gerar Excel: " + err.message);
     }
   }, 100);
 }
 
-
-/* =========================================================
-   PDF — ESTILO POWERPOINT COM TEMA DINÂMICO
-========================================================= */
 function exportPDF(){
   
   if(!dados.length){
-    alert("⚠️ Não há dados para exportar");
+    alert("Nao ha dados para exportar");
     return;
   }
   
@@ -400,201 +380,367 @@ function exportPDF(){
       const {jsPDF} = window.jspdf;
       const doc = new jsPDF("p","mm","a4");
       
-      const pageWidth = 210;
-      const pageHeight = 297;
+      const W = 210;
+      const H = 297;
+      const M = 15;
       
-      // ========================================
-      // SLIDE 1: CAPA COM DADOS DO PERFIL
-      // ========================================
+      // ===========================================
+      // SLIDE 1: CAPA PROFISSIONAL
+      // ===========================================
       
-      // Fundo com cor do tema
       doc.setFillColor(...colors.primary);
-      doc.rect(0, 0, pageWidth, 80, 'F');
+      doc.rect(0, 0, W, 60, 'F');
       
-      // Título
       doc.setTextColor(...colors.textLight);
-      doc.setFontSize(28);
+      doc.setFontSize(32);
       doc.setFont(undefined, 'bold');
-      doc.text("Relatório Financeiro", pageWidth/2, 35, {align: 'center'});
+      doc.text("RELATORIO FINANCEIRO", W/2, 30, {align: 'center'});
       
-      doc.setFontSize(16);
+      doc.setFontSize(14);
       doc.setFont(undefined, 'normal');
-      doc.text("FluxoPro Engine", pageWidth/2, 50, {align: 'center'});
+      doc.text("FluxoPro Engine", W/2, 42, {align: 'center'});
       
-      // Nome do tema (se não for padrão)
       if(theme){
-        doc.setFontSize(10);
-        const themeNames = {dark:"Dark",emerald:"Emerald",gold:"Gold",indigo:"Indigo",rose:"Rose"};
-        doc.text(`Tema: ${themeNames[theme]}`, pageWidth/2, 62, {align: 'center'});
+        doc.setFontSize(9);
+        const tNames = {dark:"Dark Mode",emerald:"Emerald",gold:"Gold",indigo:"Indigo",rose:"Rose"};
+        doc.text("Tema: " + (tNames[theme] || theme), W/2, 52, {align: 'center'});
       }
       
-      // Box com dados do perfil
       doc.setFillColor(...colors.card);
-      doc.roundedRect(20, 100, 170, 90, 5, 5, 'F');
+      doc.roundedRect(M, 75, W-2*M, 70, 3, 3, 'F');
+      
+      doc.setTextColor(...colors.text);
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.text("DADOS DO PERFIL", M+5, 88);
+      
+      doc.setFontSize(11);
+      doc.setFont(undefined, 'normal');
+      doc.text("Perfil:", M+5, 100);
+      doc.setFont(undefined, 'bold');
+      doc.text(perfil, M+25, 100);
+      
+      doc.setFont(undefined, 'normal');
+      doc.text("Nome:", M+5, 108);
+      doc.text(info.nome || "Nao informado", M+25, 108);
+      
+      doc.text("Documento:", M+5, 116);
+      doc.text(info.doc || "Nao informado", M+25, 116);
+      
+      doc.setDrawColor(200, 200, 200);
+      doc.line(M+5, 122, W-M-5, 122);
+      
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text("Gerado em: " + new Date().toLocaleString('pt-BR'), M+5, 136);
+      
+      doc.setFillColor(...colors.accent);
+      doc.roundedRect(M, 155, W-2*M, 50, 3, 3, 'F');
       
       doc.setTextColor(...colors.text);
       doc.setFontSize(14);
       doc.setFont(undefined, 'bold');
-      doc.text("📁 Perfil: " + perfil, 30, 115);
+      doc.text("RESUMO FINANCEIRO", M+5, 168);
       
-      doc.setFontSize(11);
+      const boxW = (W - 2*M - 20) / 3;
+      const boxY = 175;
+      
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(M+5, boxY, boxW, 22, 2, 2, 'F');
+      doc.roundedRect(M+10+boxW, boxY, boxW, 22, 2, 2, 'F');
+      doc.roundedRect(M+15+2*boxW, boxY, boxW, 22, 2, 2, 'F');
+      
+      doc.setFontSize(9);
       doc.setFont(undefined, 'normal');
-      doc.text("Nome: " + (info.nome || "Não informado"), 30, 130);
-      doc.text("Documento: " + (info.doc || "Não informado"), 30, 140);
+      doc.setTextColor(100, 100, 100);
+      doc.text("ENTRADAS", M+5+boxW/2, boxY+6, {align: 'center'});
       
-      // Linha divisória
-      doc.setDrawColor(229, 231, 235);
-      doc.line(30, 150, 180, 150);
+      doc.setFontSize(13);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(...colors.entrada);
+      doc.text(money(totalEnt), M+5+boxW/2, boxY+16, {align: 'center'});
       
-      // Resumo financeiro
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text("SAIDAS", M+10+boxW+boxW/2, boxY+6, {align: 'center'});
+      
+      doc.setFontSize(13);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(...colors.saida);
+      doc.text(money(totalSai), M+10+boxW+boxW/2, boxY+16, {align: 'center'});
+      
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text("RESULTADO", M+15+2*boxW+boxW/2, boxY+6, {align: 'center'});
+      
+      doc.setFontSize(13);
+      doc.setFont(undefined, 'bold');
+      const resC = (totalEnt - totalSai) >= 0 ? colors.entrada : colors.saida;
+      doc.setTextColor(...resC);
+      doc.text(money(totalEnt - totalSai), M+15+2*boxW+boxW/2, boxY+16, {align: 'center'});
+      
+      const percEnt = totalEnt + totalSai > 0 ? (totalEnt / (totalEnt + totalSai) * 100).toFixed(1) : 0;
+      const percSai = totalEnt + totalSai > 0 ? (totalSai / (totalEnt + totalSai) * 100).toFixed(1) : 0;
+      
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'normal');
+      doc.setTextColor(...colors.text);
+      doc.text(`Entradas representam ${percEnt}% do total`, M+5, 218);
+      doc.text(`Saidas representam ${percSai}% do total`, M+5, 225);
+      
+      if(totalEnt >= totalSai){
+        doc.setTextColor(...colors.entrada);
+        doc.text("Situacao: Saude financeira positiva", M+5, 232);
+      } else {
+        doc.setTextColor(...colors.saida);
+        doc.text("Situacao: Atencao, gastos maiores que entradas", M+5, 232);
+      }
+      
+      // ===========================================
+      // SLIDE 2: GRAFICOS
+      // ===========================================
+      doc.addPage();
+      
+      doc.setFillColor(...colors.primary);
+      doc.rect(0, 0, W, 35, 'F');
+      
+      doc.setTextColor(...colors.textLight);
+      doc.setFontSize(22);
+      doc.setFont(undefined, 'bold');
+      doc.text("DASHBOARD VISUAL", W/2, 22, {align: 'center'});
+      
+      const imgPizza = chartPizza.toDataURL('image/png', 1.0);
+      const imgPerc = chartPerc.toDataURL('image/png', 1.0);
+      const imgResumo = chartResumo.toDataURL('image/png', 1.0);
+      
+      doc.setTextColor(...colors.text);
       doc.setFontSize(12);
       doc.setFont(undefined, 'bold');
       
-      doc.setTextColor(...colors.entrada); // Verde
-      doc.text("Entradas:", 30, 165);
-      doc.text(money(totalEnt), 100, 165);
+      doc.text("Distribuicao por Categoria", M, 52);
+      doc.addImage(imgPizza, 'PNG', M, 56, 85, 85);
       
-      doc.setTextColor(...colors.saida); // Vermelho
-      doc.text("Saídas:", 30, 175);
-      doc.text(money(totalSai), 100, 175);
+      doc.text("Proporcao Entradas x Saidas", W/2 + 5, 52);
+      doc.addImage(imgPerc, 'PNG', W/2 + 5, 56, 85, 85);
       
-      const resColor = (totalEnt - totalSai) >= 0 ? colors.entrada : colors.saida;
-      doc.setTextColor(...resColor);
-      doc.text("Resultado:", 30, 185);
-      doc.text(money(totalEnt - totalSai), 100, 185);
+      doc.text("Resumo Comparativo", M, 152);
+      doc.addImage(imgResumo, 'PNG', M, 156, W - 2*M, 90);
       
-      // Data do relatório
-      doc.setTextColor(107, 114, 128);
       doc.setFontSize(9);
       doc.setFont(undefined, 'normal');
-      doc.text("Gerado em: " + new Date().toLocaleString('pt-BR'), pageWidth/2, 280, {align: 'center'});
+      doc.setTextColor(100, 100, 100);
+      doc.text("Graficos gerados automaticamente pelo sistema FluxoPro Engine", W/2, 260, {align: 'center'});
       
-      // ========================================
-      // SLIDE 2: GRÁFICOS
-      // ========================================
+      // ===========================================
+      // SLIDE 3: TABELA DE LANCAMENTOS
+      // ===========================================
       doc.addPage();
       
       doc.setFillColor(...colors.primary);
-      doc.rect(0, 0, pageWidth, 30, 'F');
+      doc.rect(0, 0, W, 35, 'F');
       
       doc.setTextColor(...colors.textLight);
-      doc.setFontSize(18);
+      doc.setFontSize(22);
       doc.setFont(undefined, 'bold');
-      doc.text("📊 Dashboard Visual", pageWidth/2, 20, {align: 'center'});
+      doc.text("LANCAMENTOS DETALHADOS", W/2, 22, {align: 'center'});
       
-      // Capturar gráficos como imagens
-      const imgPizza = chartPizza.toDataURL('image/png');
-      const imgPerc = chartPerc.toDataURL('image/png');
-      const imgResumo = chartResumo.toDataURL('image/png');
+      let y = 48;
       
-      doc.setTextColor(...colors.text);
-      doc.setFontSize(11);
-      doc.setFont(undefined, 'bold');
-      
-      // Gráfico Pizza
-      doc.text("Distribuição por Categoria", 20, 45);
-      doc.addImage(imgPizza, 'PNG', 15, 50, 80, 80);
-      
-      // Gráfico Percentual
-      doc.text("Entradas x Saídas", 115, 45);
-      doc.addImage(imgPerc, 'PNG', 110, 50, 80, 80);
-      
-      // Gráfico Resumo
-      doc.text("Resumo Financeiro", 20, 145);
-      doc.addImage(imgResumo, 'PNG', 15, 150, 180, 100);
-      
-      // ========================================
-      // SLIDE 3+: TABELA DE LANÇAMENTOS
-      // ========================================
-      doc.addPage();
-      
-      doc.setFillColor(...colors.primary);
-      doc.rect(0, 0, pageWidth, 30, 'F');
-      
-      doc.setTextColor(...colors.textLight);
-      doc.setFontSize(18);
-      doc.setFont(undefined, 'bold');
-      doc.text("📋 Lançamentos Detalhados", pageWidth/2, 20, {align: 'center'});
-      
-      let y = 45;
+      doc.setFillColor(...colors.accent);
+      doc.rect(M, y-5, W-2*M, 8, 'F');
       
       doc.setTextColor(...colors.text);
       doc.setFontSize(9);
-      doc.setFont(undefined, 'normal');
-      
-      // Cabeçalho da tabela
-      doc.setFillColor(...colors.zebra);
-      doc.rect(10, y-5, 190, 8, 'F');
-      
       doc.setFont(undefined, 'bold');
-      doc.text("Data", 15, y);
-      doc.text("Categoria", 45, y);
-      doc.text("Tipo", 95, y);
-      doc.text("Valor", 125, y);
-      doc.text("Obs", 160, y);
+      doc.text("DATA", M+2, y);
+      doc.text("CATEGORIA", M+32, y);
+      doc.text("TIPO", M+85, y);
+      doc.text("VALOR", M+115, y);
+      doc.text("OBSERVACAO", M+150, y);
       
-      y += 10;
+      y += 8;
       doc.setFont(undefined, 'normal');
       
-      dados.forEach((l, index) => {
+      dados.forEach((l, idx) => {
         
         if(y > 270){
           doc.addPage();
           
-          // Cabeçalho repetido
           doc.setFillColor(...colors.primary);
-          doc.rect(0, 0, pageWidth, 15, 'F');
+          doc.rect(0, 0, W, 20, 'F');
           doc.setTextColor(...colors.textLight);
-          doc.setFontSize(12);
+          doc.setFontSize(14);
           doc.setFont(undefined, 'bold');
-          doc.text("📋 Lançamentos (continuação)", pageWidth/2, 10, {align: 'center'});
+          doc.text("LANCAMENTOS (continuacao)", W/2, 13, {align: 'center'});
           
-          y = 25;
+          y = 30;
           doc.setTextColor(...colors.text);
           doc.setFontSize(9);
           doc.setFont(undefined, 'normal');
         }
         
-        // Linha zebrada com cor do tema
-        if(index % 2 === 0){
+        if(idx % 2 === 0){
           doc.setFillColor(...colors.zebra);
-          doc.rect(10, y-5, 190, 7, 'F');
+          doc.rect(M, y-5, W-2*M, 6, 'F');
         }
         
         doc.setTextColor(...colors.text);
-        doc.text(l.data || "-", 15, y);
-        doc.text(l.cat || "-", 45, y);
+        doc.text(l.data || "-", M+2, y);
+        doc.text((l.cat || "-").substring(0, 18), M+32, y);
         
-        // Cor do tipo
         if(l.tipo === "Entrada"){
           doc.setTextColor(...colors.entrada);
         } else {
           doc.setTextColor(...colors.saida);
         }
-        doc.text(l.tipo || "-", 95, y);
+        doc.setFont(undefined, 'bold');
+        doc.text(l.tipo || "-", M+85, y);
         
         doc.setTextColor(...colors.text);
-        doc.setFont(undefined, 'bold');
-        doc.text(money(l.valor), 125, y);
+        doc.text(money(l.valor), M+115, y);
+        
         doc.setFont(undefined, 'normal');
+        doc.text((l.obs || "-").substring(0, 22), M+150, y);
         
-        const obsText = (l.obs || "-").substring(0, 20);
-        doc.text(obsText, 160, y);
-        
-        y += 7;
+        y += 6;
       });
+      
+      doc.setFontSize(8);
+      doc.setTextColor(120, 120, 120);
+      doc.text(`Total de lancamentos: ${dados.length}`, M, H - 10);
+      doc.text(`Documento gerado em ${new Date().toLocaleDateString('pt-BR')}`, W - M, H - 10, {align: 'right'});
+      
+      // ===========================================
+      // SLIDE 4: INSIGHTS E ANALISES
+      // ===========================================
+      doc.addPage();
+      
+      doc.setFillColor(...colors.primary);
+      doc.rect(0, 0, W, 35, 'F');
+      
+      doc.setTextColor(...colors.textLight);
+      doc.setFontSize(22);
+      doc.setFont(undefined, 'bold');
+      doc.text("ANALISES E INSIGHTS", W/2, 22, {align: 'center'});
+      
+      doc.setTextColor(...colors.text);
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'bold');
+      doc.text("Resumo Executivo", M, 50);
+      
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      
+      let texto = `Este relatorio apresenta a situacao financeira do perfil "${perfil}" `;
+      texto += `com base em ${dados.length} lancamento(s) registrado(s). `;
+      
+      if(totalEnt >= totalSai){
+        texto += `O periodo analisado apresenta saude financeira positiva, `;
+        texto += `com superavit de ${money(totalEnt - totalSai)}. `;
+      } else {
+        texto += `O periodo analisado apresenta deficit de ${money(totalSai - totalEnt)}, `;
+        texto += `indicando que as saidas superam as entradas. `;
+      }
+      
+      const linhas = doc.splitTextToSize(texto, W - 2*M);
+      doc.text(linhas, M, 58);
+      
+      let yAnalise = 58 + linhas.length * 5 + 10;
+      
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text("Principais Categorias de Gastos", M, yAnalise);
+      
+      yAnalise += 8;
+      
+      let mapaGastos = {};
+      dados.forEach(l => {
+        if(l.tipo === "Saída") {
+          mapaGastos[l.cat || "Outros"] = (mapaGastos[l.cat || "Outros"] || 0) + l.valor;
+        }
+      });
+      
+      const topCats = Object.entries(mapaGastos).sort((a,b) => b[1] - a[1]).slice(0, 5);
+      
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      
+      if(topCats.length > 0){
+        topCats.forEach(([cat, val], idx) => {
+          const perc = (val / totalSai * 100).toFixed(1);
+          doc.setTextColor(...colors.text);
+          doc.text(`${idx+1}. ${cat}:`, M+5, yAnalise);
+          doc.setTextColor(...colors.saida);
+          doc.setFont(undefined, 'bold');
+          doc.text(`${money(val)} (${perc}%)`, M+70, yAnalise);
+          doc.setFont(undefined, 'normal');
+          yAnalise += 6;
+        });
+      } else {
+        doc.text("Nenhuma saida registrada no periodo", M+5, yAnalise);
+        yAnalise += 6;
+      }
+      
+      yAnalise += 10;
+      
+      doc.setTextColor(...colors.text);
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text("Recomendacoes", M, yAnalise);
+      
+      yAnalise += 8;
+      
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      
+      if(totalEnt >= totalSai){
+        doc.text("- Manter o controle de gastos atual", M+5, yAnalise);
+        yAnalise += 6;
+        doc.text("- Considerar investir o superavit", M+5, yAnalise);
+        yAnalise += 6;
+        doc.text("- Criar uma reserva de emergencia se ainda nao possui", M+5, yAnalise);
+      } else {
+        doc.text("- Revisar as principais categorias de gastos", M+5, yAnalise);
+        yAnalise += 6;
+        doc.text("- Buscar reduzir despesas nao essenciais", M+5, yAnalise);
+        yAnalise += 6;
+        doc.text("- Explorar oportunidades de aumentar as receitas", M+5, yAnalise);
+      }
+      
+      yAnalise += 15;
+      
+      doc.setFillColor(...colors.accent);
+      doc.roundedRect(M, yAnalise, W-2*M, 40, 3, 3, 'F');
+      
+      doc.setTextColor(...colors.text);
+      doc.setFontSize(11);
+      doc.setFont(undefined, 'bold');
+      doc.text("Sobre este Relatorio", M+5, yAnalise+10);
+      
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'normal');
+      doc.text("Este documento foi gerado automaticamente pelo FluxoPro Engine,", M+5, yAnalise+18);
+      doc.text("um sistema completo de controle financeiro desenvolvido em tecnologia web.", M+5, yAnalise+24);
+      doc.text("Para mais informacoes ou suporte, visite a area de configuracoes do sistema.", M+5, yAnalise+30);
+      
+      doc.setFontSize(7);
+      doc.setTextColor(120, 120, 120);
+      doc.text("FluxoPro Engine v12 - Relatorio confidencial", W/2, H - 8, {align: 'center'});
       
       doc.save(`fluxopro_${perfil}_${Date.now()}.pdf`);
       
       loading.classList.remove("show");
-      alert(`✅ PDF gerado com tema ${theme || "padrão"}!`);
+      alert(`PDF profissional gerado com tema ${theme || "padrao"}!`);
       
     }catch(err){
       loading.classList.remove("show");
-      alert("❌ Erro ao gerar PDF: " + err.message);
+      alert("Erro ao gerar PDF: " + err.message);
       console.error(err);
     }
-  }, 500); // Aguardar gráficos renderizarem
+  }, 600);
 }
 </script>
 </body>
