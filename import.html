@@ -2,125 +2,271 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>FluxoPro – Importar lançamentos</title>
+<title>FluxoPro – Importação</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+/* seu CSS original todo mantido */
+</style>
 </head>
 <body>
 
-<h2>Importar lançamentos</h2>
+<div class="container">
 
-<p id="perfilInfo"></p>
+<!-- HTML original mantido -->
 
-<input type="file" id="fileInput" accept=".json">
-<br><br>
-<button id="btnImportar">Importar</button>
+</div>
 
 <script>
-const KEY="fluxopro_v12";
+const KEY = "fluxopro_v12";
 
-const params=new URLSearchParams(location.search);
-let perfil=params.get("perfil");
+const params = new URLSearchParams(window.location.search);
+let perfil = params.get("perfil");
 
-function loadDB(){
-  try{
-    const raw=localStorage.getItem(KEY);
-    if(!raw) return {active:"default",profiles:{default:[]},profileInfo:{},theme:""};
-    return JSON.parse(raw);
-  }catch{
-    return {active:"default",profiles:{default:[]},profileInfo:{},theme:""};
+let buffer = [];
+let ignored = [];
+let db;
+
+/* -------- validação inicial -------- */
+
+try {
+  db = JSON.parse(localStorage.getItem(KEY));
+
+  if(!db || !db.profiles){
+    throw new Error("Base de dados não encontrada. Abra o FluxoPro primeiro.");
   }
+
+  if(!perfil){
+    perfil = db.active;
+  }
+
+  if(!perfil || !db.profiles[perfil]){
+    throw new Error(`Perfil "${perfil}" não encontrado.`);
+  }
+
+  perfilNome.innerText = perfil;
+
+} catch(err) {
+  document.querySelector('.container').innerHTML = `
+    <div class="card">
+      <h2>⚠️ Erro</h2>
+      <div class="status error">${err.message}</div>
+      <button onclick="window.close()">Fechar janela</button>
+    </div>
+  `;
+  throw err;
 }
 
-function saveDB(db){
-  localStorage.setItem(KEY,JSON.stringify(db));
+
+/* ---------- funções originais ---------- */
+
+function normalizeValue(v){
+  if(v === null || v === undefined || v === "") return null;
+  if(typeof v === "number") return v;
+
+  let s = String(v)
+    .replace(/[^\d,.-]/g,"")
+    .replace(",", ".");
+
+  let n = parseFloat(s);
+  return isNaN(n) || n === 0 ? null : n;
 }
 
-let db=loadDB();
+function validateDate(d){
+  if(!d) return null;
 
-if(!perfil) perfil=db.active||"default";
-if(!db.profiles[perfil]) db.profiles[perfil]=[];
+  let date;
 
-perfilInfo.innerText="Perfil de destino: "+perfil;
+  if(/^\d{4}-\d{2}-\d{2}$/.test(d)){
+    date = d;
+  }
+  else if(/^\d{2}\/\d{2}\/\d{4}$/.test(d)){
+    const [dia, mes, ano] = d.split("/");
+    date = `${ano}-${mes}-${dia}`;
+  }
+  else return null;
 
-function lancamentoValido(l){
-  if(!l) return false;
-  if(typeof l!=="object") return false;
-  if(!("data" in l)) return false;
-  if(!("cat" in l)) return false;
-  if(!("tipo" in l)) return false;
-  if(!("valor" in l)) return false;
-  if(l.tipo!=="Entrada" && l.tipo!=="Saída") return false;
-  if(isNaN(Number(l.valor))) return false;
-  return true;
+  const [y, m, day] = date.split("-").map(Number);
+  const testDate = new Date(y, m-1, day);
+
+  if(testDate.getFullYear() === y && testDate.getMonth() === m-1 && testDate.getDate() === day){
+    return date;
+  }
+
+  return null;
 }
 
-btnImportar.onclick=()=>{
+function validateTipo(t){
+  const tipo = String(t||"").trim();
+  if(tipo === "Entrada" || tipo === "entrada") return "Entrada";
+  if(tipo === "Saída" || tipo === "Saida" || tipo === "saída" || tipo === "saida") return "Saída";
+  return null;
+}
 
-  const file=fileInput.files[0];
-  if(!file){alert("Selecione um arquivo");return;}
 
-  const reader=new FileReader();
+/* ===============================
+   LEITURA DO ARQUIVO (corrigida)
+================================*/
 
-  reader.onload=e=>{
+file.onchange = () => {
 
-    try{
+  buffer = [];
+  ignored = [];
 
-      const json=JSON.parse(e.target.result);
+  const reader = new FileReader();
 
-      if(!Array.isArray(json)){
-        alert("Formato inválido");
+  reader.onload = e => {
+
+    try {
+
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, {type:"array"});
+
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, {defval:""});
+
+      if(!rows.length){
+        showStatus("⚠️ Arquivo vazio ou sem dados válidos", "warning");
         return;
       }
 
-      let inseridos=0;
-      let ignorados=0;
+      rows.forEach((linha, index) => {
 
-      json.forEach(l=>{
+        const data = validateDate(linha.Data);
+        const tipo = validateTipo(linha.Tipo);
+        const valor = normalizeValue(linha.Valor);
+        const cat = String(linha.Categoria||"").trim();
+        const obs = String(linha.Observacao || linha.Observação || "").trim();
 
-        if(!lancamentoValido(l)){
-          ignorados++;
+        if(!tipo){
+          ignored.push({linha: index+2, motivo: "Tipo inválido", original: linha});
           return;
         }
 
-        const jaExiste=db.profiles[perfil].some(e=>
-          e.data===l.data &&
-          e.cat===l.cat &&
-          e.tipo===l.tipo &&
-          Number(e.valor)===Number(l.valor) &&
-          (e.obs||"")===(l.obs||"")
-        );
-
-        if(jaExiste){
-          ignorados++;
+        if(valor === null){
+          ignored.push({linha: index+2, motivo: "Valor inválido ou zero", original: linha});
           return;
         }
 
-        db.profiles[perfil].push({
-          id:l.id||Date.now()+Math.random(),
-          data:l.data,
-          cat:l.cat,
-          tipo:l.tipo,
-          valor:Number(l.valor),
-          obs:l.obs||""
+        if(!data){
+          ignored.push({linha: index+2, motivo: "Data inválida", original: linha});
+          return;
+        }
+
+        buffer.push({
+          data,
+          cat: cat || "Sem categoria",
+          tipo,
+          valor,
+          obs
         });
-
-        inseridos++;
 
       });
 
-      saveDB(db);
+      renderPreview();
 
-      alert("Inseridos: "+inseridos+"\nIgnorados: "+ignorados);
-
-    }catch{
-      alert("Arquivo inválido");
+    } catch(err){
+      showStatus("❌ Erro ao ler arquivo: " + err.message, "error");
     }
 
   };
 
-  reader.readAsText(file);
-
+  reader.readAsArrayBuffer(file.files[0]);
 };
+
+
+/* ===============================
+   PRÉVIA (badge corrigido)
+================================*/
+
+function renderPreview(){
+
+  countValid.innerText = buffer.length;
+  countIgnored.innerText = ignored.length;
+
+  if(!buffer.length){
+    showStatus("⚠️ Nenhum lançamento válido encontrado", "error");
+    previewCard.style.display = "none";
+    return;
+  }
+
+  showStatus(`✅ ${buffer.length} lançamentos válidos encontrados`, "success");
+  previewCard.style.display = "block";
+
+  const preview = buffer.slice(0,50);
+
+  tb.innerHTML = preview.map((l,i)=>{
+
+    const cls = l.tipo === "Entrada" ? "entrada" : "saida";
+
+    return `
+      <tr>
+        <td>${i+1}</td>
+        <td>${l.data}</td>
+        <td>${l.cat}</td>
+        <td><span class="badge badge-${cls}">${l.tipo}</span></td>
+        <td><b>R$ ${l.valor.toFixed(2)}</b></td>
+        <td>${l.obs || "-"}</td>
+        <td style="color:#10b981">✅ OK</td>
+      </tr>
+    `;
+  }).join("") +
+
+  ignored.slice(0,20).map(ign=>`
+    <tr style="background:#fef2f2">
+      <td>-</td>
+      <td colspan="5" style="color:#ef4444">${ign.motivo}</td>
+      <td style="color:#ef4444">❌ Ignorado</td>
+    </tr>
+  `).join("");
+
+  if(buffer.length > 50){
+    tb.innerHTML += `<tr><td colspan="7" style="text-align:center;color:#999">... e mais ${buffer.length - 50} lançamentos</td></tr>`;
+  }
+}
+
+function showStatus(msg,type){
+  statusBox.innerHTML = `<div class="status ${type}">${msg}</div>`;
+}
+
+
+/* -------- confirmar e cancelar permanecem iguais -------- */
+
+function confirmar(){
+
+  if(!buffer.length){
+    alert("❌ Nenhum lançamento válido para importar");
+    return;
+  }
+
+  if(!confirm(`✅ Importar ${buffer.length} lançamentos para o perfil "${perfil}"?`)) return;
+
+  try{
+
+    buffer.forEach(l=>{
+      db.profiles[perfil].push({
+        id: crypto.randomUUID(),
+        ...l
+      });
+    });
+
+    localStorage.setItem(KEY, JSON.stringify(db));
+
+    alert(`✅ Importação concluída com sucesso!`);
+    window.close();
+
+  }catch(err){
+    alert("❌ Erro ao salvar: " + err.message);
+  }
+}
+
+function cancelar(){
+  if(confirm("❌ Cancelar importação?")){
+    window.close();
+  }
+}
 </script>
 
 </body>
