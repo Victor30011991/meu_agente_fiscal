@@ -12,7 +12,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-/* CSS original mantido */
 body{margin:0;font-family:Inter;background:#f5f7fb;color:#1f2937}
 .container{max-width:1000px;margin:auto;padding:30px}
 .card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 10px 20px rgba(0,0,0,.04)}
@@ -35,31 +34,85 @@ button:hover{opacity:.8;transform:translateY(-1px)}
 .empty{text-align:center;padding:40px;color:#999}
 </style>
 </head>
+
 <body>
 
-<!-- HTML estrutural mantido -->
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+</div>
+
+<div class="container">
+
+  <div class="top">
+    <h1>Relatorio FluxoPro</h1>
+    <div style="display:flex;gap:10px">
+      <button class="btn-excel" onclick="exportExcel()">Baixar Excel</button>
+      <button class="btn-pdf" onclick="exportPDF()">Baixar PDF</button>
+    </div>
+  </div>
+
+  <div class="card">
+
+    <h2 id="perfilTitulo"></h2>
+    <div id="perfilDados"></div>
+
+    <div class="resumo">
+      <div class="box">Entradas<br><span id="ent" class="entrada"></span></div>
+      <div class="box">Saidas<br><span id="sai" class="saida"></span></div>
+      <div class="box">Resultado<br><span id="res"></span></div>
+    </div>
+
+    <div id="conteudo">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Categoria</th>
+            <th>Tipo</th>
+            <th>Valor</th>
+            <th>Observacao</th>
+          </tr>
+        </thead>
+        <tbody id="tb"></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<div style="position:absolute;left:-9999px;width:400px">
+  <canvas id="chartPizza" width="400" height="400"></canvas>
+  <canvas id="chartPerc" width="400" height="400"></canvas>
+  <canvas id="chartResumo" width="400" height="300"></canvas>
+</div>
 
 <script>
+/* ======= BASE ======= */
 const KEY="fluxopro_v12";
 
 let db, perfil, dados, info, theme;
 
 try{
+
   db = JSON.parse(localStorage.getItem(KEY));
-  if(!db || !db.profiles) throw new Error("Base não encontrada");
+
+  if(!db || !db.profiles){
+    throw new Error("Base nao encontrada");
+  }
 
   perfil = db.active;
   theme  = db.theme || "";
-
-  dados = db.profiles[perfil] || [];
-  info  = db.profileInfo?.[perfil] || {};
+  dados  = db.profiles[perfil] || [];
+  info   = db.profileInfo?.[perfil] || {};
 
 }catch(err){
+
   document.querySelector('.container').innerHTML = `
-  <div class="card empty">
-    <h2>Erro</h2>
-    <p>${err.message}</p>
-  </div>`;
+    <div class="card empty">
+      <h2>Erro</h2>
+      <p>${err.message}</p>
+    </div>`;
+
   throw err;
 }
 
@@ -67,6 +120,7 @@ function money(v){
   return new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0);
 }
 
+/* ======= TOTAIS ======= */
 let totalEnt=0,totalSai=0;
 
 dados.forEach(l=>{
@@ -75,50 +129,269 @@ dados.forEach(l=>{
   if(l.tipo==="Saída") totalSai+=v;
 });
 
-const resultado=totalEnt-totalSai;
+const resultado = totalEnt - totalSai;
 
-/* --------- correção importante: destruir gráficos antes de recriar --------- */
+/* ======= CABEÇALHO ======= */
+perfilTitulo.innerText = "Perfil: " + perfil;
 
-let charts={};
+perfilDados.innerHTML = `
+  <p><b>Nome:</b> ${info.nome||"Nao informado"}</p>
+  <p><b>Documento:</b> ${info.doc||"Nao informado"}</p>
+`;
+
+ent.innerText = money(totalEnt);
+sai.innerText = money(totalSai);
+res.innerText = money(resultado);
+res.style.color = resultado>=0?"#10b981":"#ef4444";
+
+/* ======= TABELA ======= */
+if(!dados.length){
+
+  document.getElementById("conteudo").innerHTML =
+    `<div class="empty">Nenhum lançamento</div>`;
+
+}else{
+
+  tb.innerHTML = dados.map(l=>`
+    <tr>
+      <td>${l.data||"-"}</td>
+      <td>${l.cat||"-"}</td>
+      <td style="color:${l.tipo==="Entrada"?"#10b981":"#ef4444"}">${l.tipo}</td>
+      <td>${money(l.valor)}</td>
+      <td>${l.obs||"-"}</td>
+    </tr>
+  `).join("");
+}
+
+/* ======= GRÁFICOS PARA PDF ======= */
+let charts = {};
 
 function createCharts(){
 
   Object.values(charts).forEach(c=>{
-    try{ c.destroy(); }catch{}
+    try{c.destroy();}catch{}
   });
 
   charts={};
 
   let mapa={};
+
   dados.forEach(l=>{
     if(l.tipo==="Saída"){
-      mapa[l.cat||"Outros"]=(mapa[l.cat||"Outros"]||0)+Number(l.valor||0);
+      mapa[l.cat||"Outros"] = (mapa[l.cat||"Outros"]||0)+Number(l.valor||0);
     }
   });
 
-  charts.pizza=new Chart(chartPizza,{
+  charts.pizza = new Chart(chartPizza,{
     type:"doughnut",
     data:{labels:Object.keys(mapa),datasets:[{data:Object.values(mapa)}]},
     options:{responsive:false,plugins:{legend:{position:"bottom"}}}
   });
 
-  charts.perc=new Chart(chartPerc,{
+  charts.perc = new Chart(chartPerc,{
     type:"pie",
-    data:{labels:["Entradas","Saídas"],datasets:[{data:[totalEnt,totalSai]}]},
+    data:{labels:["Entradas","Saidas"],datasets:[{data:[totalEnt,totalSai]}]},
     options:{responsive:false,plugins:{legend:{position:"bottom"}}}
   });
 
-  charts.resumo=new Chart(chartResumo,{
+  charts.resumo = new Chart(chartResumo,{
     type:"bar",
-    data:{labels:["Entradas","Saídas","Resultado"],datasets:[{data:[totalEnt,totalSai,resultado]}]},
+    data:{labels:["Entradas","Saidas","Resultado"],datasets:[{data:[totalEnt,totalSai,resultado]}]},
     options:{responsive:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}
   });
 }
 
 createCharts();
 
-/* resto do arquivo e da função exportPDF permanece igual ao seu */
+/* ======= CORES ======= */
+const themePalettes={
+  "":{
+    primary:[79,70,229],
+    bg:[255,255,255],
+    text:[31,41,55],
+    textLight:[255,255,255],
+    card:[255,255,255],
+    entrada:[16,185,129],
+    saida:[239,68,68],
+    zebra:[249,250,251],
+    accent:[238,242,255]
+  }
+};
 
+const colors = themePalettes[""];
+
+/* =====================================================
+   GERAÇÃO DO PDF
+===================================================== */
+function exportPDF(){
+
+  if(!dados.length){
+    alert("Sem dados");
+    return;
+  }
+
+  loading.classList.add("show");
+
+  setTimeout(()=>{
+
+    try{
+
+      const {jsPDF} = window.jspdf;
+      const doc = new jsPDF("p","mm","a4");
+
+      const W=210,H=297,M=12;
+      let y=20;
+
+      function novaPagina(h){
+        if(y+h>H-15){
+          doc.addPage();
+          y=20;
+        }
+      }
+
+      function linha(){
+        doc.setDrawColor(220,220,220);
+        doc.setLineWidth(0.2);
+        doc.line(M,y,W-M,y);
+        y+=6;
+      }
+
+      doc.setFontSize(14);
+      doc.setFont(undefined,"bold");
+      doc.setTextColor(...colors.text);
+      doc.text("Relatório financeiro – FluxoPro",M,y);
+
+      y+=6;
+
+      doc.setFontSize(9);
+      doc.setFont(undefined,"normal");
+      doc.text(`Perfil: ${perfil}`,M,y);y+=4;
+      doc.text(`Nome: ${info.nome||"-"}`,M,y);y+=4;
+      doc.text(`Documento: ${info.doc||"-"}`,M,y);y+=6;
+
+      linha();
+
+      doc.setFont(undefined,"bold");
+      doc.setFontSize(9);
+      doc.text("Lançamentos",M,y);y+=5;
+
+      doc.setFontSize(8);
+      doc.text("Data",M,y);
+      doc.text("Categoria",M+25,y);
+      doc.text("Tipo",M+75,y);
+      doc.text("Valor",M+95,y);
+      doc.text("Obs",M+120,y);
+
+      y+=4;
+      doc.setFont(undefined,"normal");
+
+      dados.forEach((l,i)=>{
+
+        novaPagina(6);
+
+        if(i%2===0){
+          doc.setFillColor(...colors.zebra);
+          doc.rect(M,y-3,W-2*M,5,"F");
+        }
+
+        doc.setTextColor(...colors.text);
+        doc.text(l.data||"-",M,y);
+        doc.text((l.cat||"-").substring(0,15),M+25,y);
+
+        doc.setFont(undefined,"bold");
+        doc.setTextColor(...(l.tipo==="Entrada"?colors.entrada:colors.saida));
+        doc.text(l.tipo||"-",M+75,y);
+
+        doc.setFont(undefined,"normal");
+        doc.setTextColor(...colors.text);
+        doc.text(money(l.valor),M+95,y);
+        doc.text((l.obs||"-").substring(0,22),M+120,y);
+
+        y+=5;
+      });
+
+      y+=2;
+      linha();
+
+      novaPagina(70);
+
+      doc.setFont(undefined,"bold");
+      doc.setFontSize(9);
+      doc.setTextColor(...colors.text);
+      doc.text("Resumo visual",M,y);
+      y+=5;
+
+      const imgPizza  = chartPizza.toDataURL("image/png",1);
+      const imgPerc   = chartPerc.toDataURL("image/png",1);
+      const imgResumo = chartResumo.toDataURL("image/png",1);
+
+      const gW=50,gH=50,gap=8;
+      const gx=M,gy=y;
+
+      doc.setFontSize(7);
+      doc.setTextColor(120,120,120);
+      doc.text("Categorias",gx,gy-2);
+      doc.text("Entradas x Saídas",gx+gW+gap,gy-2);
+      doc.text("Resumo",gx+(gW+gap)*2,gy-2);
+
+      doc.addImage(imgPizza,"PNG",gx,gy,gW,gH,undefined,"FAST");
+      doc.addImage(imgPerc,"PNG",gx+gW+gap,gy,gW,gH,undefined,"FAST");
+      doc.addImage(imgResumo,"PNG",gx+(gW+gap)*2,gy,gW,gH*0.9,undefined,"FAST");
+
+      y=gy+gH+8;
+      linha();
+
+      const qtdEntradas = dados.filter(l=>l.tipo==="Entrada").length;
+      const qtdSaidas   = dados.filter(l=>l.tipo==="Saída").length;
+
+      novaPagina(40);
+
+      doc.setFont(undefined,"bold");
+      doc.setFontSize(9);
+      doc.setTextColor(...colors.text);
+      doc.text("Análise dos gráficos",M,y);
+      y+=6;
+
+      doc.setFont(undefined,"normal");
+      doc.setFontSize(8);
+
+      let t1=`Foram identificados ${qtdEntradas} lançamentos de entrada e ${qtdSaidas} lançamentos de saída no período analisado.`;
+      let l1=doc.splitTextToSize(t1,W-2*M);
+      doc.text(l1,M,y);y+=l1.length*4+3;
+
+      let t2=`O gráfico por categoria considera apenas as saídas agrupadas por categoria. O gráfico de entradas e saídas compara os totais financeiros. O gráfico de resumo consolida entradas, saídas e o resultado final, calculado pela diferença entre entradas e saídas.`;
+      let l2=doc.splitTextToSize(t2,W-2*M);
+      doc.text(l2,M,y);y+=l2.length*4+3;
+
+      const saldo=totalEnt-totalSai;
+      let t3="";
+
+      if(saldo>0)      t3="A saúde financeira do período é considerada positiva, pois as entradas superaram as saídas.";
+      else if(saldo<0) t3="A saúde financeira do período exige atenção, pois as saídas superaram as entradas.";
+      else             t3="A saúde financeira do período é considerada neutra.";
+
+      let l3=doc.splitTextToSize(t3,W-2*M);
+      doc.text(l3,M,y);y+=l3.length*4+4;
+
+      linha();
+
+      doc.setFontSize(7);
+      doc.setTextColor(150,150,150);
+      doc.text(`Total de lançamentos: ${dados.length}`,M,H-8);
+      doc.text(`FluxoPro Engine v12 – ${new Date().toLocaleDateString("pt-BR")}`,W-M,H-8,{align:"right"});
+
+      doc.save(`fluxopro_${perfil}_${Date.now()}.pdf`);
+
+      loading.classList.remove("show");
+
+    }catch(e){
+      console.error(e);
+      loading.classList.remove("show");
+      alert("Erro ao gerar PDF");
+    }
+
+  },300);
+}
 </script>
 </body>
 </html>
