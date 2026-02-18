@@ -4,285 +4,198 @@
 <meta charset="UTF-8">
 <title>FluxoPro – Importação</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-<!-- pdf.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-
 <style>
-body{
-  margin:0;
-  font-family:Inter;
-  background:#f5f7fb;
-  color:#1f2937;
-}
-.container{
-  max-width:700px;
-  margin:auto;
-  padding:40px 20px;
-}
-.card{
-  background:#fff;
-  padding:25px;
-  border-radius:16px;
-  box-shadow:0 10px 20px rgba(0,0,0,.05);
-}
-h1{margin-top:0}
-input[type=file]{
-  padding:12px;
-  border-radius:10px;
-  border:1px solid #ddd;
-  width:100%;
-}
-button{
-  margin-top:15px;
-  padding:12px 16px;
-  border-radius:10px;
-  border:0;
-  background:#4f46e5;
-  color:#fff;
-  font-weight:700;
-  cursor:pointer;
-}
-small{color:#666}
-.status{margin-top:15px;font-weight:600}
+/* (mesmo CSS que você já tinha) */
+body{font-family:Inter;background:#f5f7fb;margin:0;color:#1f2937}
+.container{max-width:1100px;margin:auto;padding:30px}
+.card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 10px 20px rgba(0,0,0,.04);margin-bottom:20px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px;border-bottom:1px solid #ddd;font-size:14px;text-align:left}
+th{background:#f9fafb;font-weight:700}
+button{padding:10px 14px;border:0;border-radius:10px;font-weight:700;cursor:pointer;transition:all .2s}
+button:hover{opacity:.8;transform:translateY(-1px)}
+.btn-main{background:#4f46e5;color:#fff}
+.btn-cancel{background:#ef4444;color:#fff}
+input[type="file"]{padding:10px;border:2px dashed #4f46e5;border-radius:10px;cursor:pointer;width:100%}
+.status{padding:10px;border-radius:10px;margin:10px 0;font-weight:700}
+.status.success{background:#ecfdf5;color:#10b981}
+.status.error{background:#fef2f2;color:#ef4444}
+.status.warning{background:#fef9c3;color:#ca8a04}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.badge{padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.badge-entrada{background:#ecfdf5;color:#10b981}
+.badge-saida{background:#fef2f2;color:#ef4444}
 </style>
 </head>
 <body>
-
 <div class="container">
-  <div class="card">
 
-    <h1>Importação de dados</h1>
+<div class="card">
+<h2>📥 Importação Assistida</h2>
+<input type="file" id="file" accept=".xlsx,.xls,.pdf">
+<div id="statusBox"></div>
+</div>
 
-    <p>
-      Você pode importar:
-      <br>• Excel (.xlsx)
-      <br>• PDF gerado pelo próprio FluxoPro
-    </p>
+<div class="card" id="previewCard" style="display:none">
+<table>
+<thead>
+<tr>
+<th>#</th><th>Data</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Obs</th><th>Status</th>
+</tr>
+</thead>
+<tbody id="tb"></tbody>
+</table>
+<div class="actions" style="margin-top:10px">
+<button class="btn-main" onclick="confirmar()">Confirmar</button>
+<button class="btn-cancel" onclick="window.close()">Cancelar</button>
+</div>
+</div>
 
-    <input type="file" id="file" accept=".xlsx,.xls,.pdf">
-
-    <button onclick="importar()">Importar para o perfil ativo</button>
-
-    <div class="status" id="status"></div>
-
-    <small>
-      Atenção: o PDF precisa ter sido gerado pelo módulo de relatórios do próprio sistema.
-    </small>
-
-  </div>
 </div>
 
 <script>
-const KEY = "fluxopro_v12";
+const KEY="fluxopro_v12";
+const params=new URLSearchParams(location.search);
+let perfil=params.get("perfil");
 
-let db, perfil;
+let buffer=[],ignored=[],db;
 
-try{
-  db = JSON.parse(localStorage.getItem(KEY));
-  if(!db || !db.profiles) throw new Error();
-  perfil = db.active;
-}catch(e){
-  alert("Base do sistema não encontrada.");
-  throw e;
+db=JSON.parse(localStorage.getItem(KEY));
+if(!perfil)perfil=db.active;
+
+function normalizeValue(v){
+  let s=String(v||"").replace(/[^\d,.-]/g,"").replace(",",".");
+  let n=parseFloat(s);
+  return isNaN(n)?null:n;
 }
 
-async function importar(){
+function validateDate(d){
+  if(/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(d)){
+    const [a,b,c]=d.split("/");
+    return `${c}-${b}-${a}`;
+  }
+  return null;
+}
 
-  const input = document.getElementById("file");
-  const file = input.files[0];
+function validateTipo(t){
+  t=String(t||"").toLowerCase();
+  if(t==="entrada")return"Entrada";
+  if(t==="saída"||t==="saida")return"Saída";
+  return null;
+}
 
-  if(!file){
-    alert("Selecione um arquivo.");
+file.onchange=async()=>{
+  buffer=[];ignored=[];
+  const f=file.files[0];
+  if(!f)return;
+
+  const ext=f.name.split(".").pop().toLowerCase();
+
+  if(ext==="pdf"){
+    await importarPDF(f);
+  }else{
+    importarExcel(f);
+  }
+};
+
+function importarExcel(f){
+  const r=new FileReader();
+  r.onload=e=>{
+    const wb=XLSX.read(e.target.result,{type:"binary"});
+    const sh=wb.Sheets[wb.SheetNames[0]];
+    const data=XLSX.utils.sheet_to_json(sh,{defval:""});
+    processar(data);
+  };
+  r.readAsBinaryString(f);
+}
+
+async function importarPDF(f){
+
+  const ab=await f.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+
+  let linhas=[];
+
+  for(let p=1;p<=pdf.numPages;p++){
+    const page=await pdf.getPage(p);
+    const c=await page.getTextContent();
+
+    let l="",ly=null;
+    c.items.forEach(i=>{
+      if(ly!==null && Math.abs(i.transform[5]-ly)>5){
+        linhas.push(l.trim()); l="";
+      }
+      l+=i.str+" ";
+      ly=i.transform[5];
+    });
+    if(l.trim())linhas.push(l.trim());
+  }
+
+  const data=[];
+
+  linhas.forEach(t=>{
+    const m=t.match(/^(\d{4}-\d{2}-\d{2})\s+(.+?)\s+(Entrada|Saída)\s+R\$\s*([\d.,-]+)\s*(.*)$/);
+    if(!m)return;
+    data.push({Data:m[1],Categoria:m[2],Tipo:m[3],Valor:m[4],Observacao:m[5]});
+  });
+
+  processar(data);
+}
+
+function processar(data){
+
+  data.forEach((l,i)=>{
+    const d=validateDate(l.Data);
+    const t=validateTipo(l.Tipo);
+    const v=normalizeValue(l.Valor);
+
+    if(!d||!t||v===null){
+      ignored.push(l);return;
+    }
+
+    buffer.push({
+      data:d,
+      cat:l.Categoria||"Sem categoria",
+      tipo:t,
+      valor:v,
+      obs:l.Observacao||""
+    });
+  });
+
+  render();
+}
+
+function render(){
+  if(!buffer.length){
+    statusBox.innerHTML="<div class='status error'>Nenhum dado válido</div>";
     return;
   }
 
-  const ext = file.name.split(".").pop().toLowerCase();
+  previewCard.style.display="block";
 
-  status.innerText = "Lendo arquivo...";
-
-  try{
-
-    let registros = [];
-
-    if(ext === "xlsx" || ext === "xls"){
-      registros = await importarExcel(file);
-    }
-    else if(ext === "pdf"){
-      registros = await importarPDF(file);
-    }
-    else{
-      alert("Formato não suportado.");
-      return;
-    }
-
-    if(!registros.length){
-      alert("Nenhum lançamento encontrado no arquivo.");
-      return;
-    }
-
-    if(!db.profiles[perfil]){
-      db.profiles[perfil] = [];
-    }
-
-    db.profiles[perfil].push(...registros);
-
-    localStorage.setItem(KEY, JSON.stringify(db));
-
-    status.innerText = `Importação concluída. ${registros.length} registros inseridos.`;
-
-  }catch(err){
-    console.error(err);
-    alert("Erro ao importar arquivo.");
-    status.innerText = "";
-  }
-
+  tb.innerHTML=buffer.map((l,i)=>`
+<tr>
+<td>${i+1}</td>
+<td>${l.data}</td>
+<td>${l.cat}</td>
+<td><span class="badge badge-${l.tipo.toLowerCase()}">${l.tipo}</span></td>
+<td>${l.valor.toFixed(2)}</td>
+<td>${l.obs}</td>
+<td>OK</td>
+</tr>`).join("");
 }
 
-/* ---------------- EXCEL ---------------- */
-
-function importarExcel(file){
-
-  return new Promise((resolve,reject)=>{
-
-    const reader = new FileReader();
-
-    reader.onload = e =>{
-
-      const data = new Uint8Array(e.target.result);
-      const wb = XLSX.read(data,{type:"array"});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-
-      const json = XLSX.utils.sheet_to_json(ws,{defval:""});
-
-      const lista = json.map(l => normalizarRegistro(l))
-                         .filter(l => l && l.data && l.tipo && l.valor !== "");
-
-      resolve(lista);
-
-    };
-
-    reader.onerror = reject;
-    reader.readAsArrayBuffer(file);
-
+function confirmar(){
+  buffer.forEach(l=>{
+    db.profiles[perfil].push({id:crypto.randomUUID(),...l});
   });
-
-}
-
-/* ---------------- PDF ---------------- */
-
-async function importarPDF(file){
-
-  const buffer = await file.arrayBuffer();
-
-  const pdf = await pdfjsLib.getDocument({data:buffer}).promise;
-
-  let textoCompleto = "";
-
-  for(let p=1;p<=pdf.numPages;p++){
-
-    const page = await pdf.getPage(p);
-    const content = await page.getTextContent();
-
-    const pageText = content.items.map(i=>i.str).join(" ");
-    textoCompleto += "\n" + pageText;
-
-  }
-
-  return extrairLancamentosDoTexto(textoCompleto);
-
-}
-
-/*
-  O PDF exportado pelo seu sistema imprime cada lançamento assim:
-
-  data | categoria | tipo | valor | obs
-
-  Aqui a leitura é baseada no padrão que o export.html gera.
-*/
-
-function extrairLancamentosDoTexto(texto){
-
-  const linhas = texto.split(/\n/).map(l=>l.trim()).filter(l=>l);
-
-  const registros = [];
-
-  for(const linha of linhas){
-
-    // procura data no padrão 0000-00-00
-    const m = linha.match(/(\d{4}-\d{2}-\d{2})/);
-
-    if(!m) continue;
-
-    const data = m[1];
-
-    const resto = linha.substring(linha.indexOf(data)+10).trim();
-
-    const tipoMatch = resto.match(/\bEntrada\b|\bSaída\b|\bSaida\b/);
-
-    if(!tipoMatch) continue;
-
-    const tipo = tipoMatch[0] === "Entrada" ? "Entrada" : "Saída";
-
-    const antesTipo = resto.substring(0, resto.indexOf(tipoMatch[0])).trim();
-    const depoisTipo = resto.substring(resto.indexOf(tipoMatch[0]) + tipoMatch[0].length).trim();
-
-    const valorMatch = depoisTipo.match(/R\$\s?[\d\.,]+/);
-
-    if(!valorMatch) continue;
-
-    const categoria = antesTipo.split(" ").slice(0,5).join(" ").trim();
-
-    const valorStr = valorMatch[0]
-      .replace("R$","")
-      .replace(/\./g,"")
-      .replace(",",".")
-      .trim();
-
-    const valor = Number(valorStr);
-
-    const obs = depoisTipo
-      .replace(valorMatch[0],"")
-      .trim();
-
-    registros.push({
-      data,
-      cat: categoria || "",
-      tipo,
-      valor,
-      obs
-    });
-
-  }
-
-  return registros;
-
-}
-
-/* ---------------- NORMALIZAÇÃO ---------------- */
-
-function normalizarRegistro(l){
-
-  const data = l.data || l.Data || l.DATA || "";
-  const cat  = l.cat  || l.categoria || l.Categoria || "";
-  const tipo = l.tipo || l.Tipo || "";
-  const valor = l.valor || l.Valor || "";
-  const obs = l.obs || l.observacao || l.Observacao || "";
-
-  if(!data || !tipo) return null;
-
-  return {
-    data: String(data).substring(0,10),
-    cat: String(cat),
-    tipo: tipo === "Entrada" ? "Entrada" : "Saída",
-    valor: Number(String(valor).replace(/\./g,"").replace(",",".")),
-    obs: String(obs)
-  };
-
+  localStorage.setItem(KEY,JSON.stringify(db));
+  alert("Importado com sucesso");
+  window.close();
 }
 </script>
 </body>
