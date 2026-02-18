@@ -1,3 +1,13 @@
-body{background:#fff1f2}
-.card{border:2px solid #fb7185}
+/* Tema Rose */
 
+:root{
+  --p: #fb7185;
+  --card: #ffffff;
+  --b: #fecdd3;
+  --ok: #10b981;
+  --bad: #ef4444;
+}
+
+body{
+  background:#fff1f2;
+}
