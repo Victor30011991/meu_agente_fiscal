@@ -1,43 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>FluxoPro – Importar</title>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>Importar lançamentos</h1>
+  <input type="file" id="fileInput">
+  <button onclick="importar()">Importar</button>
+</div>
+
 <script>
-const KEY = "fluxopro_v12";
+const KEY="fluxopro_v12";
+const params=new URLSearchParams(location.search);
+const perfil=params.get("perfil");
 
-const params = new URLSearchParams(window.location.search);
-let perfil = params.get("perfil");
-
-let buffer = [];
-let ignored = [];
-let db;
-
-try{
-
-  const raw = localStorage.getItem(KEY);
-  if(!raw) throw new Error("Base de dados não encontrada. Abra o FluxoPro primeiro.");
-
-  db = JSON.parse(raw);
-
-  if(!db || !db.profiles){
-    throw new Error("Base de dados inválida.");
-  }
-
-  if(!perfil){
-    perfil = db.active;
-  }
-
-  if(!perfil || !db.profiles[perfil]){
-    throw new Error(`Perfil "${perfil}" não encontrado.`);
-  }
-
-  document.getElementById("perfilNome").innerText = perfil;
-
-}catch(err){
-
-  document.querySelector('.container').innerHTML = `
-    <div class="card">
-      <h2>⚠️ Erro</h2>
-      <div class="status error">${err.message}</div>
-      <button onclick="window.close()">Fechar janela</button>
-    </div>
-  `;
-  throw err;
+function importar(){
+  const fileInput=document.getElementById("fileInput");
+  const file=fileInput.files[0];
+  if(!file){ alert("Selecione um arquivo"); return; }
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const dados=JSON.parse(e.target.result);
+      const db=JSON.parse(localStorage.getItem(KEY));
+      db.profiles[perfil]=db.profiles[perfil].concat(dados);
+      localStorage.setItem(KEY,JSON.stringify(db));
+      alert("Importado com sucesso!");
+    }catch{
+      alert("Arquivo inválido");
+    }
+  };
+  reader.readAsText(file);
 }
 </script>
+
+</body>
+</html>
