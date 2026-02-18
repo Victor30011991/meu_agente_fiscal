@@ -27,10 +27,7 @@ header{background:#fff;border-bottom:1px solid var(--b);padding:14px 20px;displa
   align-items:flex-start;
 }
 
-.sidebar{
-  position:sticky;
-  top:20px;
-}
+.sidebar{position:sticky;top:20px}
 
 @media(max-width:900px){
   .layout{grid-template-columns:1fr}
@@ -58,17 +55,12 @@ select,input,textarea{padding:8px 10px;border-radius:10px;border:1px solid var(-
 .resume{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:10px}
 .resume div{background:#f9fafb;border-radius:12px;padding:12px;font-weight:700;text-align:center}
 
-.gridDash{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:16px;
-}
+.gridDash{display:grid;grid-template-columns:1fr;gap:16px}
 
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:9999}
 .modal .card{max-width:380px;width:90%;margin:0}
 .hidden{display:none}
 
-/* theme selector */
 .theme-selector{display:flex;gap:8px;align-items:center}
 .theme-btn{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:all .2s}
 .theme-btn:hover{transform:scale(1.1)}
@@ -80,31 +72,18 @@ select,input,textarea{padding:8px 10px;border-radius:10px;border:1px solid var(-
 .theme-indigo{background:#6366f1}
 .theme-rose{background:#fb7185}
 
-/* loading */
 .loading{display:inline-block;width:16px;height:16px;border:3px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* toast */
 .toast{position:fixed;bottom:20px;right:20px;background:#1f2937;color:#fff;padding:12px 20px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:10000;animation:slideIn .3s}
 @keyframes slideIn{from{transform:translateX(400px);opacity:0}}
 
-/* ===== NOVO – tabelas mensais ===== */
-table.monthTable{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px;
-  font-size:13px;
+.mesHeader{
+  background:#eef2ff;
+  font-weight:800;
 }
-.monthTable th,.monthTable td{
-  padding:6px 8px;
-  border-bottom:1px solid var(--b);
-  text-align:right;
-}
-.monthTable th:first-child,
-.monthTable td:first-child{
-  text-align:left;
-}
-.monthTable tfoot td{
+.totalMes{
+  background:#f9fafb;
   font-weight:800;
 }
 </style>
@@ -116,15 +95,15 @@ table.monthTable{
 
 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
 <select id="perfilSelect"></select>
-<button id="novoPerfil" title="Novo perfil">+</button>
+<button id="novoPerfil">+</button>
 
 <div class="theme-selector">
-<button class="theme-btn theme-default active" data-theme="" title="Padrão"></button>
-<button class="theme-btn theme-dark" data-theme="dark" title="Dark"></button>
-<button class="theme-btn theme-emerald" data-theme="emerald" title="Emerald"></button>
-<button class="theme-btn theme-gold" data-theme="gold" title="Gold"></button>
-<button class="theme-btn theme-indigo" data-theme="indigo" title="Indigo"></button>
-<button class="theme-btn theme-rose" data-theme="rose" title="Rose"></button>
+<button class="theme-btn theme-default active" data-theme=""></button>
+<button class="theme-btn theme-dark" data-theme="dark"></button>
+<button class="theme-btn theme-emerald" data-theme="emerald"></button>
+<button class="theme-btn theme-gold" data-theme="gold"></button>
+<button class="theme-btn theme-indigo" data-theme="indigo"></button>
+<button class="theme-btn theme-rose" data-theme="rose"></button>
 </div>
 
 <div class="tabs">
@@ -148,14 +127,10 @@ table.monthTable{
 <div>Resultado<br><span id="sumRes">R$ 0,00</span></div>
 </div>
 
-<!-- NOVO -->
-<div id="monthlyTables"></div>
-
 <div class="actions">
 <button onclick="abrirExport()">📊 Exportar</button>
 <button onclick="abrirImport()">📥 Importar</button>
 </div>
-
 </div>
 
 <div class="gridDash">
@@ -189,7 +164,7 @@ table.monthTable{
 <div class="actions">
 <button class="main" id="novoLanc">➕ Novo lançamento</button>
 <button id="importar">📥 Alimentar perfil</button>
-<button id="refreshBtn" title="Atualizar dados">🔄 Refresh</button>
+<button id="refreshBtn">🔄 Refresh</button>
 </div>
 
 <div class="card">
@@ -199,6 +174,13 @@ table.monthTable{
 </div>
 
 <div class="card">
+
+<div class="actions">
+<label>Filtrar mês:
+<input type="month" id="filtroMes">
+</label>
+</div>
+
 <table>
 <thead>
 <tr>
@@ -304,16 +286,72 @@ function saveProfileInfo(){
 }
 
 function renderTable(){
-  const dados=list();
-  tbody.innerHTML=dados.length?dados.map(i=>`
-<tr data-id="${i.id}">
-<td contenteditable data-f="data">${i.data||""}</td>
-<td contenteditable data-f="cat">${i.cat||""}</td>
-<td><span class="badge ${i.tipo==="Entrada"?"entrada":"saida"} btnTipo">${i.tipo}</span></td>
-<td contenteditable data-f="valor">${formatMoney(i.valor)}</td>
-<td contenteditable data-f="obs">${i.obs||""}</td>
-<td><button class="del" title="Apagar">🗑️</button></td>
-</tr>`).join(""):`<tr><td colspan="6" style="text-align:center;color:#999">Nenhum lançamento cadastrado</td></tr>`;
+
+  let dados=[...list()];
+
+  const mesFiltro=filtroMes.value;
+
+  if(mesFiltro){
+    dados=dados.filter(i=>(i.data||"").startsWith(mesFiltro));
+  }
+
+  dados.sort((a,b)=>a.data.localeCompare(b.data));
+
+  if(!dados.length){
+    tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:#999">Nenhum lançamento</td></tr>`;
+    return;
+  }
+
+  const grupos={};
+
+  dados.forEach(i=>{
+    const mes=(i.data||"").slice(0,7) || "Sem data";
+    if(!grupos[mes])grupos[mes]=[];
+    grupos[mes].push(i);
+  });
+
+  let html="";
+
+  Object.keys(grupos).sort().forEach(mes=>{
+
+    let ent=0,sai=0;
+
+    html+=`
+      <tr class="mesHeader">
+        <td colspan="6">📅 ${mes}</td>
+      </tr>
+    `;
+
+    grupos[mes].forEach(i=>{
+
+      if(i.tipo==="Entrada") ent+=i.valor;
+      else sai+=i.valor;
+
+      html+=`
+      <tr data-id="${i.id}">
+        <td contenteditable data-f="data">${i.data||""}</td>
+        <td contenteditable data-f="cat">${i.cat||""}</td>
+        <td><span class="badge ${i.tipo==="Entrada"?"entrada":"saida"} btnTipo">${i.tipo}</span></td>
+        <td contenteditable data-f="valor">${formatMoney(i.valor)}</td>
+        <td contenteditable data-f="obs">${i.obs||""}</td>
+        <td><button class="del">🗑️</button></td>
+      </tr>
+      `;
+    });
+
+    html+=`
+      <tr class="totalMes">
+        <td colspan="2">Total do mês</td>
+        <td>Entradas</td>
+        <td>${formatMoney(ent)}</td>
+        <td>Saídas ${formatMoney(sai)}</td>
+        <td>Resultado ${formatMoney(ent-sai)}</td>
+      </tr>
+    `;
+
+  });
+
+  tbody.innerHTML=html;
 }
 
 function updateResumo(){
@@ -329,18 +367,18 @@ function updateResumo(){
 
 function renderDashboard(){
   const dados=list();
-  
+
   if(!dados.length){
     if(charts.pizza) charts.pizza.destroy();
     if(charts.perc) charts.perc.destroy();
     if(charts.res) charts.res.destroy();
-    
+
     txtPizza.innerText="Adicione lançamentos para visualizar gráficos.";
     txtPerc.innerText="";
     txtResumo.innerText="";
     return;
   }
-  
+
   let ent=0,sai=0,mapa={};
 
   dados.forEach(i=>{
@@ -384,86 +422,12 @@ function renderDashboard(){
   txtResumo.innerText=ent>=sai?"✅ Saúde financeira positiva.":"⚠️ Atenção: gastos maiores que entradas.";
 }
 
-/* ===== NOVO ===== */
-function renderMonthlyTables(){
-  const dados=list();
-  const box=document.getElementById("monthlyTables");
-
-  if(!box){
-    return;
-  }
-
-  if(!dados.length){
-    box.innerHTML="";
-    return;
-  }
-
-  const grupos={};
-
-  dados.forEach(i=>{
-    if(!i.data) return;
-    const mes=i.data.slice(0,7);
-    if(!grupos[mes]) grupos[mes]=[];
-    grupos[mes].push(i);
-  });
-
-  const meses=Object.keys(grupos).sort();
-
-  let html="";
-
-  meses.forEach(mes=>{
-    let ent=0,sai=0;
-
-    grupos[mes].forEach(i=>{
-      if(i.tipo==="Entrada") ent+=i.valor;
-      else sai+=i.valor;
-    });
-
-    html+=`
-      <table class="monthTable">
-        <thead>
-          <tr>
-            <th colspan="4">${mes}</th>
-          </tr>
-          <tr>
-            <th>Resumo</th>
-            <th>Entradas</th>
-            <th>Saídas</th>
-            <th>Resultado</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Mês</td>
-            <td>${formatMoney(ent)}</td>
-            <td>${formatMoney(sai)}</td>
-            <td>${formatMoney(ent-sai)}</td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr>
-            <td>TOTAL DO MÊS</td>
-            <td>${formatMoney(ent)}</td>
-            <td>${formatMoney(sai)}</td>
-            <td>${formatMoney(ent-sai)}</td>
-          </tr>
-        </tfoot>
-      </table>
-    `;
-  });
-
-  box.innerHTML=html;
-}
-
 function refreshAll(){
   renderTable();
   updateResumo();
   renderProfileInfo();
   renderDashboard();
-  renderMonthlyTables(); // novo
 }
-
-/* resto do seu JS permanece igual */
 
 function showToast(msg){
   const toast=document.createElement("div");
@@ -476,7 +440,7 @@ function showToast(msg){
 form.onsubmit=e=>{
   e.preventDefault();
   const v=normalizeValue(valor.value);
-  if(v===null)return alert("⚠️ Valor inválido. Use formato: 1500 ou 1.500,00");
+  if(v===null)return alert("⚠️ Valor inválido.");
 
   const db=loadDB();
   db.profiles[db.active].push({
@@ -494,11 +458,12 @@ form.onsubmit=e=>{
   showToast("✅ Lançamento adicionado!");
 };
 
-function fecharModal(){ modal.style.display="none"; }
+function fecharModal(){modal.style.display="none";}
 
 tbody.onclick=e=>{
   const tr=e.target.closest("tr");
   if(!tr||!tr.dataset.id)return;
+
   const db=loadDB();
   const item=db.profiles[db.active].find(i=>i.id===tr.dataset.id);
   if(!item)return;
@@ -523,6 +488,7 @@ tbody.onclick=e=>{
 tbody.addEventListener("blur",e=>{
   const td=e.target;
   if(!td.dataset.f)return;
+
   const tr=td.closest("tr");
   const db=loadDB();
   const item=db.profiles[db.active].find(i=>i.id===tr.dataset.id);
@@ -530,6 +496,7 @@ tbody.addEventListener("blur",e=>{
 
   clearTimeout(debounceTimer);
   debounceTimer=setTimeout(()=>{
+
     if(td.dataset.f==="valor"){
       const n=normalizeValue(td.innerText);
       if(n===null){
@@ -541,10 +508,13 @@ tbody.addEventListener("blur",e=>{
     }else{
       item[td.dataset.f]=td.innerText.trim();
     }
+
     saveDB(db);
     refreshAll();
     showToast("💾 Alteração salva");
+
   },300);
+
 },true);
 
 perfilNome.onblur=saveProfileInfo;
@@ -568,14 +538,17 @@ perfilSelect.onchange=e=>{
 novoPerfil.onclick=()=>{
   const n=prompt("📁 Nome do novo perfil:");
   if(!n||!n.trim())return;
+
   const db=loadDB();
   if(db.profiles[n]){
     alert("⚠️ Perfil já existe!");
     return;
   }
+
   db.profiles[n]=[];
   db.profileInfo[n]={};
   db.active=n;
+
   saveDB(db);
   renderPerfis();
   refreshAll();
@@ -604,8 +577,8 @@ importar.onclick=abrirImport;
 exportAll.onclick=abrirExport;
 
 resetAll.onclick=()=>{
-  if(confirm("⚠️ Apagar TODOS os dados do sistema?\n\nEsta ação não pode ser desfeita!")){
-    if(confirm("🚨 Tem certeza absoluta? Todos os perfis serão perdidos!")){
+  if(confirm("⚠️ Apagar TODOS os dados do sistema?")){
+    if(confirm("🚨 Tem certeza absoluta?")){
       localStorage.removeItem(KEY);
       location.reload();
     }
@@ -618,16 +591,12 @@ document.querySelectorAll(".theme-btn").forEach(btn=>{
     const db=loadDB();
     db.theme=theme;
     saveDB(db);
-    
+
     document.querySelectorAll(".theme-btn").forEach(b=>b.classList.remove("active"));
     btn.classList.add("active");
-    
-    if(theme){
-      themeCSS.href=`themes/${theme}.css`;
-    }else{
-      themeCSS.href="";
-    }
-    
+
+    themeCSS.href=theme?`themes/${theme}.css`:"";
+
     showToast(`🎨 Tema: ${theme||"Padrão"}`);
   };
 });
@@ -635,13 +604,15 @@ document.querySelectorAll(".theme-btn").forEach(btn=>{
 function loadTheme(){
   const db=loadDB();
   const theme=db.theme||"";
-  
+
   if(theme){
     themeCSS.href=`themes/${theme}.css`;
     document.querySelector(`.theme-btn[data-theme="${theme}"]`)?.classList.add("active");
     document.querySelector('.theme-btn[data-theme=""]')?.classList.remove("active");
   }
 }
+
+filtroMes.onchange=renderTable;
 
 (function init(){
   const db=loadDB();
