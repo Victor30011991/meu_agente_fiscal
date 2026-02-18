@@ -1,0 +1,25 @@
+/* Paleta dinâmica de cores
+   Apenas cor principal do sistema
+*/
+
+:root{
+  --p: #4f46e5; /* default */
+}
+
+/* Paletas possíveis */
+
+:root[data-palette="emerald"]{
+  --p: #10b981;
+}
+
+:root[data-palette="gold"]{
+  --p: #f59e0b;
+}
+
+:root[data-palette="indigo"]{
+  --p: #6366f1;
+}
+
+:root[data-palette="rose"]{
+  --p: #fb7185;
+}
