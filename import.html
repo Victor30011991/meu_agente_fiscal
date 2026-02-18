@@ -4,194 +4,90 @@
 <meta charset="UTF-8">
 <title>FluxoPro – Importar lançamentos</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
-<style>
-body{
-  font-family:Arial,Helvetica,sans-serif;
-  background:#f5f7fb;
-  padding:30px
-}
-.card{
-  max-width:500px;
-  margin:auto;
-  background:#fff;
-  padding:20px;
-  border-radius:12px;
-  box-shadow:0 10px 20px rgba(0,0,0,.05)
-}
-button{
-  padding:10px 14px;
-  border:0;
-  border-radius:8px;
-  cursor:pointer;
-  background:#4f46e5;
-  color:#fff;
-  font-weight:700
-}
-</style>
 </head>
 <body>
 
-<div class="card">
+<h2>Importar lançamentos</h2>
 
-  <h2>Importar lançamentos</h2>
+<p id="perfilInfo"></p>
 
-  <p id="perfilInfo"></p>
-
-  <input type="file" id="fileInput" accept=".json">
-
-  <br><br>
-
-  <button id="btnImportar">Importar</button>
-
-</div>
+<input type="file" id="fileInput" accept=".json">
+<br><br>
+<button id="btnImportar">Importar</button>
 
 <script>
-/* =====================================================
-   CONFIGURAÇÃO
-===================================================== */
+const KEY="fluxopro_v12";
 
-const KEY = "fluxopro_v12";
-
-/* =====================================================
-   PERFIL ATIVO (recebido pela URL)
-===================================================== */
-
-const params = new URLSearchParams(location.search);
-let perfil = params.get("perfil");
-
-/* =====================================================
-   CARREGAMENTO DA BASE
-===================================================== */
+const params=new URLSearchParams(location.search);
+let perfil=params.get("perfil");
 
 function loadDB(){
-
   try{
-    const raw = localStorage.getItem(KEY);
-
-    if(!raw){
-      return {
-        active:"default",
-        profiles:{ default:[] },
-        profileInfo:{},
-        theme:""
-      };
-    }
-
-    const db = JSON.parse(raw);
-
-    if(!db.profiles) db.profiles = {};
-    if(!db.profileInfo) db.profileInfo = {};
-
-    return db;
-
+    const raw=localStorage.getItem(KEY);
+    if(!raw) return {active:"default",profiles:{default:[]},profileInfo:{},theme:""};
+    return JSON.parse(raw);
   }catch{
-    return {
-      active:"default",
-      profiles:{ default:[] },
-      profileInfo:{},
-      theme:""
-    };
+    return {active:"default",profiles:{default:[]},profileInfo:{},theme:""};
   }
-
 }
 
 function saveDB(db){
-  localStorage.setItem(KEY, JSON.stringify(db));
+  localStorage.setItem(KEY,JSON.stringify(db));
 }
 
-/* =====================================================
-   PERFIL DE DESTINO
-===================================================== */
+let db=loadDB();
 
-const db = loadDB();
+if(!perfil) perfil=db.active||"default";
+if(!db.profiles[perfil]) db.profiles[perfil]=[];
 
-if(!perfil){
-  perfil = db.active || "default";
-}
-
-if(!db.profiles[perfil]){
-  db.profiles[perfil] = [];
-}
-
-perfilInfo.innerText = "Perfil de destino: " + perfil;
-
-saveDB(db);
-
-/* =====================================================
-   VALIDAÇÃO DE LANÇAMENTO
-===================================================== */
+perfilInfo.innerText="Perfil de destino: "+perfil;
 
 function lancamentoValido(l){
-
   if(!l) return false;
-
-  if(typeof l !== "object") return false;
-
-  if(!("data" in l))  return false;
-  if(!("cat" in l))   return false;
-  if(!("tipo" in l))  return false;
+  if(typeof l!=="object") return false;
+  if(!("data" in l)) return false;
+  if(!("cat" in l)) return false;
+  if(!("tipo" in l)) return false;
   if(!("valor" in l)) return false;
-
-  if(l.tipo !== "Entrada" && l.tipo !== "Saída") return false;
-
+  if(l.tipo!=="Entrada" && l.tipo!=="Saída") return false;
   if(isNaN(Number(l.valor))) return false;
-
   return true;
 }
 
-/* =====================================================
-   IMPORTAÇÃO
-===================================================== */
+btnImportar.onclick=()=>{
 
-btnImportar.onclick = () => {
+  const file=fileInput.files[0];
+  if(!file){alert("Selecione um arquivo");return;}
 
-  const input = document.getElementById("fileInput");
-  const file = input.files[0];
+  const reader=new FileReader();
 
-  if(!file){
-    alert("Selecione um arquivo JSON.");
-    return;
-  }
-
-  const reader = new FileReader();
-
-  reader.onload = e => {
+  reader.onload=e=>{
 
     try{
 
-      const json = JSON.parse(e.target.result);
+      const json=JSON.parse(e.target.result);
 
       if(!Array.isArray(json)){
-        alert("O arquivo não contém uma lista de lançamentos.");
+        alert("Formato inválido");
         return;
       }
 
-      const db = loadDB();
+      let inseridos=0;
+      let ignorados=0;
 
-      if(!db.profiles[perfil]){
-        db.profiles[perfil] = [];
-      }
-
-      const existentes = db.profiles[perfil];
-
-      let inseridos = 0;
-      let ignorados = 0;
-
-      json.forEach(l => {
+      json.forEach(l=>{
 
         if(!lancamentoValido(l)){
           ignorados++;
           return;
         }
 
-        /* evita duplicação simples */
-        const jaExiste = existentes.some(e =>
-          e.data  === l.data  &&
-          e.cat   === l.cat   &&
-          e.tipo  === l.tipo  &&
-          Number(e.valor) === Number(l.valor) &&
-          (e.obs || "") === (l.obs || "")
+        const jaExiste=db.profiles[perfil].some(e=>
+          e.data===l.data &&
+          e.cat===l.cat &&
+          e.tipo===l.tipo &&
+          Number(e.valor)===Number(l.valor) &&
+          (e.obs||"")===(l.obs||"")
         );
 
         if(jaExiste){
@@ -199,13 +95,13 @@ btnImportar.onclick = () => {
           return;
         }
 
-        existentes.push({
-          id: l.id || Date.now() + Math.random(),
-          data: l.data,
-          cat: l.cat,
-          tipo: l.tipo,
-          valor: Number(l.valor),
-          obs: l.obs || ""
+        db.profiles[perfil].push({
+          id:l.id||Date.now()+Math.random(),
+          data:l.data,
+          cat:l.cat,
+          tipo:l.tipo,
+          valor:Number(l.valor),
+          obs:l.obs||""
         });
 
         inseridos++;
@@ -214,17 +110,10 @@ btnImportar.onclick = () => {
 
       saveDB(db);
 
-      alert(
-        "Importação finalizada.\n\n" +
-        "Inseridos: " + inseridos + "\n" +
-        "Ignorados: " + ignorados
-      );
+      alert("Inseridos: "+inseridos+"\nIgnorados: "+ignorados);
 
-    }catch(err){
-
-      console.error(err);
-      alert("Arquivo inválido.");
-
+    }catch{
+      alert("Arquivo inválido");
     }
 
   };
