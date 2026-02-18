@@ -1,18 +1,3 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<title>FluxoPro – Importação</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-<!-- CSS original mantido -->
-</head>
-<body>
-
-<!-- HTML estrutural mantido -->
-
 <script>
 const KEY = "fluxopro_v12";
 
@@ -23,14 +8,15 @@ let buffer = [];
 let ignored = [];
 let db;
 
-try {
+try{
+
   const raw = localStorage.getItem(KEY);
-  if(!raw) throw new Error("Base não encontrada.");
+  if(!raw) throw new Error("Base de dados não encontrada. Abra o FluxoPro primeiro.");
 
   db = JSON.parse(raw);
 
   if(!db || !db.profiles){
-    throw new Error("Base de dados não encontrada. Abra o FluxoPro primeiro.");
+    throw new Error("Base de dados inválida.");
   }
 
   if(!perfil){
@@ -41,9 +27,10 @@ try {
     throw new Error(`Perfil "${perfil}" não encontrado.`);
   }
 
-  perfilNome.innerText = perfil;
+  document.getElementById("perfilNome").innerText = perfil;
 
-} catch(err) {
+}catch(err){
+
   document.querySelector('.container').innerHTML = `
     <div class="card">
       <h2>⚠️ Erro</h2>
@@ -53,10 +40,4 @@ try {
   `;
   throw err;
 }
-
-/* restante do código permanece igual ao seu */
-
 </script>
-
-</body>
-</html>
