@@ -1,3 +1,13 @@
-body{background:#ecfdf5}
-.card{border:2px solid #10b981}
+/* Tema Emerald */
 
+:root{
+  --p: #10b981;
+  --card: #ffffff;
+  --b: #a7f3d0;
+  --ok: #10b981;
+  --bad: #ef4444;
+}
+
+body{
+  background:#ecfdf5;
+}
