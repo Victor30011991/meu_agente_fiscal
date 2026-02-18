@@ -8,7 +8,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- ✅ SISTEMA DE TEMAS DINÂMICO -->
 <link id="themeCSS" rel="stylesheet" href="">
 
 <style>
@@ -69,7 +68,7 @@ select,input,textarea{padding:8px 10px;border-radius:10px;border:1px solid var(-
 .modal .card{max-width:380px;width:90%;margin:0}
 .hidden{display:none}
 
-/* ✅ TEMA SELECTOR */
+/* theme selector */
 .theme-selector{display:flex;gap:8px;align-items:center}
 .theme-btn{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:all .2s}
 .theme-btn:hover{transform:scale(1.1)}
@@ -81,13 +80,33 @@ select,input,textarea{padding:8px 10px;border-radius:10px;border:1px solid var(-
 .theme-indigo{background:#6366f1}
 .theme-rose{background:#fb7185}
 
-/* ✅ LOADING */
+/* loading */
 .loading{display:inline-block;width:16px;height:16px;border:3px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ✅ TOAST */
+/* toast */
 .toast{position:fixed;bottom:20px;right:20px;background:#1f2937;color:#fff;padding:12px 20px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:10000;animation:slideIn .3s}
 @keyframes slideIn{from{transform:translateX(400px);opacity:0}}
+
+/* ===== NOVO – tabelas mensais ===== */
+table.monthTable{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+  font-size:13px;
+}
+.monthTable th,.monthTable td{
+  padding:6px 8px;
+  border-bottom:1px solid var(--b);
+  text-align:right;
+}
+.monthTable th:first-child,
+.monthTable td:first-child{
+  text-align:left;
+}
+.monthTable tfoot td{
+  font-weight:800;
+}
 </style>
 </head>
 <body>
@@ -99,7 +118,6 @@ select,input,textarea{padding:8px 10px;border-radius:10px;border:1px solid var(-
 <select id="perfilSelect"></select>
 <button id="novoPerfil" title="Novo perfil">+</button>
 
-<!-- ✅ SELETOR DE TEMAS -->
 <div class="theme-selector">
 <button class="theme-btn theme-default active" data-theme="" title="Padrão"></button>
 <button class="theme-btn theme-dark" data-theme="dark" title="Dark"></button>
@@ -117,10 +135,8 @@ select,input,textarea{padding:8px 10px;border-radius:10px;border:1px solid var(-
 </header>
 
 <div class="container">
-
 <div class="layout">
 
-<!-- SIDEBAR / DASHBOARD -->
 <aside class="sidebar">
 
 <div class="card">
@@ -131,6 +147,9 @@ select,input,textarea{padding:8px 10px;border-radius:10px;border:1px solid var(-
 <div>Saídas<br><span id="sumSai">R$ 0,00</span></div>
 <div>Resultado<br><span id="sumRes">R$ 0,00</span></div>
 </div>
+
+<!-- NOVO -->
+<div id="monthlyTables"></div>
 
 <div class="actions">
 <button onclick="abrirExport()">📊 Exportar</button>
@@ -163,7 +182,6 @@ select,input,textarea{padding:8px 10px;border-radius:10px;border:1px solid var(-
 
 </aside>
 
-<!-- CONTEÚDO -->
 <main>
 
 <section id="tab-lanc">
@@ -171,7 +189,6 @@ select,input,textarea{padding:8px 10px;border-radius:10px;border:1px solid var(-
 <div class="actions">
 <button class="main" id="novoLanc">➕ Novo lançamento</button>
 <button id="importar">📥 Alimentar perfil</button>
-<!-- ✅ BOTÃO REFRESH -->
 <button id="refreshBtn" title="Atualizar dados">🔄 Refresh</button>
 </div>
 
@@ -212,7 +229,6 @@ select,input,textarea{padding:8px 10px;border-radius:10px;border:1px solid var(-
 </div>
 </div>
 
-<!-- ✅ MODAL COM BOTÃO CANCELAR -->
 <div class="modal" id="modal">
 <div class="card">
 <h3>Novo lançamento</h3>
@@ -315,7 +331,6 @@ function renderDashboard(){
   const dados=list();
   
   if(!dados.length){
-    // ✅ Tratamento de dados vazios
     if(charts.pizza) charts.pizza.destroy();
     if(charts.perc) charts.perc.destroy();
     if(charts.res) charts.res.destroy();
@@ -333,7 +348,6 @@ function renderDashboard(){
     if(i.tipo==="Saída") mapa[i.cat||"Outros"]=(mapa[i.cat||"Outros"]||0)+i.valor;
   });
 
-  // ✅ Atualizar dados ao invés de destruir gráficos
   if(charts.pizza){
     charts.pizza.data.labels=Object.keys(mapa);
     charts.pizza.data.datasets[0].data=Object.values(mapa);
@@ -370,14 +384,87 @@ function renderDashboard(){
   txtResumo.innerText=ent>=sai?"✅ Saúde financeira positiva.":"⚠️ Atenção: gastos maiores que entradas.";
 }
 
+/* ===== NOVO ===== */
+function renderMonthlyTables(){
+  const dados=list();
+  const box=document.getElementById("monthlyTables");
+
+  if(!box){
+    return;
+  }
+
+  if(!dados.length){
+    box.innerHTML="";
+    return;
+  }
+
+  const grupos={};
+
+  dados.forEach(i=>{
+    if(!i.data) return;
+    const mes=i.data.slice(0,7);
+    if(!grupos[mes]) grupos[mes]=[];
+    grupos[mes].push(i);
+  });
+
+  const meses=Object.keys(grupos).sort();
+
+  let html="";
+
+  meses.forEach(mes=>{
+    let ent=0,sai=0;
+
+    grupos[mes].forEach(i=>{
+      if(i.tipo==="Entrada") ent+=i.valor;
+      else sai+=i.valor;
+    });
+
+    html+=`
+      <table class="monthTable">
+        <thead>
+          <tr>
+            <th colspan="4">${mes}</th>
+          </tr>
+          <tr>
+            <th>Resumo</th>
+            <th>Entradas</th>
+            <th>Saídas</th>
+            <th>Resultado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Mês</td>
+            <td>${formatMoney(ent)}</td>
+            <td>${formatMoney(sai)}</td>
+            <td>${formatMoney(ent-sai)}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td>TOTAL DO MÊS</td>
+            <td>${formatMoney(ent)}</td>
+            <td>${formatMoney(sai)}</td>
+            <td>${formatMoney(ent-sai)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    `;
+  });
+
+  box.innerHTML=html;
+}
+
 function refreshAll(){
   renderTable();
   updateResumo();
   renderProfileInfo();
   renderDashboard();
+  renderMonthlyTables(); // novo
 }
 
-// ✅ TOAST DE FEEDBACK
+/* resto do seu JS permanece igual */
+
 function showToast(msg){
   const toast=document.createElement("div");
   toast.className="toast";
@@ -407,9 +494,7 @@ form.onsubmit=e=>{
   showToast("✅ Lançamento adicionado!");
 };
 
-function fecharModal(){
-  modal.style.display="none";
-}
+function fecharModal(){ modal.style.display="none"; }
 
 tbody.onclick=e=>{
   const tr=e.target.closest("tr");
@@ -435,7 +520,6 @@ tbody.onclick=e=>{
   }
 };
 
-// ✅ DEBOUNCE NO CONTENTEDITABLE
 tbody.addEventListener("blur",e=>{
   const td=e.target;
   if(!td.dataset.f)return;
@@ -468,7 +552,6 @@ perfilDoc.onblur=saveProfileInfo;
 
 novoLanc.onclick=()=>modal.style.display="flex";
 
-// ✅ BOTÃO REFRESH
 refreshBtn.onclick=()=>{
   refreshAll();
   showToast("🔄 Dados atualizados!");
@@ -508,7 +591,6 @@ document.querySelectorAll(".tabs button").forEach(b=>{
   };
 });
 
-// ✅ PASSAGEM CORRETA DO PERFIL
 function abrirImport(){
   const db=loadDB();
   window.open(`import.html?perfil=${encodeURIComponent(db.active)}`,"_blank");
@@ -530,7 +612,6 @@ resetAll.onclick=()=>{
   }
 };
 
-// ✅ SISTEMA DE TEMAS
 document.querySelectorAll(".theme-btn").forEach(btn=>{
   btn.onclick=()=>{
     const theme=btn.dataset.theme;
@@ -551,7 +632,6 @@ document.querySelectorAll(".theme-btn").forEach(btn=>{
   };
 });
 
-// ✅ CARREGAR TEMA SALVO
 function loadTheme(){
   const db=loadDB();
   const theme=db.theme||"";
@@ -563,7 +643,6 @@ function loadTheme(){
   }
 }
 
-// ✅ INICIALIZAÇÃO
 (function init(){
   const db=loadDB();
   saveDB(db);
@@ -572,7 +651,6 @@ function loadTheme(){
   refreshAll();
 })();
 
-// ✅ FECHAR MODAL CLICANDO FORA
 modal.onclick=e=>{
   if(e.target===modal)fecharModal();
 };
