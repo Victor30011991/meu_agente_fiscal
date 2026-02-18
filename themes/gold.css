@@ -1,3 +1,13 @@
-body{background:#fff7ed}
-.card{border:2px solid #f59e0b}
+/* Tema Gold */
 
+:root{
+  --p: #f59e0b;
+  --card: #ffffff;
+  --b: #fde68a;
+  --ok: #10b981;
+  --bad: #ef4444;
+}
+
+body{
+  background:#fff7ed;
+}
