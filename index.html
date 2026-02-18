@@ -8,138 +8,311 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Tema principal -->
+<!-- tema -->
 <link id="themeCSS" rel="stylesheet" href="">
-<!-- Paleta de cores dinâmica -->
+<!-- paleta -->
 <link rel="stylesheet" href="./themes/palette.css">
 
 <style>
-/* (Seu CSS original, mantido e indentado) */
-... <!-- omitido para brevidade — igual ao que você já usa -->
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui;background:#f5f7fb;color:#1f2937}
+
+header{
+  padding:10px 20px;
+  background:#fff;
+  border-bottom:1px solid #eee;
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+  justify-content:space-between
+}
+
+.container{
+  max-width:1300px;
+  margin:auto;
+  padding:20px
+}
+
+.layout{
+  display:grid;
+  grid-template-columns:320px 1fr;
+  gap:20px
+}
+
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+}
+
+.card{
+  background:#fff;
+  border-radius:14px;
+  padding:16px;
+  box-shadow:0 8px 20px rgba(0,0,0,.04)
+}
+
+.resume{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin:10px 0
+}
+
+.resume div{
+  background:#f3f4f6;
+  padding:10px;
+  border-radius:10px;
+  text-align:center;
+  font-weight:700
+}
+
+.actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap
+}
+
+button{
+  padding:8px 12px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  cursor:pointer;
+  background:#fff;
+  font-weight:600
+}
+
+button.main{
+  background:var(--p);
+  color:#fff;
+  border:none
+}
+
+.gridDash{
+  display:grid;
+  gap:12px
+}
+
+table{
+  width:100%;
+  border-collapse:collapse
+}
+
+th,td{
+  padding:8px;
+  border-bottom:1px solid #eee
+}
+
+.hidden{display:none}
+
+.badge{
+  padding:4px 8px;
+  border-radius:20px;
+  font-size:12px;
+  font-weight:700
+}
+
+.badge.entrada{background:#dcfce7;color:#166534}
+.badge.saida{background:#fee2e2;color:#991b1b}
+
+.theme-selector{
+  display:flex;
+  gap:6px
+}
+
+.theme-btn{
+  width:20px;
+  height:20px;
+  border-radius:4px;
+  border:1px solid #ccc;
+  cursor:pointer
+}
+
+.theme-btn.active{
+  outline:2px solid var(--p)
+}
+
+.tabs{
+  display:flex;
+  gap:6px
+}
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:999
+}
+
+.modal.show{display:flex}
 </style>
 </head>
 
 <body>
 
 <header>
+
   <strong>FluxoPro Engine v12</strong>
 
-  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+
     <select id="perfilSelect"></select>
     <button id="novoPerfil">+</button>
 
-    <!-- Seletor de temas -->
     <div class="theme-selector">
-      <button class="theme-btn theme-default active" data-theme=""></button>
-      <button class="theme-btn theme-dark" data-theme="dark"></button>
-      <button class="theme-btn theme-emerald" data-theme="emerald"></button>
-      <button class="theme-btn theme-gold" data-theme="gold"></button>
-      <button class="theme-btn theme-indigo" data-theme="indigo"></button>
-      <button class="theme-btn theme-rose" data-theme="rose"></button>
+      <button class="theme-btn" data-theme=""></button>
+      <button class="theme-btn" data-theme="dark"></button>
+      <button class="theme-btn" data-theme="emerald"></button>
+      <button class="theme-btn" data-theme="gold"></button>
+      <button class="theme-btn" data-theme="indigo"></button>
+      <button class="theme-btn" data-theme="rose"></button>
     </div>
 
-    <!-- COLOR PICKER (paleta livre) -->
-    <input type="color" id="colorPicker" title="Cor principal" style="width:32px;height:32px;border:none;padding:0;">
+    <input type="color" id="colorPicker" title="Cor principal">
 
     <div class="tabs">
       <button data-tab="lanc" class="active">Lançamentos</button>
       <button data-tab="conf">Configurações</button>
     </div>
+
   </div>
+
 </header>
 
 <div class="container">
+
   <div class="layout">
-  
-  <!-- LATERAL COM RESUMOS -->
-  <aside class="sidebar">
-    <div class="card">
-      <h3>Resumo geral</h3>
-      <div class="resume">
-        <div>Entradas<br><span id="sumEnt">R$ 0,00</span></div>
-        <div>Saídas<br><span id="sumSai">R$ 0,00</span></div>
-        <div>Resultado<br><span id="sumRes">R$ 0,00</span></div>
-      </div>
 
-      <div class="actions">
-        <button onclick="abrirExport()">📊 Exportar</button>
-        <button onclick="abrirImport()">📥 Importar</button>
-      </div>
-    </div>
-
-    <!-- GRÁFICOS -->
-    <div class="gridDash">
-      <div class="card"><h4>Distribuição por categoria</h4><canvas id="chartPizza"></canvas></div>
-      <div class="card"><h4>Entradas x Saídas</h4><canvas id="chartPerc"></canvas></div>
-      <div class="card"><h4>Resumo</h4><canvas id="chartResumo"></canvas></div>
-    </div>
-  </aside>
-
-  <!-- CONTEÚDO PRINCIPAL -->
-  <main>
-    <section id="tab-lanc">
-      <div class="actions">
-        <button class="main" id="novoLanc">➕ Novo lançamento</button>
-        <button id="refreshBtn">🔄 Refresh</button>
-      </div>
+    <aside>
 
       <div class="card">
-        <h3>Dados do perfil</h3>
-        <input id="perfilNome" placeholder="Nome / Razão social">
-        <input id="perfilDoc" placeholder="CPF ou CNPJ">
+
+        <h3>Resumo geral</h3>
+
+        <div class="resume">
+          <div>Entradas<br><span id="sumEnt">R$ 0,00</span></div>
+          <div>Saídas<br><span id="sumSai">R$ 0,00</span></div>
+          <div>Resultado<br><span id="sumRes">R$ 0,00</span></div>
+        </div>
+
+        <div class="actions">
+          <button onclick="abrirExport()">📊 Exportar</button>
+          <button onclick="abrirImport()">📥 Importar</button>
+        </div>
+
       </div>
 
-      <div class="card">
-        <table>
-          <thead><tr>
-            <th>Data</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Observ.</th><th>Apagar</th>
-          </tr></thead>
-          <tbody id="tbody"></tbody>
-        </table>
-      </div>
-    </section>
+      <div class="gridDash">
 
-    <section id="tab-conf" class="hidden">
-      <div class="card">
-        <h3>Configurações</h3>
-        <button id="exportAll">Relatório (Excel / PDF)</button>
-        <button id="resetAll" style="background:#ef4444;color:#fff">Reset de fábrica</button>
+        <div class="card">
+          <h4>Distribuição por categoria</h4>
+          <canvas id="chartPizza"></canvas>
+        </div>
+
+        <div class="card">
+          <h4>Entradas x Saídas</h4>
+          <canvas id="chartPerc"></canvas>
+        </div>
+
+        <div class="card">
+          <h4>Resumo</h4>
+          <canvas id="chartResumo"></canvas>
+        </div>
+
       </div>
-    </section>
-  </main>
+
+    </aside>
+
+    <main>
+
+      <section id="tab-lanc">
+
+        <div class="actions">
+          <button class="main" id="novoLanc">➕ Novo lançamento</button>
+          <button id="refreshBtn">🔄 Atualizar</button>
+        </div>
+
+        <div class="card">
+          <h3>Dados do perfil</h3>
+          <input id="perfilNome" placeholder="Nome / Razão social">
+          <input id="perfilDoc" placeholder="CPF ou CNPJ">
+        </div>
+
+        <div class="card">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Categoria</th>
+                <th>Tipo</th>
+                <th>Valor</th>
+                <th>Observação</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+
+      </section>
+
+      <section id="tab-conf" class="hidden">
+
+        <div class="card">
+          <h3>Configurações</h3>
+          <button id="exportAll">Relatório (Excel / PDF)</button>
+          <button id="resetAll">Resetar sistema</button>
+        </div>
+
+      </section>
+
+    </main>
 
   </div>
+
 </div>
 
-<!-- MODAL DE LANCAMENTO -->
 <div class="modal" id="modal">
+
   <div class="card">
+
     <h3>Novo lançamento</h3>
+
     <form id="form">
+
       <input type="date" id="data" required><br><br>
-      <input type="text" id="cat" placeholder="Categoria" required><br><br>
-      <select id="tipo"><option>Entrada</option><option>Saída</option></select><br><br>
-      <input type="text" id="valor" placeholder="Valor" required><br><br>
-      <textarea id="obs" placeholder="Observação (opcional)"></textarea><br><br>
-      <button type="submit" class="main">Salvar</button>
+      <input id="cat" placeholder="Categoria" required><br><br>
+
+      <select id="tipo">
+        <option>Entrada</option>
+        <option>Saída</option>
+      </select><br><br>
+
+      <input id="valor" placeholder="Valor" required><br><br>
+
+      <textarea id="obs" placeholder="Observação"></textarea><br><br>
+
+      <button class="main">Salvar</button>
       <button type="button" onclick="fecharModal()">Cancelar</button>
+
     </form>
+
   </div>
+
 </div>
 
 <script>
-/* ——— VARIÁVEIS GLOBAIS ——— */
 const KEY="fluxopro_v12";
-let charts = {};
-let debounceTimer;
+let charts={};
 
-/* ——— FUNÇÕES DE BANCO ——— */
 function loadDB(){
-  try {
-    const raw = localStorage.getItem(KEY);
+  try{
+    const raw=localStorage.getItem(KEY);
     if(!raw) return {active:"default",profiles:{default:[]},profileInfo:{},theme:""};
     return JSON.parse(raw);
-  } catch {
+  }catch{
     return {active:"default",profiles:{default:[]},profileInfo:{},theme:""};
   }
 }
@@ -148,88 +321,43 @@ function saveDB(db){
   localStorage.setItem(KEY,JSON.stringify(db));
 }
 
-/* ——— UTILITÁRIOS ——— */
-function normalizeValue(v){
-  let s=String(v||"").replace(/[^\d.,-]/g,"").replace(",",".");
-  let n=parseFloat(s);
-  return isNaN(n)?null:n;
+function list(){
+  const db=loadDB();
+  return db.profiles[db.active]||[];
 }
 
 function formatMoney(v){
   return new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0);
 }
 
-function list(){
-  const db=loadDB();
-  return db.profiles[db.active]||[];
-}
-
-/* ——— FUNÇÕES DE RENDER ——— */
 function renderTable(){
   const dados=list();
-  tbody.innerHTML = dados.map(i=>`
-    <tr data-id="${i.id}">
-      <td contenteditable data-f="data">${i.data||""}</td>
-      <td contenteditable data-f="cat">${i.cat||""}</td>
-      <td><span class="badge ${i.tipo==="Entrada"?"entrada":"saida"} btnTipo">${i.tipo}</span></td>
-      <td contenteditable data-f="valor">${formatMoney(i.valor)}</td>
-      <td contenteditable data-f="obs">${i.obs||""}</td>
-      <td><button class="del">🗑️</button></td>
+
+  tbody.innerHTML=dados.map(l=>`
+    <tr>
+      <td>${l.data||""}</td>
+      <td>${l.cat||""}</td>
+      <td><span class="badge ${l.tipo==="Entrada"?"entrada":"saida"}">${l.tipo}</span></td>
+      <td>${formatMoney(l.valor)}</td>
+      <td>${l.obs||""}</td>
+      <td></td>
     </tr>
   `).join("");
 }
 
 function updateResumo(){
   let e=0,s=0;
-  list().forEach(i=> i.tipo==="Entrada"?e+=i.valor:s+=i.valor );
+
+  list().forEach(l=>{
+    if(l.tipo==="Entrada") e+=Number(l.valor||0);
+    if(l.tipo==="Saída") s+=Number(l.valor||0);
+  });
+
   sumEnt.innerText=formatMoney(e);
   sumSai.innerText=formatMoney(s);
   sumRes.innerText=formatMoney(e-s);
 }
 
-/* ——— FUNÇÕES DE TEMAS ——— */
-document.querySelectorAll(".theme-btn").forEach(btn=>{
-  btn.onclick = ()=>{
-    const theme=btn.dataset.theme;
-    const db=loadDB();
-    db.theme=theme;
-    saveDB(db);
-    document.querySelectorAll(".theme-btn").forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active");
-    themeCSS.href = theme ? `./themes/${theme}.css` : "";
-  };
-});
-
-function loadTheme(){
-  const db=loadDB();
-  if(db.theme){
-    themeCSS.href = `./themes/${db.theme}.css`;
-    document.querySelector(`.theme-btn[data-theme="${db.theme}"]`)?.classList.add("active");
-  }
-}
-
-/* ——— PALETA DE CORES ——— */
-function applyPrimaryColor(color){
-  document.documentElement.style.setProperty("--p",color);
-}
-
-document.getElementById("colorPicker").oninput = e=>{
-  const color=e.target.value;
-  const db=loadDB();
-  db.primaryColor=color;
-  saveDB(db);
-  applyPrimaryColor(color);
-};
-
-function loadPrimaryColor(){
-  const db=loadDB();
-  if(db.primaryColor){
-    applyPrimaryColor(db.primaryColor);
-    colorPicker.value=db.primaryColor;
-  }
-}
-
-/* ——— AÇÕES DE BOTÕES ——— */
 function abrirImport(){
   const db=loadDB();
   window.open(`./import.html?perfil=${encodeURIComponent(db.active)}`,"_blank");
@@ -239,12 +367,56 @@ function abrirExport(){
   window.open("./export.html","_blank");
 }
 
-/* ——— INICIALIZAÇÃO ——— */
+/* temas */
+
+document.querySelectorAll(".theme-btn").forEach(btn=>{
+  btn.onclick=()=>{
+    const theme=btn.dataset.theme;
+    const db=loadDB();
+    db.theme=theme;
+    saveDB(db);
+    themeCSS.href=theme?`./themes/${theme}.css`:"";
+    document.querySelectorAll(".theme-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+  };
+});
+
+function loadTheme(){
+  const db=loadDB();
+  if(db.theme){
+    themeCSS.href=`./themes/${db.theme}.css`;
+    document.querySelector(`.theme-btn[data-theme="${db.theme}"]`)?.classList.add("active");
+  }
+}
+
+/* paleta */
+
+function applyPrimaryColor(c){
+  document.documentElement.style.setProperty("--p",c);
+}
+
+function loadPrimaryColor(){
+  const db=loadDB();
+  if(db.primaryColor){
+    applyPrimaryColor(db.primaryColor);
+    colorPicker.value=db.primaryColor;
+  }
+}
+
+colorPicker.oninput=e=>{
+  const db=loadDB();
+  db.primaryColor=e.target.value;
+  saveDB(db);
+  applyPrimaryColor(e.target.value);
+};
+
 (function init(){
   const db=loadDB();
   saveDB(db);
-  loadTheme(); loadPrimaryColor();
-  renderTable(); updateResumo();
+  loadTheme();
+  loadPrimaryColor();
+  renderTable();
+  updateResumo();
 })();
 </script>
 
