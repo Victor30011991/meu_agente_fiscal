@@ -1,3 +1,13 @@
-body{background:#eef2ff}
-.card{border:2px solid #6366f1}
+/* Tema Indigo */
 
+:root{
+  --p: #6366f1;
+  --card: #ffffff;
+  --b: #c7d2fe;
+  --ok: #10b981;
+  --bad: #ef4444;
+}
+
+body{
+  background:#eef2ff;
+}
