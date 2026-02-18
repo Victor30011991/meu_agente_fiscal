@@ -5,357 +5,36 @@
 <title>FluxoPro - Relatório</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-body{
-  margin:0;
-  font-family:Inter;
-  background:#f5f7fb;
-  color:#1f2937
-}
-.container{
-  max-width:1000px;
-  margin:auto;
-  padding:30px
-}
-.card{
-  background:#fff;
-  border-radius:16px;
-  padding:20px;
-  box-shadow:0 10px 20px rgba(0,0,0,.04)
-}
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:10px
-}
-th,td{
-  padding:8px;
-  border-bottom:1px solid #eee;
-  text-align:left
-}
-th{
-  background:#fafafa
-}
-.top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:20px;
-  flex-wrap:wrap;
-  gap:10px
-}
-button{
-  padding:10px 14px;
-  border:0;
-  border-radius:10px;
-  font-weight:700;
-  cursor:pointer;
-  transition:all .2s
-}
-button:hover{
-  opacity:.8;
-  transform:translateY(-1px)
-}
-.btn-excel{
-  background:#10b981;
-  color:#fff
-}
-.btn-pdf{
-  background:#ef4444;
-  color:#fff
-}
-.resumo{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-  margin:10px 0
-}
-.box{
-  background:#f3f4f6;
-  padding:10px;
-  border-radius:10px;
-  font-weight:700;
-  text-align:center
-}
-.entrada{color:#10b981}
-.saida{color:#ef4444}
-
-.loading{
-  display:none;
-  align-items:center;
-  justify-content:center;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.3);
-  z-index:9999
-}
-.loading.show{display:flex}
-
-.spinner{
-  border:4px solid #f3f4f6;
-  border-top:4px solid #4f46e5;
-  border-radius:50%;
-  width:40px;
-  height:40px;
-  animation:spin 1s linear infinite
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-.empty{
-  text-align:center;
-  padding:40px;
-  color:#999
-}
-</style>
 </head>
 <body>
 
-<!-- overlay de carregamento -->
-<div class="loading" id="loading">
-  <div class="spinner"></div>
-</div>
+<h2>Relatório FluxoPro</h2>
 
-<div class="container">
-
-  <div class="top">
-    <h1>Relatório FluxoPro</h1>
-    <div style="display:flex;gap:10px">
-      <button class="btn-excel" onclick="exportExcel()">Baixar Excel</button>
-      <button class="btn-pdf" onclick="exportPDF()">Baixar PDF</button>
-    </div>
-  </div>
-
-  <div class="card">
-
-    <h2 id="perfilTitulo"></h2>
-    <div id="perfilDados"></div>
-
-    <div class="resumo">
-      <div class="box">Entradas<br><span id="ent" class="entrada"></span></div>
-      <div class="box">Saídas<br><span id="sai" class="saida"></span></div>
-      <div class="box">Resultado<br><span id="res"></span></div>
-    </div>
-
-    <div id="conteudo">
-      <table>
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Categoria</th>
-            <th>Tipo</th>
-            <th>Valor</th>
-            <th>Observação</th>
-          </tr>
-        </thead>
-        <tbody id="tb"></tbody>
-      </table>
-    </div>
-
-  </div>
-</div>
-
-<!-- canvases fora da tela para geração dos gráficos do PDF -->
-<div style="position:absolute;left:-9999px;width:400px">
-  <canvas id="chartPizza" width="400" height="400"></canvas>
-  <canvas id="chartPerc" width="400" height="400"></canvas>
-  <canvas id="chartResumo" width="400" height="300"></canvas>
-</div>
+<button onclick="exportExcel()">Baixar Excel</button>
+<button onclick="exportPDF()">Baixar PDF</button>
 
 <script>
-/* =====================================================
-   CONFIG
-===================================================== */
+const KEY="fluxopro_v12";
 
-const KEY = "fluxopro_v12";
-
-let db, perfil, dados, info, theme;
-
-/* =====================================================
-   CARREGAMENTO DA BASE
-===================================================== */
+let db,perfil,dados,info;
 
 try{
-
-  const raw = localStorage.getItem(KEY);
-
-  if(!raw) throw new Error("Base não encontrada");
-
-  db = JSON.parse(raw);
-
-  if(!db || !db.profiles) throw new Error("Base inválida");
-
-  perfil = db.active;
-  theme  = db.theme || "";
-
-  dados = db.profiles[perfil] || [];
-  info  = db.profileInfo?.[perfil] || {};
-
-}catch(err){
-
-  document.querySelector('.container').innerHTML = `
-    <div class="card empty">
-      <h2>Erro</h2>
-      <p>${err.message}</p>
-    </div>
-  `;
-
-  throw err;
+  db=JSON.parse(localStorage.getItem(KEY));
+  if(!db||!db.profiles) throw "erro";
+  perfil=db.active;
+  dados=db.profiles[perfil]||[];
+  info=db.profileInfo?.[perfil]||{};
+}catch{
+  alert("Erro ao carregar base");
+  throw new Error("DB inválido");
 }
-
-/* =====================================================
-   UTIL
-===================================================== */
 
 function money(v){
-  return new Intl.NumberFormat("pt-BR",{
-    style:"currency",
-    currency:"BRL"
-  }).format(v || 0);
+  return new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0);
 }
-
-/* =====================================================
-   TOTAIS
-===================================================== */
-
-let totalEnt = 0;
-let totalSai = 0;
-
-dados.forEach(l=>{
-  const v = Number(l.valor || 0);
-
-  if(l.tipo === "Entrada") totalEnt += v;
-  if(l.tipo === "Saída")   totalSai += v;
-});
-
-/* =====================================================
-   DADOS DO PERFIL
-===================================================== */
-
-perfilTitulo.innerText = "Perfil: " + perfil;
-
-perfilDados.innerHTML = `
-  <p><b>Nome:</b> ${info.nome || "Não informado"}</p>
-  <p><b>Documento:</b> ${info.doc || "Não informado"}</p>
-`;
-
-ent.innerText = money(totalEnt);
-sai.innerText = money(totalSai);
-
-const resultado = totalEnt - totalSai;
-
-res.innerText = money(resultado);
-res.style.color = resultado >= 0 ? "#10b981" : "#ef4444";
-
-/* =====================================================
-   TABELA
-===================================================== */
-
-if(!dados.length){
-
-  document.getElementById("conteudo").innerHTML = `
-    <div class="empty">Nenhum lançamento</div>
-  `;
-
-}else{
-
-  tb.innerHTML = dados.map(l=>`
-    <tr>
-      <td>${l.data || "-"}</td>
-      <td>${l.cat || "-"}</td>
-      <td style="color:${l.tipo==="Entrada"?"#10b981":"#ef4444"}">${l.tipo}</td>
-      <td>${money(l.valor)}</td>
-      <td>${l.obs || "-"}</td>
-    </tr>
-  `).join("");
-
-}
-
-/* =====================================================
-   GRÁFICOS
-===================================================== */
-
-let charts = {};
-
-function createCharts(){
-
-  const mapa = {};
-
-  dados.forEach(l=>{
-    if(l.tipo === "Saída"){
-      const c = l.cat || "Outros";
-      mapa[c] = (mapa[c] || 0) + Number(l.valor || 0);
-    }
-  });
-
-  charts.pizza = new Chart(chartPizza,{
-    type:"doughnut",
-    data:{
-      labels:Object.keys(mapa),
-      datasets:[{data:Object.values(mapa)}]
-    },
-    options:{
-      responsive:false,
-      plugins:{legend:{position:"bottom"}}
-    }
-  });
-
-  charts.perc = new Chart(chartPerc,{
-    type:"pie",
-    data:{
-      labels:["Entradas","Saídas"],
-      datasets:[{data:[totalEnt,totalSai]}]
-    },
-    options:{
-      responsive:false,
-      plugins:{legend:{position:"bottom"}}
-    }
-  });
-
-  charts.resumo = new Chart(chartResumo,{
-    type:"bar",
-    data:{
-      labels:["Entradas","Saídas","Resultado"],
-      datasets:[{data:[totalEnt,totalSai,resultado]}]
-    },
-    options:{
-      responsive:false,
-      plugins:{legend:{display:false}},
-      scales:{y:{beginAtZero:true}}
-    }
-  });
-}
-
-createCharts();
-
-/* =====================================================
-   PALETA (mantida igual ao seu modelo atual)
-===================================================== */
-
-const themePalettes = {
-  "" : {
-    primary:[79,70,229],
-    bg:[255,255,255],
-    text:[31,41,55],
-    textLight:[255,255,255],
-    card:[255,255,255],
-    entrada:[16,185,129],
-    saida:[239,68,68],
-    zebra:[249,250,251],
-    accent:[238,242,255]
-  }
-};
-
-const colors = themePalettes[""];
-
-/* =====================================================
-   EXPORTAÇÃO PDF
-===================================================== */
 
 function exportPDF(){
 
@@ -364,205 +43,25 @@ function exportPDF(){
     return;
   }
 
-  loading.classList.add("show");
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF();
 
-  setTimeout(()=>{
+  let y=10;
 
-    try{
+  doc.text("Relatório FluxoPro",10,y);y+=6;
+  doc.text("Perfil: "+perfil,10,y);y+=6;
 
-      const { jsPDF } = window.jspdf;
+  dados.forEach(l=>{
+    doc.text(
+      `${l.data} | ${l.cat} | ${l.tipo} | ${money(l.valor)}`,
+      10,y
+    );
+    y+=6;
+    if(y>280){doc.addPage();y=10;}
+  });
 
-      const doc = new jsPDF("p","mm","a4");
-
-      const W = 210;
-      const H = 297;
-      const M = 12;
-
-      let y = 20;
-
-      function novaPagina(h){
-        if(y + h > H - 15){
-          doc.addPage();
-          y = 20;
-        }
-      }
-
-      function linha(){
-        doc.setDrawColor(220,220,220);
-        doc.setLineWidth(0.2);
-        doc.line(M,y,W-M,y);
-        y += 6;
-      }
-
-      /* ---------- Cabeçalho ---------- */
-
-      doc.setFontSize(14);
-      doc.setFont(undefined,"bold");
-      doc.setTextColor(...colors.text);
-      doc.text("Relatório financeiro – FluxoPro",M,y);
-
-      y += 6;
-
-      doc.setFontSize(9);
-      doc.setFont(undefined,"normal");
-      doc.text(`Perfil: ${perfil}`,M,y); y+=4;
-      doc.text(`Nome: ${info.nome || "-"}`,M,y); y+=4;
-      doc.text(`Documento: ${info.doc || "-"}`,M,y); y+=6;
-
-      linha();
-
-      /* ---------- Tabela ---------- */
-
-      doc.setFont(undefined,"bold");
-      doc.setFontSize(9);
-      doc.text("Lançamentos",M,y); y+=5;
-
-      doc.setFontSize(8);
-      doc.text("Data",M,y);
-      doc.text("Categoria",M+25,y);
-      doc.text("Tipo",M+75,y);
-      doc.text("Valor",M+95,y);
-      doc.text("Obs",M+120,y);
-
-      y += 4;
-      doc.setFont(undefined,"normal");
-
-      dados.forEach((l,i)=>{
-
-        novaPagina(6);
-
-        if(i%2===0){
-          doc.setFillColor(...colors.zebra);
-          doc.rect(M,y-3,W-2*M,5,"F");
-        }
-
-        doc.setTextColor(...colors.text);
-        doc.text(l.data || "-",M,y);
-        doc.text((l.cat || "-").substring(0,15),M+25,y);
-
-        doc.setFont(undefined,"bold");
-        doc.setTextColor(...(l.tipo==="Entrada"?colors.entrada:colors.saida));
-        doc.text(l.tipo || "-",M+75,y);
-
-        doc.setFont(undefined,"normal");
-        doc.setTextColor(...colors.text);
-        doc.text(money(l.valor),M+95,y);
-        doc.text((l.obs || "-").substring(0,22),M+120,y);
-
-        y += 5;
-      });
-
-      y += 2;
-      linha();
-
-      /* ---------- Gráficos ---------- */
-
-      novaPagina(70);
-
-      doc.setFont(undefined,"bold");
-      doc.setFontSize(9);
-      doc.setTextColor(...colors.text);
-      doc.text("Resumo visual",M,y);
-      y += 5;
-
-      const imgPizza  = chartPizza.toDataURL("image/png",1);
-      const imgPerc   = chartPerc.toDataURL("image/png",1);
-      const imgResumo = chartResumo.toDataURL("image/png",1);
-
-      const gW = 50;
-      const gH = 50;
-      const gap = 8;
-
-      const gx = M;
-      const gy = y;
-
-      doc.setFontSize(7);
-      doc.setTextColor(120,120,120);
-      doc.text("Categorias",gx,gy-2);
-      doc.text("Entradas x Saídas",gx+gW+gap,gy-2);
-      doc.text("Resumo",gx+(gW+gap)*2,gy-2);
-
-      doc.addImage(imgPizza,"PNG",gx,gy,gW,gH,undefined,"FAST");
-      doc.addImage(imgPerc,"PNG",gx+gW+gap,gy,gW,gH,undefined,"FAST");
-      doc.addImage(imgResumo,"PNG",gx+(gW+gap)*2,gy,gW,gH*0.9,undefined,"FAST");
-
-      y = gy + gH + 8;
-      linha();
-
-      /* ---------- Resumo interpretativo ---------- */
-
-      const qtdEntradas = dados.filter(l=>l.tipo==="Entrada").length;
-      const qtdSaidas   = dados.filter(l=>l.tipo==="Saída").length;
-
-      novaPagina(40);
-
-      doc.setFont(undefined,"bold");
-      doc.setFontSize(9);
-      doc.setTextColor(...colors.text);
-      doc.text("Análise dos gráficos",M,y);
-      y += 6;
-
-      doc.setFont(undefined,"normal");
-      doc.setFontSize(8);
-
-      let t1 = `Foram identificados ${qtdEntradas} lançamentos de entrada e ${qtdSaidas} lançamentos de saída no período analisado.`;
-      let l1 = doc.splitTextToSize(t1,W-2*M);
-      doc.text(l1,M,y);
-      y += l1.length*4 + 3;
-
-      let t2 = `O gráfico por categoria considera apenas as saídas agrupadas por categoria. O gráfico de entradas e saídas compara os totais financeiros. O gráfico de resumo consolida entradas, saídas e o resultado final, calculado pela diferença entre entradas e saídas.`;
-      let l2 = doc.splitTextToSize(t2,W-2*M);
-      doc.text(l2,M,y);
-      y += l2.length*4 + 3;
-
-      const saldo = totalEnt - totalSai;
-
-      let t3 = "";
-      if(saldo > 0)
-        t3 = "A saúde financeira do período é considerada positiva, pois as entradas superaram as saídas.";
-      else if(saldo < 0)
-        t3 = "A saúde financeira do período exige atenção, pois as saídas superaram as entradas.";
-      else
-        t3 = "A saúde financeira do período é considerada neutra.";
-
-      let l3 = doc.splitTextToSize(t3,W-2*M);
-      doc.text(l3,M,y);
-      y += l3.length*4 + 4;
-
-      linha();
-
-      /* ---------- Rodapé ---------- */
-
-      doc.setFontSize(7);
-      doc.setTextColor(150,150,150);
-
-      doc.text(`Total de lançamentos: ${dados.length}`,M,H-8);
-      doc.text(
-        `FluxoPro Engine v12 – ${new Date().toLocaleDateString("pt-BR")}`,
-        W-M,
-        H-8,
-        {align:"right"}
-      );
-
-      doc.save(`fluxopro_${perfil}_${Date.now()}.pdf`);
-
-      loading.classList.remove("show");
-
-    }catch(e){
-
-      console.error(e);
-      loading.classList.remove("show");
-      alert("Erro ao gerar PDF");
-
-    }
-
-  },300);
+  doc.save("fluxopro_"+perfil+".pdf");
 }
-
-/* =====================================================
-   EXPORTAÇÃO EXCEL
-   (implementação simples, sem mudar estrutura)
-===================================================== */
 
 function exportExcel(){
 
@@ -571,7 +70,7 @@ function exportExcel(){
     return;
   }
 
-  const planilha = dados.map(l=>({
+  const planilha=dados.map(l=>({
     Data:l.data,
     Categoria:l.cat,
     Tipo:l.tipo,
@@ -579,13 +78,12 @@ function exportExcel(){
     Observacao:l.obs
   }));
 
-  const ws = XLSX.utils.json_to_sheet(planilha);
-  const wb = XLSX.utils.book_new();
-
-  XLSX.utils.book_append_sheet(wb, ws, "Lancamentos");
-
-  XLSX.writeFile(wb, `fluxopro_${perfil}.xlsx`);
+  const ws=XLSX.utils.json_to_sheet(planilha);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Lancamentos");
+  XLSX.writeFile(wb,"fluxopro_"+perfil+".xlsx");
 }
 </script>
+
 </body>
 </html>
