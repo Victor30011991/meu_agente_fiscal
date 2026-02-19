@@ -81,11 +81,11 @@ tbody tr:nth-child(even){background:#fafbff}
   <div class="loading-text" id="loadingText">Gerando documento...</div>
 </div>
 
-<!-- canvases ocultos para PNG no PDF — MESMAS dimensões -->
-<div style="position:absolute;left:-9999px;width:500px;opacity:.01;pointer-events:none">
-  <canvas id="cvPizza"    width="500" height="400"></canvas>
-  <canvas id="cvEvolucao" width="500" height="400"></canvas>
-  <canvas id="cvBar"      width="500" height="400"></canvas>
+<!-- canvases ocultos para PNG no PDF — 560×340 = 14:8.5 = mesma proporção -->
+<div style="position:absolute;left:-9999px;width:560px;opacity:.01;pointer-events:none">
+  <canvas id="cvPizza"    width="560" height="340"></canvas>
+  <canvas id="cvEvolucao" width="560" height="340"></canvas>
+  <canvas id="cvBar"      width="560" height="340"></canvas>
 </div>
 
 <div class="page">
@@ -345,35 +345,98 @@ const monthly=buildMonthly(dados);
 
 new Chart(cPizza,{type:"doughnut",
   data:{labels:catL,datasets:[{data:catV,backgroundColor:PALETTE.slice(0,catL.length),borderWidth:2,borderColor:"#fff",hoverOffset:6}]},
-  options:{responsive:true,cutout:"63%",plugins:{legend:{position:"bottom",labels:{font:{family:"Inter",size:10},color:gc.color,boxWidth:10,padding:7}},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${fmtMoney(ctx.parsed)}`}}}}
+  options:{responsive:true,cutout:"62%",
+    layout:{padding:{bottom:4}},
+    plugins:{
+      legend:{position:"right",labels:{font:{family:"Inter",size:10},color:gc.color,boxWidth:10,padding:8,usePointStyle:true}},
+      tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${fmtMoney(ctx.parsed)}`}}
+    }
+  }
 });
 new Chart(cEvolucao,{type:"line",
   data:{labels:monthly.labels,datasets:[
     {label:"Entradas",data:monthly.ent,borderColor:"#059669",backgroundColor:"rgba(5,150,105,.07)",fill:true,tension:.38,pointRadius:3,borderWidth:2},
     {label:"Saídas",  data:monthly.sai,borderColor:"#dc2626",backgroundColor:"rgba(220,38,38,.06)",fill:true,tension:.38,pointRadius:3,borderWidth:2}
   ]},
-  options:{responsive:true,interaction:{mode:"index",intersect:false},scales:{x:{grid:{color:gc.grid},ticks:{color:gc.color,font:{size:9}}},y:{grid:{color:gc.grid},ticks:{color:gc.color,font:{size:9},callback:v=>"R$"+(v>=1000?(v/1000).toFixed(0)+"k":v)},beginAtZero:true}},plugins:{legend:{position:"top",labels:{font:{size:10},color:gc.color,boxWidth:10}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmtMoney(ctx.parsed.y)}`}}}}
+  options:{responsive:true,interaction:{mode:"index",intersect:false},
+    scales:{
+      x:{grid:{color:gc.grid},ticks:{color:gc.color,font:{size:9},maxTicksLimit:6}},
+      y:{grid:{color:gc.grid},ticks:{color:gc.color,font:{size:9},maxTicksLimit:5,
+          callback:v=>{const a=Math.abs(v); return "R$"+(a>=1000?(v/1000).toFixed(1).replace(/\.0$/,"")+"k":v);}},beginAtZero:true}
+    },
+    plugins:{legend:{position:"top",labels:{font:{size:10},color:gc.color,boxWidth:10}},
+      tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmtMoney(ctx.parsed.y)}`}}}
+  }
 });
 new Chart(cBar,{type:"bar",
   data:{labels:["Entradas","Saídas"],datasets:[{data:[totalEnt,totalSai],backgroundColor:["rgba(5,150,105,.8)","rgba(220,38,38,.8)"],borderColor:["#059669","#dc2626"],borderWidth:2,borderRadius:7}]},
-  options:{responsive:true,scales:{x:{grid:{display:false},ticks:{color:gc.color,font:{size:10}}},y:{grid:{color:gc.grid},ticks:{color:gc.color,font:{size:9},callback:v=>"R$"+(v>=1000?(v/1000).toFixed(0)+"k":v)},beginAtZero:true}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${fmtMoney(ctx.parsed.y)}`}}}}
+  options:{responsive:true,
+    scales:{
+      x:{grid:{display:false},ticks:{color:gc.color,font:{size:10}}},
+      y:{grid:{color:gc.grid},ticks:{color:gc.color,font:{size:9},maxTicksLimit:5,
+          callback:v=>{const a=Math.abs(v); return "R$"+(a>=1000?(v/1000).toFixed(1).replace(/\.0$/,"")+"k":v);}},beginAtZero:true}
+    },
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${fmtMoney(ctx.parsed.y)}`}}}
+  }
 });
 
-/* canvases offline — 500x400 cada */
+/* ── canvases offline 560×340 — mesmo aspect ratio para PDF alinhado ── */
 new Chart(cvPizza,{type:"doughnut",
   data:{labels:catL,datasets:[{data:catV,backgroundColor:PALETTE.slice(0,catL.length),borderWidth:2,borderColor:"#fff",hoverOffset:10}]},
-  options:{responsive:false,animation:false,cutout:"60%",plugins:{legend:{position:"bottom",labels:{font:{size:14},padding:16}},tooltip:{enabled:false}}}
+  options:{responsive:false,animation:false,cutout:"60%",
+    layout:{padding:{top:10,bottom:10,left:10,right:10}},
+    plugins:{
+      legend:{
+        position:"right",
+        labels:{font:{size:13},padding:14,usePointStyle:true,
+          boxWidth:12,
+          /* trunca labels longos para não vazar */
+          generateLabels: chart => {
+            const data=chart.data;
+            return (data.labels||[]).map((lbl,i)=>({
+              text: String(lbl).length>14 ? String(lbl).substring(0,14)+"…" : String(lbl),
+              fillStyle: data.datasets[0].backgroundColor[i],
+              strokeStyle:"#fff",
+              lineWidth:1, index:i
+            }));
+          }
+        }
+      },
+      tooltip:{enabled:false}
+    }
+  }
 });
 new Chart(cvEvolucao,{type:"line",
   data:{labels:monthly.labels,datasets:[
     {label:"Entradas",data:monthly.ent,borderColor:"#059669",backgroundColor:"rgba(5,150,105,.10)",fill:true,tension:.38,pointRadius:4,borderWidth:2.5},
     {label:"Saídas",  data:monthly.sai,borderColor:"#dc2626",backgroundColor:"rgba(220,38,38,.08)",fill:true,tension:.38,pointRadius:4,borderWidth:2.5}
   ]},
-  options:{responsive:false,animation:false,interaction:{mode:"index",intersect:false},scales:{x:{grid:{color:"#f1f3f9"},ticks:{font:{size:12},color:"#6b7280"}},y:{grid:{color:"#f1f3f9"},ticks:{font:{size:12},color:"#6b7280",callback:v=>"R$"+(v>=1000?(v/1000).toFixed(0)+"k":v)},beginAtZero:true}},plugins:{legend:{labels:{font:{size:13},padding:14}},tooltip:{enabled:false}}}
+  options:{responsive:false,animation:false,
+    layout:{padding:{top:8,right:12,bottom:4,left:4}},
+    scales:{
+      x:{grid:{color:"#eef0f5"},ticks:{font:{size:12},color:"#6b7280",maxTicksLimit:6}},
+      y:{grid:{color:"#eef0f5"},ticks:{font:{size:12},color:"#6b7280",maxTicksLimit:5,
+          callback:v=>"R$"+(Math.abs(v)>=1000?(v/1000).toFixed(1).replace(/\.0$/,"")+"k":v)},
+        beginAtZero:true}
+    },
+    plugins:{
+      legend:{position:"top",align:"end",labels:{font:{size:13},padding:14,usePointStyle:true,boxWidth:10}},
+      tooltip:{enabled:false}
+    }
+  }
 });
 new Chart(cvBar,{type:"bar",
-  data:{labels:["Entradas","Saídas"],datasets:[{data:[totalEnt,totalSai],backgroundColor:["rgba(5,150,105,.8)","rgba(220,38,38,.8)"],borderColor:["#059669","#dc2626"],borderWidth:2,borderRadius:10}]},
-  options:{responsive:false,animation:false,scales:{x:{grid:{display:false},ticks:{font:{size:13},color:"#6b7280"}},y:{grid:{color:"#f1f3f9"},ticks:{font:{size:13},color:"#6b7280",callback:v=>"R$"+(v>=1000?(v/1000).toFixed(0)+"k":v)},beginAtZero:true}},plugins:{legend:{display:false},tooltip:{enabled:false}}}
+  data:{labels:["Entradas","Saídas"],datasets:[{data:[totalEnt,totalSai],backgroundColor:["rgba(5,150,105,.82)","rgba(220,38,38,.82)"],borderColor:["#059669","#dc2626"],borderWidth:2,borderRadius:12}]},
+  options:{responsive:false,animation:false,
+    layout:{padding:{top:8,right:20,bottom:4,left:4}},
+    scales:{
+      x:{grid:{display:false},ticks:{font:{size:13},color:"#6b7280"}},
+      y:{grid:{color:"#eef0f5"},ticks:{font:{size:12},color:"#6b7280",maxTicksLimit:5,
+          callback:v=>"R$"+(Math.abs(v)>=1000?(v/1000).toFixed(1).replace(/\.0$/,"")+"k":v)},
+        beginAtZero:true}
+    },
+    plugins:{legend:{display:false},tooltip:{enabled:false}}
+  }
 });
 
 /* ============================================================
@@ -536,23 +599,34 @@ function exportPDF() {
       y += 32;
 
       /* --------- GRÁFICOS --------- */
-      novaPag(72);
+      novaPag(80);
       doc.setFillColor(...C.pri); doc.rect(M,y,3,13,"F");
       doc.setFontSize(9); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark);
       doc.text("Resumo Visual", M+7, y+8.5);
       y += 16;
 
-      doc.setFontSize(6.5); doc.setFont(undefined,"bold"); doc.setTextColor(...C.gray);
-      doc.text("GASTOS POR CATEGORIA", M,           y);
-      doc.text("EVOLUÇÃO MENSAL",       M+kW+4,     y);
-      doc.text("ENTRADAS x SAÍDAS",     M+(kW+4)*2, y);
-      y += 3;
+      /* Espaçamento entre gráficos */
+      const gGap = 5;
+      /* gH calculado pelo aspect ratio real do canvas 560×340 */
+      const gH = Math.round(kW * 340 / 560);  /* ≈ 35 mm */
 
-      const gH = 56;
-      doc.addImage(cvPizza.toDataURL("image/png",1),    "PNG", M,           y, kW, gH,undefined,"FAST");
-      doc.addImage(cvEvolucao.toDataURL("image/png",1), "PNG", M+kW+4,     y, kW, gH,undefined,"FAST");
-      doc.addImage(cvBar.toDataURL("image/png",1),      "PNG", M+(kW+4)*2, y, kW, gH,undefined,"FAST");
-      y += gH+10;
+      /* Títulos de seção */
+      doc.setFontSize(6.5); doc.setFont(undefined,"bold"); doc.setTextColor(...C.gray);
+      doc.text("GASTOS POR CATEGORIA", M,                    y);
+      doc.text("EVOLUÇÃO MENSAL",       M + kW + gGap,       y);
+      doc.text("ENTRADAS x SAÍDAS",     M + (kW + gGap) * 2, y);
+      y += 4;
+
+      /* Fundo cinza leve atrás dos gráficos */
+      doc.setFillColor(250,251,253);
+      doc.roundedRect(M,                    y, kW, gH, 3, 3, "F");
+      doc.roundedRect(M + kW + gGap,        y, kW, gH, 3, 3, "F");
+      doc.roundedRect(M + (kW+gGap)*2,      y, kW, gH, 3, 3, "F");
+
+      doc.addImage(cvPizza.toDataURL("image/png",1),    "PNG", M,                     y, kW, gH, undefined,"FAST");
+      doc.addImage(cvEvolucao.toDataURL("image/png",1), "PNG", M + kW + gGap,         y, kW, gH, undefined,"FAST");
+      doc.addImage(cvBar.toDataURL("image/png",1),      "PNG", M + (kW + gGap) * 2,   y, kW, gH, undefined,"FAST");
+      y += gH + 12;
 
       /* --------- TABELA --------- */
       doc.addPage(); y=18;
@@ -561,27 +635,37 @@ function exportPDF() {
       doc.text("Extrato Completo", M+7, y+8.5);
       y += 16;
 
-      /* cabeçalho */
-      doc.setFillColor(...C.pri); doc.rect(M,y,cW,8,"F");
+      /* cabeçalho da tabela */
+      doc.setFillColor(...C.pri); doc.rect(M, y, cW, 8, "F");
       doc.setFontSize(6.5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
-      const TCols=[{x:M+2,t:"#",w:8},{x:M+10,t:"DATA",w:22},{x:M+32,t:"CATEGORIA",w:40},{x:M+72,t:"TIPO",w:18},{x:M+90,t:"VALOR",w:26},{x:M+116,t:"OBS"}];
-      TCols.forEach(c=>doc.text(c.t, c.x, y+5.5));
-      y+=10;
+      /* posições fixas e proporcionais ao cW=182 */
+      const TC = [
+        {x:M+2,   t:"#",          align:"left"},
+        {x:M+10,  t:"DATA",       align:"left"},
+        {x:M+32,  t:"CATEGORIA",  align:"left"},
+        {x:M+82,  t:"TIPO",       align:"left"},
+        {x:M+112, t:"VALOR",      align:"right"},
+        {x:M+130, t:"OBSERVAÇÃO", align:"left"},
+      ];
+      TC.forEach(c => doc.text(c.t, c.x, y+5.5, {align: c.align==="right"?"right":"left"}));
+      y += 10;
 
-      dados.forEach((l,idx)=>{
+      dados.forEach((l,idx) => {
         novaPag(7);
-        if (idx%2===0){doc.setFillColor(...C.cardBg); doc.rect(M,y-3,cW,6.5,"F");}
-        const isE=ehEntrada(l.tipo);
+        if (idx%2===0) { doc.setFillColor(...C.cardBg); doc.rect(M, y-3, cW, 6.5, "F"); }
+        const isE = ehEntrada(l.tipo);
         doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
-        doc.text(String(idx+1),                     TCols[0].x, y);
-        doc.text(fmtDate(l.data||""),               TCols[1].x, y);
-        doc.text((l.cat||"—").substring(0,18),      TCols[2].x, y);
-        doc.setFont(undefined,"bold"); doc.setTextColor(...(isE?C.ok:C.bad));
-        doc.text(l.tipo||"—",                       TCols[3].x, y);
-        doc.text(fmtMoney(l.valor),                 TCols[4].x, y);
+        doc.text(String(idx+1),                                 TC[0].x, y);
+        doc.text(fmtDate(l.data||""),                           TC[1].x, y);
+        doc.text((l.cat||"—").substring(0,20),                 TC[2].x, y);
+        doc.setFont(undefined,"bold"); doc.setTextColor(...(isE ? C.ok : C.bad));
+        doc.text(l.tipo||"—",                                   TC[3].x, y);
+        /* valor alinhado à direita na coluna VALOR */
+        const valTxt = fmtMoney(l.valor);
+        doc.text(valTxt,                                         TC[4].x, y, {align:"right"});
         doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-        doc.text((l.obs||"—").substring(0,22),      TCols[5].x, y);
-        y+=6.5;
+        doc.text((l.obs||"—").substring(0,24),                  TC[5].x, y);
+        y += 6.5;
       });
       y+=5;
 
@@ -618,13 +702,13 @@ function exportPDF() {
         return boxH;
       }
 
-      const maxH1 = relBox(M,           y,"ENTRADAS (GANHOS)", C.ok, C.okL, C.okB,  topEnt, totalEnt);
-      const maxH2 = relBox(M+kW+4,      y,"SAÍDAS (GASTOS)",   C.bad,C.badL,C.badB, topSai, totalSai);
-      relBox(M+(kW+4)*2,  y,"RESULTADO LÍQUIDO",
+      const maxH1 = relBox(M,                    y, "ENTRADAS (GANHOS)", C.ok,  C.okL,  C.okB,  topEnt, totalEnt);
+      const maxH2 = relBox(M + kW + gGap,        y, "SAÍDAS (GASTOS)",   C.bad, C.badL, C.badB, topSai, totalSai);
+      relBox(M + (kW+gGap)*2, y, "RESULTADO LÍQUIDO",
         resultado>=0?C.pri:C.bad, C.priL, C.priB,
         [["Total entradas",totalEnt],["(–) Saídas",-totalSai],["Margem",resultado]],
         resultado);
-      y += Math.max(maxH1, maxH2, 60)+10;
+      y += Math.max(maxH1, maxH2, 60) + 10;
 
       /* --------- NARRATIVA --------- */
       novaPag(55);
