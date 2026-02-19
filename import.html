@@ -2,190 +2,164 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>FluxoPro – Importação</title>
+<title>FluxoPro - Importar</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.9.179/pdf.min.js"></script>
+
 <style>
-body{font-family:Inter;background:#f5f7fb;margin:0;color:#1f2937}
-.container{max-width:1100px;margin:auto;padding:30px}
-.card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 10px 20px rgba(0,0,0,.04);margin-bottom:20px}
-table{width:100%;border-collapse:collapse}
-th,td{padding:8px;border-bottom:1px solid #ddd;font-size:14px;text-align:left}
-th{background:#f9fafb;font-weight:700}
-button{padding:10px 14px;border:0;border-radius:10px;font-weight:700;cursor:pointer;transition:all .2s}
+body{font-family:Inter;background:#f5f7fb;color:#1f2937;margin:0;padding:20px}
+.container{max-width:600px;margin:auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 10px 20px rgba(0,0,0,.05)}
+h1{margin-top:0}
+input{width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;margin-bottom:10px}
+button{padding:10px 14px;border:none;border-radius:10px;background:#4f46e5;color:#fff;font-weight:700;cursor:pointer;transition:.2s}
 button:hover{opacity:.8;transform:translateY(-1px)}
-.btn-main{background:#4f46e5;color:#fff}
-.btn-cancel{background:#ef4444;color:#fff}
-input[type="file"]{padding:10px;border:2px dashed #4f46e5;border-radius:10px;cursor:pointer;width:100%;font-family:inherit}
-.status{padding:10px;border-radius:10px;margin:10px 0;font-weight:700}
-.status.success{background:#ecfdf5;color:#10b981}
-.status.error{background:#fef2f2;color:#ef4444}
-.status.warning{background:#fef9c3;color:#ca8a04}
-.info{background:#eff6ff;padding:15px;border-radius:10px;border-left:4px solid #4f46e5;margin-bottom:20px}
-.actions{display:flex;gap:10px;flex-wrap:wrap}
-.empty{text-align:center;padding:40px;color:#999}
+.toast{position:fixed;bottom:20px;right:20px;background:#1f2937;color:#fff;padding:12px 20px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:10000;animation:slideIn .3s}
+@keyframes slideIn{from{transform:translateX(400px);opacity:0}}
 </style>
 </head>
 <body>
 
 <div class="container">
-
-  <div class="card">
-    <h2>📥 Importação Assistida</h2>
-    <div class="info">
-      <strong>📁 Perfil de destino:</strong> <span id="perfilNome"></span><br>
-      <small>Os dados serão adicionados a este perfil sem remover lançamentos existentes</small>
-    </div>
-    <div class="info" style="background:#fef9c3;border-left-color:#ca8a04">
-      <strong>⚠️ Formato esperado:</strong><br>
-      • Colunas: Data | Categoria | Tipo | Valor | Observacao<br>
-      • Tipo deve ser "Entrada" ou "Saída"<br>
-      • Valor numérico<br>
-      • Data: AAAA-MM-DD ou DD/MM/AAAA
-    </div>
-
-    <!-- ✅ Aceita Excel, CSV, TXT -->
-    <input type="file" id="file" accept=".xlsx,.xls,.csv,.txt">
-
-    <div id="statusBox"></div>
-  </div>
-
-  <div class="card" id="previewCard" style="display:none">
-    <h3>📋 Prévia dos dados</h3>
-    <p><strong>Total válidos:</strong> <span id="countValid">0</span></p>
-    <p><strong>Linhas ignoradas:</strong> <span id="countIgnored">0</span></p>
-    <div style="overflow-x:auto">
-      <table>
-        <thead>
-          <tr><th>#</th><th>Data</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Observacao</th><th>Status</th></tr>
-        </thead>
-        <tbody id="tb"></tbody>
-      </table>
-    </div>
-    <div class="actions" style="margin-top:20px">
-      <button class="btn-main" onclick="confirmar()">✅ Confirmar importação</button>
-      <button class="btn-cancel" onclick="cancelar()">❌ Cancelar</button>
-    </div>
-  </div>
-
+<h1>Importar lançamentos</h1>
+<p>Selecione um arquivo (Excel, CSV, TXT ou PDF) para alimentar o perfil ativo.</p>
+<input type="file" id="file" accept=".xlsx,.xls,.csv,.txt,.pdf">
+<button id="importBtn">📥 Importar</button>
 </div>
 
 <script>
-const KEY="fluxopro_v12";
-let db = JSON.parse(localStorage.getItem(KEY));
-let perfil = db?.active || Object.keys(db.profiles)[0];
-document.getElementById("perfilNome").innerText = perfil;
+const KEY = "fluxopro_v12";
 
-let buffer=[], ignored=[];
+// ✅ Ler perfil ativo da URL
+const urlParams = new URLSearchParams(window.location.search);
+const perfil = urlParams.get("perfil") || "default";
 
+// ✅ Função toast
+function showToast(msg){
+  const toast=document.createElement("div");
+  toast.className="toast";
+  toast.innerText=msg;
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(),2000);
+}
+
+// ✅ Carregar DB
+function loadDB(){
+  return JSON.parse(localStorage.getItem(KEY)) || {active:"default", profiles:{default:[]}, profileInfo:{}};
+}
+
+// ✅ Salvar DB
+function saveDB(db){ localStorage.setItem(KEY,JSON.stringify(db)); }
+
+// ✅ Normalizar valor
 function normalizeValue(v){
-  if(v===null||v===undefined||v==="") return null;
-  if(typeof v==="number") return v;
-  let s = String(v).replace(/[^\d,.-]/g,"").replace(",",".");
-  let n = parseFloat(s);
-  return isNaN(n)?null:n;
+  let s=String(v||"").replace(/[^\d.,-]/g,"").replace(",",".");
+  let n=parseFloat(s);
+  return isNaN(n)?0:n;
 }
 
-function validateDate(d){
-  if(!d) return null;
-  let date=null;
-  if(/^\d{4}-\d{2}-\d{2}$/.test(d)) date=d;
-  else if(/^\d{2}\/\d{2}\/\d{4}$/.test(d)){
-    const [dia,mes,ano]=d.split("/");
-    date=`${ano}-${mes}-${dia}`;
-  }else return null;
-  const [y,m,day]=date.split("-").map(Number);
-  const test=new Date(y,m-1,day);
-  return test.getFullYear()===y&&test.getMonth()===m-1&&test.getDate()===day?date:null;
-}
-
-function validateTipo(t){
-  const tipo = String(t||"").trim();
-  if(["Entrada","entrada"].includes(tipo)) return "Entrada";
-  if(["Saída","Saida","saída","saida"].includes(tipo)) return "Saída";
-  return null;
-}
-
-function showStatus(msg,type){document.getElementById("statusBox").innerHTML=`<div class="status ${type}">${msg}</div>`;}
-function renderPreview(){
-  document.getElementById("countValid").innerText=buffer.length;
-  document.getElementById("countIgnored").innerText=ignored.length;
-  if(!buffer.length){showStatus("⚠️ Nenhum lançamento válido", "error"); previewCard.style.display="none"; return;}
-  showStatus(`✅ ${buffer.length} lançamentos válidos encontrados`, "success");
-  previewCard.style.display="block";
-  const preview = buffer.slice(0,50);
-  tb.innerHTML = preview.map((l,i)=>`
-    <tr>
-      <td>${i+1}</td>
-      <td>${l.data}</td>
-      <td>${l.cat}</td>
-      <td>${l.tipo}</td>
-      <td>${l.valor.toFixed(2)}</td>
-      <td>${l.obs||"-"}</td>
-      <td style="color:#10b981">✅ OK</td>
-    </tr>`).join("") +
-    ignored.slice(0,20).map(ign=>`
-    <tr style="background:#fef2f2">
-      <td>-</td>
-      <td colspan="5" style="color:#ef4444">${ign.motivo}</td>
-      <td style="color:#ef4444">❌ Ignorado</td>
-    </tr>`).join("");
-}
-
-file.onchange = ()=>{
-  buffer=[]; ignored=[];
-  const reader = new FileReader();
-  const f = file.files[0];
-  const ext = f.name.split('.').pop().toLowerCase();
-
-  reader.onload = e=>{
-    try{
-      let data=[];
-      if(ext==="xlsx"||ext==="xls"){
-        const wb=XLSX.read(e.target.result,{type:"binary"});
-        data=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:""});
-      } else {
-        let txt = e.target.result.split(/\r?\n/);
-        const headers = txt[0].split(/[,;|\t]/);
-        data = txt.slice(1).map(l=>{
-          const obj={};
-          l.split(/[,;|\t]/).forEach((v,i)=>obj[headers[i].trim()]=v.trim());
-          return obj;
-        });
-      }
-
-      data.forEach((linha,index)=>{
-        const d = validateDate(linha.Data);
-        const tipo = validateTipo(linha.Tipo);
-        const valor = normalizeValue(linha.Valor);
-        const cat = String(linha.Categoria||"Sem categoria").trim();
-        const obs = String(linha.Observacao||linha.Observação||"").trim();
-        if(!tipo) {ignored.push({linha:index+2,motivo:"Tipo inválido"}); return;}
-        if(valor===null){ignored.push({linha:index+2,motivo:"Valor inválido"}); return;}
-        if(!d){ignored.push({linha:index+2,motivo:"Data inválida"}); return;}
-        buffer.push({data:d,cat,tipo,valor,obs});
-      });
-      renderPreview();
-    }catch(err){showStatus("❌ Erro: "+err.message,"error");}
-  };
-
-  if(ext==="xlsx"||ext==="xls") reader.readAsBinaryString(f);
-  else reader.readAsText(f);
-}
-
-function confirmar(){
-  if(!buffer.length){alert("Nenhum lançamento válido"); return;}
-  if(!confirm(`Importar ${buffer.length} lançamentos para "${perfil}"?`)) return;
-  buffer.forEach(l=>{
-    db.profiles[perfil].push({id:crypto.randomUUID(),...l});
+// ✅ Processar Excel/CSV/TXT
+function processText(content){
+  const linhas = content.split(/\r?\n/);
+  const dados=[];
+  linhas.forEach((l,i)=>{
+    if(i===0) return; // pular cabeçalho
+    const cols = l.split(/[,;\t]/);
+    if(cols.length<5) return;
+    dados.push({
+      id:crypto.randomUUID(),
+      data:cols[0].trim(),
+      cat:cols[1].trim(),
+      tipo:cols[2].trim(),
+      valor:normalizeValue(cols[3]),
+      obs:cols[4].trim()
+    });
   });
-  localStorage.setItem(KEY, JSON.stringify(db));
-  alert(`✅ ${buffer.length} lançamentos importados com sucesso`);
-  window.close();
+  return dados;
 }
 
-function cancelar(){if(confirm("Cancelar importação?")) window.close();}
+// ✅ Processar PDF usando pdf.js
+async function processPDF(file){
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+  let textContent="";
+  for(let i=1;i<=pdf.numPages;i++){
+    const page = await pdf.getPage(i);
+    const txt = await page.getTextContent();
+    textContent += txt.items.map(item=>item.str).join(" ") + "\n";
+  }
+  
+  // O PDF do export.html possui linhas com Data, Categoria, Tipo, Valor, Obs
+  // Precisamos extrair essas linhas de forma robusta
+  const linhas = textContent.split(/\r?\n/).map(l=>l.trim()).filter(l=>l);
+  const dados=[];
+  
+  linhas.forEach(l=>{
+    // Regex simples: Data dd/mm/yyyy Categoria Tipo Valor Obs
+    const match = l.match(/(\d{2}\/\d{2}\/\d{4})\s+(\S+)\s+(Entrada|Saída)\s+([R$.\d,]+)\s+(.*)/);
+    if(match){
+      dados.push({
+        id:crypto.randomUUID(),
+        data: match[1],
+        cat: match[2],
+        tipo: match[3],
+        valor: normalizeValue(match[4]),
+        obs: match[5]
+      });
+    }
+  });
+  return dados;
+}
+
+document.getElementById("importBtn").onclick=async ()=>{
+  const file = document.getElementById("file").files[0];
+  if(!file){ showToast("❌ Selecione um arquivo"); return; }
+
+  let novos=[];
+  try{
+    const db = loadDB();
+    const perfilDados = db.profiles[perfil] || [];
+
+    if(file.name.endsWith(".xlsx") || file.name.endsWith(".xls")){
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data,{type:"array"});
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const json = XLSX.utils.sheet_to_json(sheet,{header:["data","cat","tipo","valor","obs"],defval:""});
+      novos = json.map(i=>({
+        id:crypto.randomUUID(),
+        data:i.data,
+        cat:i.cat,
+        tipo:i.tipo,
+        valor:normalizeValue(i.valor),
+        obs:i.obs
+      }));
+    } else if(file.name.endsWith(".csv") || file.name.endsWith(".txt")){
+      const text = await file.text();
+      novos = processText(text);
+    } else if(file.name.endsWith(".pdf")){
+      novos = await processPDF(file);
+    } else{
+      showToast("❌ Formato não suportado");
+      return;
+    }
+
+    if(novos.length===0){ showToast("⚠️ Nenhum lançamento encontrado"); return; }
+
+    perfilDados.push(...novos);
+    db.profiles[perfil] = perfilDados;
+    saveDB(db);
+
+    showToast(`✅ ${novos.length} lançamentos importados`);
+    setTimeout(()=>window.close(),1000);
+  }catch(e){
+    console.error(e);
+    showToast("❌ Erro ao processar arquivo");
+  }
+};
 </script>
+
 </body>
 </html>
