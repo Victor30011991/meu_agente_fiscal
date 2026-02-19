@@ -8,7 +8,10 @@
 
 <!-- Bibliotecas -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.16.105/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+</script>
 
 <style>
 body{font-family:Inter;background:#f5f7fb;margin:0;color:#1f2937}
@@ -135,10 +138,7 @@ function normalizeValue(v){
   if(v === null || v === undefined || v === "") return null;
   if(typeof v === "number") return v;
   
-  let s = String(v)
-    .replace(/[^\d,.-]/g,"")
-    .replace(",", ".");
-
+  let s = String(v).replace(/[^\d,.-]/g,"").replace(",", ".");
   let n = parseFloat(s);
   return isNaN(n) || n === 0 ? null : n;
 }
@@ -146,32 +146,25 @@ function normalizeValue(v){
 // ✅ VALIDAR DATA
 function validateDate(d){
   if(!d) return null;
-  
   let date;
-  
   if(/^\d{4}-\d{2}-\d{2}$/.test(d)){
     date = d;
   } else if(/^\d{2}\/\d{2}\/\d{4}$/.test(d)){
     const [dia, mes, ano] = d.split("/");
     date = `${ano}-${mes}-${dia}`;
-  } else {
-    return null;
-  }
-  
-  const [y, m, day] = date.split("-").map(Number);
+  } else return null;
+
+  const [y,m,day] = date.split("-").map(Number);
   const testDate = new Date(y, m-1, day);
-  if(testDate.getFullYear() === y && testDate.getMonth() === m-1 && testDate.getDate() === day){
-    return date;
-  }
-  
+  if(testDate.getFullYear() === y && testDate.getMonth() === m-1 && testDate.getDate() === day) return date;
   return null;
 }
 
 // ✅ VALIDAR TIPO
 function validateTipo(t){
   const tipo = String(t||"").trim();
-  if(tipo === "Entrada" || tipo === "entrada") return "Entrada";
-  if(tipo === "Saída" || tipo === "Saida" || tipo === "saída" || tipo === "saida") return "Saída";
+  if(tipo.toLowerCase() === "entrada") return "Entrada";
+  if(tipo.toLowerCase() === "saída" || tipo.toLowerCase() === "saida") return "Saída";
   return null;
 }
 
@@ -202,7 +195,7 @@ file.onchange = async () => {
       const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
       let textoCompleto = "";
 
-      for(let i=1; i<=pdf.numPages; i++){
+      for(let i=1;i<=pdf.numPages;i++){
         const page = await pdf.getPage(i);
         const content = await page.getTextContent();
         const pageText = content.items.map(item => item.str).join(" ");
@@ -210,7 +203,7 @@ file.onchange = async () => {
       }
 
       const linhas = textoCompleto.split("\n").map(l => {
-        const partes = l.split(/\s*\|\s*/); // separar por pipe |
+        const partes = l.split(/\s*\|\s*/);
         return {
           Data: partes[0],
           Categoria: partes[1],
@@ -225,8 +218,7 @@ file.onchange = async () => {
     } catch(err) {
       showStatus("❌ Erro ao ler PDF: " + err.message, "error");
     }
-  } 
-  else {
+  } else {
     showStatus("⚠️ Formato de arquivo não suportado", "warning");
   }
 };
@@ -245,26 +237,20 @@ function processarLinhas(data){
     const cat = String(linha.Categoria||"").trim();
     const obs = String(linha.Observacao || linha.Observação || "").trim();
 
-    if(!tipo){
-      ignored.push({linha: index+2, motivo: "Tipo inválido (use 'Entrada' ou 'Saída')", original: linha});
+    if(!tipo) {
+      ignored.push({linha:index+2,motivo:"Tipo inválido (use 'Entrada' ou 'Saída')",original:linha});
       return;
     }
-    if(valor === null){
-      ignored.push({linha: index+2, motivo: "Valor inválido ou zero", original: linha});
+    if(valor === null) {
+      ignored.push({linha:index+2,motivo:"Valor inválido ou zero",original:linha});
       return;
     }
-    if(!dataValida){
-      ignored.push({linha: index+2, motivo: "Data inválida (use AAAA-MM-DD ou DD/MM/AAAA)", original: linha});
+    if(!dataValida) {
+      ignored.push({linha:index+2,motivo:"Data inválida (use AAAA-MM-DD ou DD/MM/AAAA)",original:linha});
       return;
     }
 
-    buffer.push({
-      data: dataValida,
-      cat: cat || "Sem categoria",
-      tipo,
-      valor,
-      obs
-    });
+    buffer.push({data:dataValida,cat:cat||"Sem categoria",tipo,valor,obs});
   });
 
   renderPreview();
@@ -274,44 +260,41 @@ function processarLinhas(data){
 function renderPreview(){
   document.getElementById("countValid").innerText = buffer.length;
   document.getElementById("countIgnored").innerText = ignored.length;
-  
+
   if(!buffer.length){
-    showStatus("⚠️ Nenhum lançamento válido encontrado no arquivo", "error");
+    showStatus("⚠️ Nenhum lançamento válido encontrado no arquivo","error");
     previewCard.style.display = "none";
     return;
   }
-  
-  showStatus(`✅ ${buffer.length} lançamentos válidos encontrados! Revise abaixo e confirme.`, "success");
+
+  showStatus(`✅ ${buffer.length} lançamentos válidos encontrados! Revise abaixo e confirme.`,"success");
   previewCard.style.display = "block";
-  
-  const preview = buffer.slice(0, 50);
-  
-  tb.innerHTML = preview.map((l, i)=>`
-  <tr>
-    <td>${i+1}</td>
-    <td>${l.data}</td>
-    <td>${l.cat}</td>
-    <td><span class="badge badge-${l.tipo.toLowerCase()}">${l.tipo}</span></td>
-    <td><b>R$ ${l.valor.toFixed(2)}</b></td>
-    <td>${l.obs || "-"}</td>
-    <td style="color:#10b981">✅ OK</td>
-  </tr>
-  `).join("") + 
-  ignored.slice(0, 20).map(ign=>`
-  <tr style="background:#fef2f2">
-    <td>-</td>
-    <td colspan="5" style="color:#ef4444">${ign.motivo}</td>
-    <td style="color:#ef4444">❌ Ignorado</td>
-  </tr>
-  `).join("");
-  
-  if(buffer.length > 50){
-    tb.innerHTML += `<tr><td colspan="7" style="text-align:center;color:#999">... e mais ${buffer.length - 50} lançamentos</td></tr>`;
+
+  const preview = buffer.slice(0,50);
+  tb.innerHTML = preview.map((l,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td>${l.data}</td>
+      <td>${l.cat}</td>
+      <td><span class="badge badge-${l.tipo.toLowerCase()}">${l.tipo}</span></td>
+      <td><b>R$ ${l.valor.toFixed(2)}</b></td>
+      <td>${l.obs||"-"}</td>
+      <td style="color:#10b981">✅ OK</td>
+    </tr>`).join("") +
+    ignored.slice(0,20).map(ign=>`
+    <tr style="background:#fef2f2">
+      <td>-</td>
+      <td colspan="5" style="color:#ef4444">${ign.motivo}</td>
+      <td style="color:#ef4444">❌ Ignorado</td>
+    </tr>`).join("");
+
+  if(buffer.length>50){
+    tb.innerHTML += `<tr><td colspan="7" style="text-align:center;color:#999">... e mais ${buffer.length-50} lançamentos</td></tr>`;
   }
 }
 
 // ✅ STATUS
-function showStatus(msg, type){
+function showStatus(msg,type){
   statusBox.innerHTML = `<div class="status ${type}">${msg}</div>`;
 }
 
@@ -321,26 +304,19 @@ function confirmar(){
     alert("❌ Nenhum lançamento válido para importar");
     return;
   }
-  
   if(!confirm(`✅ Importar ${buffer.length} lançamentos para o perfil "${perfil}"?`)){
     return;
   }
-  
-  try {
+
+  try{
     buffer.forEach(l=>{
-      db.profiles[perfil].push({
-        id: crypto.randomUUID(),
-        ...l
-      });
+      db.profiles[perfil].push({id:crypto.randomUUID(),...l});
     });
-    
-    localStorage.setItem(KEY, JSON.stringify(db));
-    
+    localStorage.setItem(KEY,JSON.stringify(db));
     alert(`✅ Importação concluída com sucesso!\n\n${buffer.length} lançamentos adicionados ao perfil "${perfil}"`);
     window.close();
-    
-  } catch(err) {
-    alert("❌ Erro ao salvar: " + err.message);
+  }catch(err){
+    alert("❌ Erro ao salvar: "+err.message);
   }
 }
 
