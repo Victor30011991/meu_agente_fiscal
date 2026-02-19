@@ -8,6 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
 body{margin:0;font-family:Inter;background:#f5f7fb;color:#1f2937}
 .container{max-width:1000px;margin:auto;padding:30px}
@@ -28,10 +29,11 @@ button:hover{opacity:.8;transform:translateY(-1px)}
 .loading.show{display:flex}
 .spinner{border:4px solid #f3f4f6;border-top:4px solid #4f46e5;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.empty{text-align:center;padding:40px;color:#999}
 </style>
 </head>
+
 <body>
+
 <div class="loading" id="loading"><div class="spinner"></div></div>
 
 <div class="container">
@@ -44,6 +46,7 @@ button:hover{opacity:.8;transform:translateY(-1px)}
   </div>
 
   <div class="card">
+
     <h2 id="perfilTitulo"></h2>
     <div id="perfilDados"></div>
 
@@ -67,6 +70,7 @@ button:hover{opacity:.8;transform:translateY(-1px)}
         <tbody id="tb"></tbody>
       </table>
     </div>
+
   </div>
 </div>
 
@@ -124,6 +128,7 @@ tb.innerHTML=dados.map(l=>`
 let charts={};
 
 function createCharts(){
+
   let mapa={};
   dados.forEach(l=>{
     if(l.tipo==="Saída"){
@@ -131,28 +136,34 @@ function createCharts(){
     }
   });
 
-  charts.pizza=new Chart(chartPizza,{type:"doughnut",
+  charts.pizza=new Chart(chartPizza,{
+    type:"doughnut",
     data:{labels:Object.keys(mapa),datasets:[{data:Object.values(mapa)}]},
     options:{responsive:false,plugins:{legend:{position:"bottom"}}}
   });
 
-  charts.perc=new Chart(chartPerc,{type:"pie",
+  charts.perc=new Chart(chartPerc,{
+    type:"pie",
     data:{labels:["Entradas","Saidas"],datasets:[{data:[totalEnt,totalSai]}]},
     options:{responsive:false,plugins:{legend:{position:"bottom"}}}
   });
 
-  charts.resumo=new Chart(chartResumo,{type:"bar",
+  charts.resumo=new Chart(chartResumo,{
+    type:"bar",
     data:{labels:["Entradas","Saidas","Resultado"],datasets:[{data:[totalEnt,totalSai,resultado]}]},
     options:{responsive:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}
   });
+
 }
+
 createCharts();
 
 const colors={
-text:[31,41,55],
-entrada:[16,185,129],
-saida:[239,68,68],
-zebra:[249,250,251]
+  text:[31,41,55],
+  entrada:[16,185,129],
+  saida:[239,68,68],
+  zebra:[249,250,251],
+  theme:[79,70,229]
 };
 
 function exportPDF(){
@@ -169,7 +180,10 @@ const W=210,H=297,M=12;
 let y=20;
 
 function novaPagina(h){
-  if(y+h>H-15){doc.addPage();y=20;}
+  if(y+h>H-15){
+    doc.addPage();
+    y=20;
+  }
 }
 
 function linha(){
@@ -179,11 +193,14 @@ function linha(){
   y+=6;
 }
 
+/* designer topo */
+doc.setFillColor(...colors.theme);
+doc.rect(0,0,W,8,"F");
+
 doc.setFontSize(14);
 doc.setFont(undefined,"bold");
 doc.setTextColor(...colors.text);
-doc.text("Relatório financeiro – FluxoPro",M,y);
-y+=6;
+doc.text("Relatório financeiro – FluxoPro",M,y); y+=6;
 
 doc.setFontSize(9);
 doc.setFont(undefined,"normal");
@@ -193,7 +210,7 @@ doc.text(`Documento: ${info.doc||"-"}`,M,y);y+=6;
 
 linha();
 
-/* ==== PAINEL DE SALDOS (ADICIONADO) ==== */
+/* painel de saldos */
 
 const saldoEnt = totalEnt;
 const saldoSai = totalSai;
@@ -203,8 +220,7 @@ novaPagina(18);
 
 doc.setFont(undefined,"bold");
 doc.setFontSize(9);
-doc.text("Resumo financeiro do período", M, y);
-y+=5;
+doc.text("Resumo financeiro do período", M, y); y+=5;
 
 doc.setDrawColor(220,220,220);
 doc.setFillColor(245,247,250);
@@ -216,11 +232,13 @@ doc.text(`Saldo de Entradas: ${money(saldoEnt)}`, M+4, y+5);
 doc.text(`Saldo de Saídas: ${money(saldoSai)}`, M+4, y+9);
 
 doc.setTextColor(...(saldoLiq>=0?colors.entrada:colors.saida));
-doc.text(`Saldo Líquido: ${money(saldoLiq)}`, M+90, y+7);
+doc.text(`Saldo Líquido: ${money(saldoLiq)}`, M+95, y+7);
 
 y+=18;
 
-/* ==== TABELA ==== */
+linha();
+
+/* tabela */
 
 doc.setFont(undefined,"bold");
 doc.setFontSize(9);
@@ -238,6 +256,7 @@ y+=4;
 doc.setFont(undefined,"normal");
 
 dados.forEach((l,i)=>{
+
   novaPagina(6);
 
   if(i%2===0){
@@ -261,10 +280,70 @@ dados.forEach((l,i)=>{
   y+=5;
 });
 
+linha();
+
+/* gráficos */
+
+novaPagina(120);
+
+doc.setFont(undefined,"bold");
+doc.setFontSize(9);
+doc.setTextColor(...colors.text);
+doc.text("Gráficos",M,y); y+=6;
+
+const img1=chartPizza.toDataURL("image/png",1.0);
+const img2=chartPerc.toDataURL("image/png",1.0);
+const img3=chartResumo.toDataURL("image/png",1.0);
+
+doc.addImage(img1,"PNG",M,y,80,80);
+doc.addImage(img2,"PNG",M+90,y,80,80);
+
+y+=85;
+
+novaPagina(70);
+doc.addImage(img3,"PNG",M,y,160,70);
+
+y+=75;
+
+linha();
+
+/* relatórios */
+
+novaPagina(50);
+
+doc.setFont(undefined,"bold");
+doc.text("Relatórios consolidados",M,y); y+=6;
+
+doc.setFont(undefined,"normal");
+
+doc.setTextColor(...colors.entrada);
+doc.text(`Total de entradas: ${money(totalEnt)}`,M,y); y+=5;
+
+doc.setTextColor(...colors.saida);
+doc.text(`Total de saídas: ${money(totalSai)}`,M,y); y+=5;
+
+doc.setTextColor(...colors.text);
+doc.text(`Saldo líquido: ${money(resultado)}`,M,y); y+=5;
+
+let saude="Boa";
+if(resultado<0) saude="Crítica";
+else if(resultado<totalEnt*0.1) saude="Atenção";
+
+doc.text(`Saúde financeira: ${saude}`,M,y); y+=10;
+
+/* rodapé designer */
+
+doc.setFillColor(...colors.theme);
+doc.rect(0,H-8,W,8,"F");
+
 doc.save(`fluxopro_${perfil}_${Date.now()}.pdf`);
 loading.classList.remove("show");
 
 },300);
+}
+
+function exportExcel(){
+  alert("Exportação Excel não alterada.");
 }
 </script>
 </body>
