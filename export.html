@@ -13,14 +13,13 @@
 body{font-family:Inter,sans-serif;background:#f0f2f8;color:#1a1f36}
 .page{max-width:960px;margin:0 auto;padding:24px 20px}
 
-/* TOPO DA PÁGINA */
 .top-bar{
   display:flex;justify-content:space-between;align-items:center;
   background:#fff;border-radius:14px;padding:16px 20px;
   border:1px solid #e2e5ef;box-shadow:0 2px 8px rgba(0,0,0,.05);
   margin-bottom:20px;gap:12px;flex-wrap:wrap;
 }
-.top-bar h1{font-size:18px;font-weight:800;color:#1a1f36}
+.top-bar h1{font-size:17px;font-weight:800;color:#1a1f36}
 .top-bar span{font-size:12px;color:#6b7280}
 .btn-group{display:flex;gap:10px}
 button{
@@ -33,100 +32,65 @@ button:hover{opacity:.85;transform:translateY(-1px)}
 .btn-excel{background:#059669;color:#fff}
 .btn-pdf  {background:#4f46e5;color:#fff}
 
-/* CARDS */
-.card{
-  background:#fff;border-radius:14px;
-  border:1px solid #e2e5ef;
-  box-shadow:0 2px 8px rgba(0,0,0,.05);
-  margin-bottom:16px;overflow:hidden;
-}
-.card-head{
-  padding:14px 20px;
-  display:flex;align-items:center;gap:8px;
-  border-bottom:1px solid #f1f3f9;
-}
-.card-head h2{font-size:13px;font-weight:700;color:#1a1f36;text-transform:uppercase;letter-spacing:.4px}
-.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.card{background:#fff;border-radius:14px;border:1px solid #e2e5ef;box-shadow:0 2px 8px rgba(0,0,0,.05);margin-bottom:16px;overflow:hidden}
+.card-head{padding:14px 20px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f1f3f9}
+.card-head h2{font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
 .card-body{padding:16px 20px}
 
-/* KPI GRID */
 .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 20px}
-.kpi{
-  border-radius:10px;padding:14px;text-align:center;
-  border:1px solid #f1f3f9;
-}
-.kpi-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:4px}
-.kpi-val  {font-size:18px;font-weight:800;letter-spacing:-1px}
-.kpi-sub  {font-size:11px;color:#9ca3af;margin-top:2px}
-.kpi-ent{background:#f0fdf4;border-color:#bbf7d0} .kpi-ent .kpi-val{color:#059669}
-.kpi-sai{background:#fef2f2;border-color:#fecaca} .kpi-sai .kpi-val{color:#dc2626}
-.kpi-net{background:#eef2ff;border-color:#c7d2fe} .kpi-net .kpi-val{color:#4f46e5}
+.kpi{border-radius:10px;padding:14px;text-align:center;border:1px solid transparent}
+.kpi-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.kpi-val  {font-size:19px;font-weight:800;letter-spacing:-1px}
+.kpi-sub  {font-size:11px;color:#9ca3af;margin-top:3px}
+.kpi-ent{background:#f0fdf4;border-color:#bbf7d0} .kpi-ent .kpi-label{color:#047857} .kpi-ent .kpi-val{color:#059669}
+.kpi-sai{background:#fef2f2;border-color:#fecaca} .kpi-sai .kpi-label{color:#b91c1c} .kpi-sai .kpi-val{color:#dc2626}
+.kpi-net{background:#eef2ff;border-color:#c7d2fe} .kpi-net .kpi-label{color:#3730a3} .kpi-net .kpi-val{color:#4f46e5}
 
-/* PERFIL INFO */
 .perfil-info{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;padding:16px 20px}
 .pi-item label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#9ca3af;margin-bottom:3px}
 .pi-item span {font-size:13px;font-weight:600;color:#1a1f36}
 
-/* TABLE */
 table{width:100%;border-collapse:collapse}
-th{
-  padding:9px 12px;text-align:left;font-size:10px;font-weight:700;
-  text-transform:uppercase;letter-spacing:.5px;color:#6b7280;
-  background:#f8fafc;border-bottom:1px solid #e2e5ef;white-space:nowrap;
-}
+th{padding:9px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;background:#f8fafc;border-bottom:1px solid #e2e5ef;white-space:nowrap}
 td{padding:9px 12px;font-size:13px;color:#1a1f36;border-bottom:1px solid #f1f3f9}
 tbody tr:last-child td{border-bottom:none}
 tbody tr:nth-child(even){background:#fafbff}
-tbody tr:hover{background:#f1f5ff}
-.td-val{font-weight:700;text-align:right;white-space:nowrap}
 .badge{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase}
 .badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor}
 .ent{background:#f0fdf4;color:#059669}
 .sai{background:#fef2f2;color:#dc2626}
 
-/* CHARTS GRID */
+/* GRÁFICOS — 3 colunas iguais */
 .chart-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 20px}
-.chart-box{border:1px solid #f1f3f9;border-radius:10px;padding:12px}
-.chart-box h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#6b7280;margin-bottom:8px}
+.chart-box{border:1px solid #f1f3f9;border-radius:10px;padding:12px;display:flex;flex-direction:column}
+.chart-box h3{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7280;margin-bottom:8px;text-align:center}
+.chart-box canvas{flex:1}
 
-/* RESUMO ANALÍTICO */
 .analise-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:16px 20px}
-.analise-box{border-radius:10px;padding:14px;border:1px solid #f1f3f9}
+.analise-box{border-radius:10px;padding:14px;border:1px solid transparent}
 .analise-box.ent{background:#f0fdf4;border-color:#bbf7d0}
 .analise-box.sai{background:#fef2f2;border-color:#fecaca}
 .analise-box.net{background:#eef2ff;border-color:#c7d2fe}
-.analise-box h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px}
-.analise-box.ent h3{color:#059669}
-.analise-box.sai h3{color:#dc2626}
-.analise-box.net h3{color:#4f46e5}
+.analise-box h3{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px}
+.analise-box.ent h3{color:#047857}
+.analise-box.sai h3{color:#b91c1c}
+.analise-box.net h3{color:#3730a3}
 .analise-item{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(0,0,0,.05);font-size:12px}
 .analise-item:last-child{border-bottom:none}
-.analise-item .label{color:#6b7280;font-weight:500}
-.analise-item .val  {font-weight:700}
+.analise-item .lbl{color:#6b7280;font-weight:500}
+.analise-item .val{font-weight:700}
 .analise-total{margin-top:8px;padding-top:8px;border-top:2px solid rgba(0,0,0,.08);display:flex;justify-content:space-between;font-weight:800;font-size:13px}
 
-/* NARRATIVA */
 .narrativa{padding:16px 20px}
-.narrativa p{font-size:13px;line-height:1.7;color:#374151;margin-bottom:8px}
+.narrativa p{font-size:13px;line-height:1.75;color:#374151;margin-bottom:8px}
 .narrativa strong{color:#1a1f36}
 
-/* LOADING */
-.loading{
-  display:none;position:fixed;inset:0;background:rgba(10,15,30,.55);
-  backdrop-filter:blur(4px);z-index:999;
-  flex-direction:column;align-items:center;justify-content:center;gap:12px;
-}
+.loading{display:none;position:fixed;inset:0;background:rgba(10,15,30,.55);backdrop-filter:blur(4px);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:12px}
 .loading.show{display:flex}
-.spinner{
-  width:44px;height:44px;
-  border:4px solid rgba(255,255,255,.2);
-  border-top:4px solid #fff;
-  border-radius:50%;animation:spin 1s linear infinite;
-}
+.spinner{width:44px;height:44px;border:4px solid rgba(255,255,255,.2);border-top:4px solid #fff;border-radius:50%;animation:spin 1s linear infinite}
 .loading-text{color:#fff;font-weight:600;font-size:14px}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-/* EMPTY */
 .empty{text-align:center;padding:40px;color:#9ca3af}
 </style>
 </head>
@@ -137,19 +101,18 @@ tbody tr:hover{background:#f1f5ff}
   <div class="loading-text" id="loadingText">Gerando documento...</div>
 </div>
 
-<!-- Canvases ocultos para gerar imagens para o PDF -->
-<div style="position:absolute;left:-9999px;width:450px;opacity:.01;pointer-events:none">
-  <canvas id="cvPizza"   width="450" height="350"></canvas>
-  <canvas id="cvEvolucao" width="450" height="280"></canvas>
-  <canvas id="cvTop"    width="450" height="280"></canvas>
+<!-- 3 canvases ocultos — MESMO tamanho para PDF consistente -->
+<div style="position:absolute;left:-9999px;width:480px;opacity:.01;pointer-events:none">
+  <canvas id="cvPizza"    width="480" height="380"></canvas>
+  <canvas id="cvEvolucao" width="480" height="380"></canvas>
+  <canvas id="cvTop"      width="480" height="380"></canvas>
 </div>
 
 <div class="page">
 
-  <!-- TOPO -->
   <div class="top-bar">
     <div>
-      <h1>&#128202; Relatorio FluxoPro</h1>
+      <h1>&#128202; Relatório FluxoPro</h1>
       <span id="headerSub">Carregando...</span>
     </div>
     <div class="btn-group">
@@ -158,738 +121,523 @@ tbody tr:hover{background:#f1f5ff}
     </div>
   </div>
 
-  <!-- PERFIL -->
+  <!-- Perfil -->
   <div class="card">
-    <div class="card-head">
-      <span class="dot" style="background:#4f46e5"></span>
-      <h2>Identificacao do Perfil</h2>
-    </div>
+    <div class="card-head"><span class="dot" style="background:#4f46e5"></span><h2>Identificação do Perfil</h2></div>
     <div class="perfil-info">
       <div class="pi-item"><label>Perfil</label><span id="piPerfil">-</span></div>
-      <div class="pi-item"><label>Nome / Razao social</label><span id="piNome">-</span></div>
+      <div class="pi-item"><label>Nome / Razão social</label><span id="piNome">-</span></div>
       <div class="pi-item"><label>CPF / CNPJ</label><span id="piDoc">-</span></div>
     </div>
   </div>
 
   <!-- KPIs -->
   <div class="card">
-    <div class="card-head">
-      <span class="dot" style="background:#059669"></span>
-      <h2>Painel de Saldos</h2>
-    </div>
+    <div class="card-head"><span class="dot" style="background:#059669"></span><h2>Painel de Saldos</h2></div>
     <div class="kpi-grid">
       <div class="kpi kpi-ent">
-        <div class="kpi-label">Total Entradas</div>
+        <div class="kpi-label">Entradas (ganhos)</div>
         <div class="kpi-val" id="kEnt">R$ 0</div>
-        <div class="kpi-sub" id="kEntQtd">0 lancamentos</div>
+        <div class="kpi-sub" id="kEntQtd">0 lançamentos</div>
       </div>
       <div class="kpi kpi-sai">
-        <div class="kpi-label">Total Saidas</div>
+        <div class="kpi-label">Saídas (gastos)</div>
         <div class="kpi-val" id="kSai">R$ 0</div>
-        <div class="kpi-sub" id="kSaiQtd">0 lancamentos</div>
+        <div class="kpi-sub" id="kSaiQtd">0 lançamentos</div>
       </div>
       <div class="kpi kpi-net">
-        <div class="kpi-label">Resultado Liquido</div>
+        <div class="kpi-label">Resultado líquido</div>
         <div class="kpi-val" id="kNet">R$ 0</div>
         <div class="kpi-sub" id="kNetPct">-</div>
       </div>
     </div>
   </div>
 
-  <!-- GRAFICOS -->
+  <!-- Gráficos preview -->
   <div class="card">
-    <div class="card-head">
-      <span class="dot" style="background:#7c3aed"></span>
-      <h2>Resumo Visual</h2>
-    </div>
+    <div class="card-head"><span class="dot" style="background:#7c3aed"></span><h2>Resumo Visual</h2></div>
     <div class="chart-row">
-      <div class="chart-box">
-        <h3>Categorias (Saidas)</h3>
-        <canvas id="chartPizza2" height="200"></canvas>
-      </div>
-      <div class="chart-box">
-        <h3>Evolucao Mensal</h3>
-        <canvas id="chartEvolucao2" height="200"></canvas>
-      </div>
-      <div class="chart-box">
-        <h3>Entradas x Saidas</h3>
-        <canvas id="chartBar2" height="200"></canvas>
-      </div>
+      <div class="chart-box"><h3>Categorias (Saídas)</h3><canvas id="chartPizza2" height="220"></canvas></div>
+      <div class="chart-box"><h3>Evolução Mensal</h3>    <canvas id="chartEvo2"   height="220"></canvas></div>
+      <div class="chart-box"><h3>Entradas x Saídas</h3>  <canvas id="chartBar2"   height="220"></canvas></div>
     </div>
   </div>
 
-  <!-- EXTRATO COMPLETO -->
+  <!-- Extrato -->
   <div class="card">
-    <div class="card-head">
-      <span class="dot" style="background:#d97706"></span>
-      <h2>Extrato Completo de Lancamentos</h2>
-    </div>
+    <div class="card-head"><span class="dot" style="background:#d97706"></span><h2>Extrato Completo de Lançamentos</h2></div>
     <div id="tabelaWrap">
       <table>
         <thead>
-          <tr>
-            <th>#</th>
-            <th>Data</th>
-            <th>Categoria</th>
-            <th>Tipo</th>
-            <th style="text-align:right">Valor</th>
-            <th>Observacao</th>
-          </tr>
+          <tr><th>#</th><th>Data</th><th>Categoria</th><th>Tipo</th><th style="text-align:right">Valor</th><th>Observação</th></tr>
         </thead>
         <tbody id="tb"></tbody>
       </table>
     </div>
   </div>
 
-  <!-- ANALISE DETALHADA -->
+  <!-- Análise -->
   <div class="card">
-    <div class="card-head">
-      <span class="dot" style="background:#059669"></span>
-      <h2>Relatorio Detalhado</h2>
-    </div>
-    <div class="analise-grid" id="analiseGrid">
-      <!-- preenchido por JS -->
-    </div>
+    <div class="card-head"><span class="dot" style="background:#059669"></span><h2>Relatório Detalhado</h2></div>
+    <div class="analise-grid" id="analiseGrid"></div>
   </div>
 
-  <!-- NARRATIVA -->
+  <!-- Narrativa -->
   <div class="card">
-    <div class="card-head">
-      <span class="dot" style="background:#1a1f36"></span>
-      <h2>Analise Interpretativa</h2>
-    </div>
-    <div class="narrativa" id="narrativa">
-      <!-- preenchido por JS -->
-    </div>
+    <div class="card-head"><span class="dot" style="background:#1a1f36"></span><h2>Análise Interpretativa</h2></div>
+    <div class="narrativa" id="narrativa"></div>
   </div>
 
-</div><!-- /page -->
+</div>
 
 <script>
-/* =============================================================
-   INICIALIZACAO
-   ============================================================= */
+/* ================================================
+   INICIALIZAÇÃO
+   ================================================ */
 const KEY = "fluxopro_v12";
 let db, perfil, dados, info;
-let chartsPreview = {};
 
-const PALETTE = [
-  "#4f46e5","#059669","#dc2626","#d97706","#7c3aed",
-  "#db2777","#0891b2","#65a30d","#ea580c","#2563eb"
-];
+const PALETTE = ["#4f46e5","#059669","#dc2626","#d97706","#7c3aed","#db2777","#0891b2","#65a30d","#ea580c","#2563eb"];
+
+/* Helper tipo — normaliza acentos */
+function ehEntrada(tipo) { return String(tipo||"").trim().toLowerCase() === "entrada"; }
+function ehSaida(tipo)   {
+  const t = String(tipo||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
+  return t === "saida";
+}
 
 try {
   db     = JSON.parse(localStorage.getItem(KEY));
-  if (!db || !db.profiles) throw new Error("Base nao encontrada. Abra o FluxoPro primeiro.");
+  if (!db || !db.profiles) throw new Error("Base não encontrada. Abra o FluxoPro primeiro.");
   perfil = db.active;
   dados  = db.profiles[perfil] || [];
   info   = db.profileInfo?.[perfil] || {};
 } catch(err) {
   document.querySelector(".page").innerHTML =
-    "<div class='card'><div class='card-body empty'><h2>Erro</h2><p>" + err.message + "</p></div></div>";
+    "<div class='card'><div class='card-body empty'><h2>Erro</h2><p>"+err.message+"</p></div></div>";
   throw err;
 }
 
-/* =============================================================
-   FORMATADORES
-   ============================================================= */
-function fmt(v) {
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
-}
-function pct(a, b) {
-  return b ? (a / b * 100).toFixed(1) + "%" : "-";
-}
+function fmt(v) { return new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0); }
+function pct(a,b) { return b ? (a/b*100).toFixed(1)+"%" : "—"; }
 
-/* =============================================================
-   CALCULOS
-   ============================================================= */
-let totalEnt = 0, totalSai = 0;
-let mapacat  = {};
+/* ================================================
+   CÁLCULOS
+   ================================================ */
+let totalEnt=0, totalSai=0;
+const mapacat={}, catEntradas={};
 dados.forEach(l => {
-  const v = Number(l.valor || 0);
-  if (l.tipo === "Entrada") totalEnt += v;
-  else { totalSai += v; mapacat[l.cat || "Outros"] = (mapacat[l.cat || "Outros"] || 0) + v; }
+  const v = Number(l.valor||0);
+  if (ehEntrada(l.tipo)) {
+    totalEnt += v;
+    catEntradas[l.cat||"Outros"] = (catEntradas[l.cat||"Outros"]||0) + v;
+  } else {
+    totalSai += v;
+    mapacat[l.cat||"Outros"] = (mapacat[l.cat||"Outros"]||0) + v;
+  }
 });
-const resultado  = totalEnt - totalSai;
-const qtdEnt     = dados.filter(l => l.tipo === "Entrada").length;
-const qtdSai     = dados.filter(l => l.tipo !== "Entrada").length;
-const catEntradas = {};
-dados.forEach(l => {
-  if (l.tipo === "Entrada") catEntradas[l.cat || "Outros"] = (catEntradas[l.cat || "Outros"] || 0) + Number(l.valor || 0);
-});
+const resultado = totalEnt - totalSai;
+const qtdEnt    = dados.filter(l => ehEntrada(l.tipo)).length;
+const qtdSai    = dados.filter(l => ehSaida(l.tipo)).length;
 
-/* =============================================================
-   PREENCHER PAGINA HTML
-   ============================================================= */
-const datas = dados.map(l => l.data).filter(Boolean).sort();
-const periodo = datas.length ? datas[0] + " a " + datas[datas.length - 1] : "-";
+/* ================================================
+   PREENCHER PÁGINA HTML
+   ================================================ */
+const datas  = dados.map(l=>l.data).filter(Boolean).sort();
+const periodo = datas.length ? datas[0]+" a "+datas[datas.length-1] : "—";
 
-document.getElementById("headerSub").innerText =
-  "Perfil: " + perfil + "  |  " + dados.length + " lancamentos  |  " + periodo;
-
+document.getElementById("headerSub").innerText = "Perfil: "+perfil+"  |  "+dados.length+" lançamentos  |  "+periodo;
 document.getElementById("piPerfil").innerText = perfil;
-document.getElementById("piNome").innerText   = info.nome || "Nao informado";
-document.getElementById("piDoc").innerText    = info.doc  || "Nao informado";
+document.getElementById("piNome").innerText   = info.nome || "Não informado";
+document.getElementById("piDoc").innerText    = info.doc  || "Não informado";
 
 document.getElementById("kEnt").innerText    = fmt(totalEnt);
 document.getElementById("kSai").innerText    = fmt(totalSai);
 document.getElementById("kNet").innerText    = fmt(resultado);
 document.getElementById("kNet").style.color  = resultado >= 0 ? "#059669" : "#dc2626";
-document.getElementById("kEntQtd").innerText = qtdEnt + " lancamento" + (qtdEnt !== 1 ? "s" : "");
-document.getElementById("kSaiQtd").innerText = qtdSai + " lancamento" + (qtdSai !== 1 ? "s" : "");
-document.getElementById("kNetPct").innerText =
-  (resultado >= 0 ? "+" : "") + pct(Math.abs(resultado), totalEnt) + " do total de entradas";
+document.getElementById("kEntQtd").innerText = qtdEnt+" lançamento"+(qtdEnt!==1?"s":"");
+document.getElementById("kSaiQtd").innerText = qtdSai+" lançamento"+(qtdSai!==1?"s":"");
+document.getElementById("kNetPct").innerText = (resultado>=0?"+":"")+pct(Math.abs(resultado),totalEnt)+" das entradas";
 
-/* --- Tabela --- */
+/* Tabela */
 if (!dados.length) {
-  document.getElementById("tabelaWrap").innerHTML = "<div class='empty'>Nenhum lancamento</div>";
+  document.getElementById("tabelaWrap").innerHTML = "<div class='empty'>Nenhum lançamento</div>";
 } else {
-  document.getElementById("tb").innerHTML = dados.map((l, i) => `
+  document.getElementById("tb").innerHTML = dados.map((l,i) => `
   <tr>
-    <td style="color:#9ca3af;font-size:11px;font-weight:600">${i + 1}</td>
-    <td style="font-weight:600;font-size:12px;color:#6b7280">${l.data || "-"}</td>
-    <td style="font-weight:600">${l.cat || "-"}</td>
-    <td><span class="badge ${l.tipo === "Entrada" ? "ent" : "sai"}">${l.tipo}</span></td>
-    <td class="td-val" style="color:${l.tipo === "Entrada" ? "#059669" : "#dc2626"}">${fmt(l.valor)}</td>
-    <td style="color:#9ca3af;font-size:12px">${l.obs || "-"}</td>
+    <td style="color:#9ca3af;font-size:11px;font-weight:600">${i+1}</td>
+    <td style="font-weight:600;font-size:12px;color:#6b7280">${l.data||"—"}</td>
+    <td style="font-weight:600">${l.cat||"—"}</td>
+    <td><span class="badge ${ehEntrada(l.tipo)?"ent":"sai"}">${l.tipo}</span></td>
+    <td style="font-weight:700;text-align:right;white-space:nowrap;color:${ehEntrada(l.tipo)?"#059669":"#dc2626"}">${fmt(l.valor)}</td>
+    <td style="color:#9ca3af;font-size:12px">${l.obs||"—"}</td>
   </tr>`).join("");
 }
 
-/* --- Analise Detalhada --- */
-const topEntCats = Object.entries(catEntradas).sort((a,b) => b[1]-a[1]).slice(0, 5);
-const topSaiCats = Object.entries(mapacat).sort((a,b) => b[1]-a[1]).slice(0, 5);
+/* Análise detalhada */
+const topEnt = Object.entries(catEntradas).sort((a,b)=>b[1]-a[1]).slice(0,5);
+const topSai = Object.entries(mapacat).sort((a,b)=>b[1]-a[1]).slice(0,5);
 
 document.getElementById("analiseGrid").innerHTML = `
   <div class="analise-box ent">
-    <h3>Entradas</h3>
-    ${topEntCats.map(([k,v]) => `
-    <div class="analise-item">
-      <span class="label">${k}</span>
-      <span class="val" style="color:#059669">${fmt(v)}</span>
-    </div>`).join("")}
-    <div class="analise-total" style="color:#059669">
-      <span>Total Entradas</span><span>${fmt(totalEnt)}</span>
-    </div>
+    <h3>Entradas (ganhos)</h3>
+    ${topEnt.map(([k,v])=>`<div class="analise-item"><span class="lbl">${k}</span><span class="val" style="color:#059669">${fmt(v)}</span></div>`).join("")}
+    <div class="analise-total" style="color:#059669"><span>Total</span><span>${fmt(totalEnt)}</span></div>
   </div>
   <div class="analise-box sai">
-    <h3>Saidas</h3>
-    ${topSaiCats.map(([k,v]) => `
-    <div class="analise-item">
-      <span class="label">${k}</span>
-      <span class="val" style="color:#dc2626">${fmt(v)}</span>
-    </div>`).join("")}
-    <div class="analise-total" style="color:#dc2626">
-      <span>Total Saidas</span><span>${fmt(totalSai)}</span>
-    </div>
+    <h3>Saídas (gastos)</h3>
+    ${topSai.map(([k,v])=>`<div class="analise-item"><span class="lbl">${k}</span><span class="val" style="color:#dc2626">${fmt(v)}</span></div>`).join("")}
+    <div class="analise-total" style="color:#dc2626"><span>Total</span><span>${fmt(totalSai)}</span></div>
   </div>
   <div class="analise-box net">
-    <h3>Resultado Liquido</h3>
-    <div class="analise-item">
-      <span class="label">Total entradas</span>
-      <span class="val" style="color:#059669">${fmt(totalEnt)}</span>
-    </div>
-    <div class="analise-item">
-      <span class="label">Total saidas</span>
-      <span class="val" style="color:#dc2626">(${fmt(totalSai)})</span>
-    </div>
-    <div class="analise-item">
-      <span class="label">Margem liquida</span>
-      <span class="val">${pct(resultado, totalEnt)}</span>
-    </div>
-    <div class="analise-item">
-      <span class="label">Total lancamentos</span>
-      <span class="val">${dados.length}</span>
-    </div>
-    <div class="analise-total" style="color:${resultado >= 0 ? "#4f46e5" : "#dc2626"}">
-      <span>Resultado</span><span>${fmt(resultado)}</span>
-    </div>
+    <h3>Resultado líquido</h3>
+    <div class="analise-item"><span class="lbl">Entradas</span><span class="val" style="color:#059669">${fmt(totalEnt)}</span></div>
+    <div class="analise-item"><span class="lbl">(-) Saídas</span><span class="val" style="color:#dc2626">(${fmt(totalSai)})</span></div>
+    <div class="analise-item"><span class="lbl">Margem</span><span class="val">${pct(resultado,totalEnt)}</span></div>
+    <div class="analise-item"><span class="lbl">Lançamentos</span><span class="val">${dados.length}</span></div>
+    <div class="analise-total" style="color:${resultado>=0?"#4f46e5":"#dc2626"}"><span>Resultado</span><span>${fmt(resultado)}</span></div>
   </div>
 `;
 
-/* --- Narrativa --- */
-const maiorGasto  = topSaiCats[0] ? topSaiCats[0][0] : "-";
-const maiorEntrada = topEntCats[0] ? topEntCats[0][0] : "-";
-const saude = resultado > 0 ? "positiva" : resultado < 0 ? "negativa" : "neutra";
-const corSaude = resultado > 0 ? "#059669" : resultado < 0 ? "#dc2626" : "#d97706";
-
+/* Narrativa */
+const maiorGasto   = topSai[0]   ? topSai[0][0]   : "—";
+const maiorEntrada = topEnt[0]   ? topEnt[0][0]   : "—";
+const corSaude     = resultado > 0 ? "#059669" : resultado < 0 ? "#dc2626" : "#d97706";
 document.getElementById("narrativa").innerHTML = `
-  <p>
-    O periodo analisado compreende <strong>${dados.length} lancamentos</strong>
-    (${qtdEnt} entradas e ${qtdSai} saidas), com datas de
-    <strong>${datas[0] || "-"}</strong> a <strong>${datas[datas.length-1] || "-"}</strong>.
+  <p>O período analisado compreende <strong>${dados.length} lançamentos</strong> (${qtdEnt} entradas e ${qtdSai} saídas), de <strong>${datas[0]||"—"}</strong> a <strong>${datas[datas.length-1]||"—"}</strong>.</p>
+  <p>As entradas totalizaram <strong style="color:#059669">${fmt(totalEnt)}</strong>, com principal categoria: <strong>${maiorEntrada}</strong>.
+     As saídas totalizaram <strong style="color:#dc2626">${fmt(totalSai)}</strong>, com maior concentração em <strong>${maiorGasto}</strong>
+     (${fmt(mapacat[maiorGasto]||0)} — ${pct(mapacat[maiorGasto]||0,totalSai)} das saídas).</p>
+  <p>Resultado líquido: <strong style="color:${corSaude}">${fmt(resultado)}</strong> — margem de ${pct(resultado,totalEnt)} sobre as entradas.
+     A saúde financeira do período é considerada <strong style="color:${corSaude}">${resultado>0?"POSITIVA":resultado<0?"NEGATIVA":"NEUTRA"}</strong>${resultado<0?" — recomenda-se revisão dos gastos.":"."}
   </p>
-  <p>
-    As entradas totalizaram <strong style="color:#059669">${fmt(totalEnt)}</strong>,
-    sendo a principal categoria de receita <strong>${maiorEntrada}</strong>.
-    As saidas totalizaram <strong style="color:#dc2626">${fmt(totalSai)}</strong>,
-    com maior concentracao em <strong>${maiorGasto}</strong>
-    (${fmt(mapacat[maiorGasto] || 0)} — ${pct(mapacat[maiorGasto] || 0, totalSai)} do total de saidas).
-  </p>
-  <p>
-    O resultado liquido do periodo e de
-    <strong style="color:${corSaude}">${fmt(resultado)}</strong>,
-    representando uma margem de ${pct(resultado, totalEnt)} sobre as entradas.
-    A saude financeira do periodo e considerada
-    <strong style="color:${corSaude}">${saude}</strong>
-    ${resultado > 0 ? ", pois as entradas superaram as saidas." :
-      resultado < 0 ? ", pois as saidas superaram as entradas — recomenda-se revisao de gastos." :
-      ", com entradas e saidas em equilibrio."}
-  </p>
-  ${topSaiCats.length > 1 ? `
-  <p>
-    As cinco maiores categorias de saida representam
-    <strong style="color:#dc2626">${fmt(topSaiCats.reduce((a,x)=>a+x[1],0))}</strong>
-    (${pct(topSaiCats.reduce((a,x)=>a+x[1],0), totalSai)} das saidas totais):
-    ${topSaiCats.map(([k,v]) => k + " (" + fmt(v) + ")").join(", ")}.
-  </p>` : ""}
 `;
 
-/* =============================================================
-   GRAFICOS DA PAGINA HTML (preview)
-   ============================================================= */
+/* ================================================
+   HELPER MONTHLY
+   ================================================ */
 function buildMonthly(d) {
   const map = {};
   d.forEach(l => {
     if (!l.data) return;
     const mes = l.data.substring(0,7);
-    if (!map[mes]) map[mes] = {ent:0,sai:0};
-    l.tipo === "Entrada" ? map[mes].ent += Number(l.valor||0) : map[mes].sai += Number(l.valor||0);
+    if (!map[mes]) map[mes]={ent:0,sai:0};
+    ehEntrada(l.tipo) ? map[mes].ent+=Number(l.valor||0) : map[mes].sai+=Number(l.valor||0);
   });
   const keys = Object.keys(map).sort();
   return {
-    labels: keys.map(k => { const [y,m]=k.split("-"); return new Date(y,m-1).toLocaleDateString("pt-BR",{month:"short",year:"2-digit"}); }),
+    labels: keys.map(k=>{ const [y,m]=k.split("-"); return new Date(y,m-1).toLocaleDateString("pt-BR",{month:"short",year:"2-digit"}); }),
     ent: keys.map(k=>map[k].ent),
     sai: keys.map(k=>map[k].sai)
   };
 }
 
-const catLabels = Object.keys(mapacat);
-const catVals   = Object.values(mapacat);
-const monthly   = buildMonthly(dados);
-const gc = {color:"#6b7280",gridColor:"#f1f3f9"};
+/* ================================================
+   GRÁFICOS PREVIEW (página)
+   ================================================ */
+const gc = {color:"#6b7280", gridColor:"#f1f3f9"};
+const catL = Object.keys(mapacat), catV = Object.values(mapacat);
+const monthly = buildMonthly(dados);
 
-// Grafico 1 - Donut
-chartsPreview.pizza = new Chart(chartPizza2, {
+new Chart(chartPizza2, {
   type:"doughnut",
-  data:{labels:catLabels,datasets:[{data:catVals,backgroundColor:PALETTE.slice(0,catLabels.length),borderWidth:0,hoverOffset:6}]},
-  options:{responsive:true,cutout:"65%",plugins:{legend:{position:"bottom",labels:{font:{family:"Inter",size:10},color:gc.color,boxWidth:10,padding:8}},tooltip:{callbacks:{label:ctx=>" "+fmt(ctx.parsed)}}}}
+  data:{labels:catL,datasets:[{data:catV,backgroundColor:PALETTE.slice(0,catL.length),borderWidth:0,hoverOffset:5}]},
+  options:{responsive:true,cutout:"62%",plugins:{legend:{position:"bottom",labels:{font:{family:"Inter",size:10},color:gc.color,boxWidth:10,padding:8}},tooltip:{callbacks:{label:ctx=>" "+fmt(ctx.parsed)}}}}
 });
-
-// Grafico 2 - Linha
-chartsPreview.evo = new Chart(chartEvolucao2, {
+new Chart(chartEvo2, {
   type:"line",
   data:{labels:monthly.labels,datasets:[
-    {label:"Entradas",data:monthly.ent,borderColor:"#059669",backgroundColor:"rgba(5,150,105,.08)",fill:true,tension:.4,pointRadius:3,borderWidth:2},
-    {label:"Saidas",  data:monthly.sai,borderColor:"#dc2626",backgroundColor:"rgba(220,38,38,.07)",fill:true,tension:.4,pointRadius:3,borderWidth:2}
+    {label:"Entradas",data:monthly.ent,borderColor:"#059669",backgroundColor:"rgba(5,150,105,.07)",fill:true,tension:.4,pointRadius:3,borderWidth:2},
+    {label:"Saídas",  data:monthly.sai,borderColor:"#dc2626",backgroundColor:"rgba(220,38,38,.06)",fill:true,tension:.4,pointRadius:3,borderWidth:2}
   ]},
-  options:{responsive:true,interaction:{mode:"index",intersect:false},scales:{
-    x:{grid:{color:gc.gridColor},ticks:{color:gc.color,font:{family:"Inter",size:9}}},
-    y:{grid:{color:gc.gridColor},ticks:{color:gc.color,font:{family:"Inter",size:9},callback:v=>"R$"+(v>=1000?(v/1000).toFixed(0)+"k":v)},beginAtZero:true}
-  },plugins:{legend:{position:"top",labels:{font:{family:"Inter",size:10},color:gc.color,boxWidth:10}},tooltip:{callbacks:{label:ctx=>" "+fmt(ctx.parsed.y)}}}}
+  options:{responsive:true,interaction:{mode:"index",intersect:false},scales:{x:{grid:{color:gc.gridColor},ticks:{color:gc.color,font:{size:9}}},y:{grid:{color:gc.gridColor},ticks:{color:gc.color,font:{size:9},callback:v=>"R$"+(v>=1000?(v/1000).toFixed(0)+"k":v)},beginAtZero:true}},plugins:{legend:{position:"top",labels:{font:{size:10},color:gc.color,boxWidth:10}},tooltip:{callbacks:{label:ctx=>" "+fmt(ctx.parsed.y)}}}}
 });
-
-// Grafico 3 - Barras agrupadas
-chartsPreview.bar = new Chart(chartBar2, {
+new Chart(chartBar2, {
   type:"bar",
-  data:{labels:["Entradas","Saidas"],datasets:[{data:[totalEnt,totalSai],backgroundColor:["rgba(5,150,105,.8)","rgba(220,38,38,.8)"],borderColor:["#059669","#dc2626"],borderWidth:2,borderRadius:6}]},
-  options:{responsive:true,scales:{
-    x:{grid:{display:false},ticks:{color:gc.color,font:{family:"Inter",size:10}}},
-    y:{grid:{color:gc.gridColor},ticks:{color:gc.color,font:{family:"Inter",size:9},callback:v=>"R$"+(v>=1000?(v/1000).toFixed(0)+"k":v)},beginAtZero:true}
-  },plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>" "+fmt(ctx.parsed.y)}}}}
+  data:{labels:["Entradas","Saídas"],datasets:[{data:[totalEnt,totalSai],backgroundColor:["rgba(5,150,105,.8)","rgba(220,38,38,.8)"],borderColor:["#059669","#dc2626"],borderWidth:2,borderRadius:6}]},
+  options:{responsive:true,scales:{x:{grid:{display:false},ticks:{color:gc.color,font:{size:10}}},y:{grid:{color:gc.gridColor},ticks:{color:gc.color,font:{size:9},callback:v=>"R$"+(v>=1000?(v/1000).toFixed(0)+"k":v)},beginAtZero:true}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>" "+fmt(ctx.parsed.y)}}}}
 });
 
-/* =============================================================
-   CHARTS OCULTOS (para gerar imagem no PDF)
-   ============================================================= */
-const offCharts = {};
-
-offCharts.pizza = new Chart(cvPizza, {
+/* ================================================
+   CANVASES OCULTOS PARA PDF — todos 480x380
+   ================================================ */
+const offPizza = new Chart(cvPizza, {
   type:"doughnut",
-  data:{labels:catLabels,datasets:[{data:catVals,backgroundColor:PALETTE.slice(0,catLabels.length),borderWidth:0,hoverOffset:8}]},
-  options:{responsive:false,animation:false,cutout:"60%",plugins:{legend:{position:"bottom",labels:{font:{size:13},padding:14}},tooltip:{enabled:false}}}
+  data:{labels:catL,datasets:[{data:catV,backgroundColor:PALETTE.slice(0,catL.length),borderWidth:0,hoverOffset:10}]},
+  options:{responsive:false,animation:false,cutout:"58%",plugins:{legend:{position:"bottom",labels:{font:{size:14},padding:16}},tooltip:{enabled:false}}}
 });
-
-offCharts.evo = new Chart(cvEvolucao, {
+const offEvo = new Chart(cvEvolucao, {
   type:"line",
   data:{labels:monthly.labels,datasets:[
-    {label:"Entradas",data:monthly.ent,borderColor:"#059669",backgroundColor:"rgba(5,150,105,.1)",fill:true,tension:.4,pointRadius:4,borderWidth:2.5},
-    {label:"Saidas",  data:monthly.sai,borderColor:"#dc2626",backgroundColor:"rgba(220,38,38,.08)",fill:true,tension:.4,pointRadius:4,borderWidth:2.5}
+    {label:"Entradas",data:monthly.ent,borderColor:"#059669",backgroundColor:"rgba(5,150,105,.10)",fill:true,tension:.4,pointRadius:5,borderWidth:2.5},
+    {label:"Saídas",  data:monthly.sai,borderColor:"#dc2626",backgroundColor:"rgba(220,38,38,.08)",fill:true,tension:.4,pointRadius:5,borderWidth:2.5}
   ]},
-  options:{responsive:false,animation:false,interaction:{mode:"index",intersect:false},scales:{
-    x:{grid:{color:"#f1f3f9"},ticks:{font:{size:11},color:"#6b7280"}},
-    y:{grid:{color:"#f1f3f9"},ticks:{font:{size:11},color:"#6b7280",callback:v=>"R$"+(v>=1000?(v/1000).toFixed(0)+"k":v)},beginAtZero:true}
-  },plugins:{legend:{labels:{font:{size:12},padding:12}},tooltip:{enabled:false}}}
+  options:{responsive:false,animation:false,interaction:{mode:"index",intersect:false},scales:{x:{grid:{color:"#f1f3f9"},ticks:{font:{size:12},color:"#6b7280"}},y:{grid:{color:"#f1f3f9"},ticks:{font:{size:12},color:"#6b7280",callback:v=>"R$"+(v>=1000?(v/1000).toFixed(0)+"k":v)},beginAtZero:true}},plugins:{legend:{labels:{font:{size:13},padding:14}},tooltip:{enabled:false}}}
 });
-
-offCharts.top = new Chart(cvTop, {
+const offTop = new Chart(cvTop, {
   type:"bar",
-  data:{labels:Object.keys(mapacat).slice(0,6),datasets:[{label:"Saidas",data:Object.values(mapacat).slice(0,6),backgroundColor:PALETTE.slice(0,6).map(c=>c+"bb"),borderColor:PALETTE.slice(0,6),borderWidth:2,borderRadius:8}]},
-  options:{responsive:false,animation:false,indexAxis:"y",scales:{
-    x:{grid:{color:"#f1f3f9"},ticks:{font:{size:11},color:"#6b7280",callback:v=>"R$"+(v>=1000?(v/1000).toFixed(0)+"k":v)},beginAtZero:true},
-    y:{grid:{display:false},ticks:{font:{size:11,weight:"bold"},color:"#374151"}}
-  },plugins:{legend:{display:false},tooltip:{enabled:false}}}
+  data:{labels:["Entradas","Saídas"],datasets:[{data:[totalEnt,totalSai],backgroundColor:["rgba(5,150,105,.8)","rgba(220,38,38,.8)"],borderColor:["#059669","#dc2626"],borderWidth:2,borderRadius:8}]},
+  options:{responsive:false,animation:false,scales:{x:{grid:{display:false},ticks:{font:{size:12},color:"#6b7280"}},y:{grid:{color:"#f1f3f9"},ticks:{font:{size:12},color:"#6b7280",callback:v=>"R$"+(v>=1000?(v/1000).toFixed(0)+"k":v)},beginAtZero:true}},plugins:{legend:{display:false},tooltip:{enabled:false}}}
 });
 
-/* =============================================================
-   EXPORT EXCEL
-   ============================================================= */
+/* ================================================
+   EXCEL
+   ================================================ */
 function exportExcel() {
-  if (!dados.length) { alert("Sem dados"); return; }
-  const rows = dados.map(l => ({
-    Data: l.data || "-",
-    Categoria: l.cat || "-",
-    Tipo: l.tipo || "-",
-    Valor: Number(l.valor || 0),
-    Observacao: l.obs || "-"
-  }));
+  if (!dados.length){alert("Sem dados");return;}
+  const rows = dados.map(l=>({Data:l.data||"—",Categoria:l.cat||"—",Tipo:l.tipo||"—",Valor:Number(l.valor||0),Observacao:l.obs||"—"}));
   const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Lancamentos");
-  XLSX.writeFile(wb, "fluxopro_" + perfil + "_" + Date.now() + ".xlsx");
+  XLSX.utils.book_append_sheet(wb,ws,"Lancamentos");
+  XLSX.writeFile(wb,"fluxopro_"+perfil+"_"+Date.now()+".xlsx");
 }
 
-/* =============================================================
-   EXPORT PDF — estrutura redesenhada
-   ============================================================= */
+/* ================================================
+   PDF — estrutura redesenhada com nome em destaque
+   ================================================ */
 function exportPDF() {
-  if (!dados.length) { alert("Sem dados"); return; }
-
+  if (!dados.length){alert("Sem dados");return;}
   loading.classList.add("show");
   loadingText.innerText = "Gerando PDF...";
 
-  setTimeout(() => {
+  setTimeout(()=>{
     try {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF("p", "mm", "a4");
-      const W = 210, H = 297, M = 14;
-      const cW = W - M * 2; // content width
+      const {jsPDF} = window.jspdf;
+      const doc = new jsPDF("p","mm","a4");
+      const W=210, H=297, M=14;
+      const cW = W - M*2;
       let y = 0;
 
-      /* --- PALETA DE CORES (para o PDF) --- */
       const C = {
-        primary:  [79,  70, 229],
-        ok:       [5,  150, 105],
-        bad:      [220,  38,  38],
-        warn:     [217, 119,   6],
-        dark:     [26,  31,  54],
-        gray:     [107, 114, 128],
-        lightGray:[241, 243, 249],
-        white:    [255, 255, 255],
-        cardBg:   [248, 250, 252],
-        okLight:  [240, 253, 244],
-        badLight: [254, 242, 242],
-        primLight:[238, 242, 255],
+        primary:  [79, 70,229], primaryD:[55,48,163],
+        ok:       [5,150,105],  okLight: [240,253,244], okBorder:[187,247,208],
+        bad:      [220,38, 38], badLight:[254,242,242], badBorder:[254,202,202],
+        primLight:[238,242,255],primBorder:[199,210,254],
+        dark:     [26, 31, 54],
+        gray:     [107,114,128],
+        lightGray:[241,243,249],
+        cardBg:   [248,250,252],
+        white:    [255,255,255],
       };
 
-      function hex2rgb(hex) {
-        return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)];
-      }
       function novaPagina(h) {
-        if (y + h > H - 20) { doc.addPage(); y = 20; }
+        if (y+h > H-22){doc.addPage(); y=22;}
       }
 
-      /* ---- PAGINA 1 — CAPA/CABEÇALHO ---- */
-
-      // Faixa de topo
+      /* ---- BANNER CAPA — nome da pessoa em destaque ---- */
+      // Faixa primária de topo
       doc.setFillColor(...C.primary);
-      doc.rect(0, 0, W, 42, "F");
+      doc.rect(0,0,W,52,"F");
 
-      // Logo / Marca
-      doc.setFillColor(255, 255, 255, .15);
-      doc.roundedRect(M, 8, 26, 26, 4, 4, "F");
-      doc.setFontSize(20);
-      doc.setFont(undefined, "bold");
-      doc.setTextColor(255, 255, 255);
-      doc.text("F", M + 9, 25);
+      // Gradiente simulado (segunda faixa escura)
+      doc.setFillColor(...C.primaryD);
+      doc.rect(0,36,W,16,"F");
 
-      // Titulo
-      doc.setFontSize(16);
-      doc.setFont(undefined, "bold");
-      doc.setTextColor(...C.white);
-      doc.text("Relatorio Financeiro", M + 32, 18);
+      // Ícone
+      doc.setFillColor(255,255,255,0.12);
+      doc.roundedRect(M,8,30,28,5,5,"F");
+      doc.setFontSize(22); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+      doc.text("F", M+10.5, 27);
 
-      doc.setFontSize(9);
-      doc.setFont(undefined, "normal");
-      doc.setTextColor(200, 205, 255);
-      doc.text("FluxoPro Engine v12  |  " + new Date().toLocaleDateString("pt-BR", {day:"2-digit",month:"long",year:"numeric"}), M + 32, 26);
-      doc.text("Periodo: " + (datas[0] || "-") + " a " + (datas[datas.length-1] || "-") + "  |  " + dados.length + " lancamentos", M + 32, 33);
+      // Nome da pessoa — GRANDE
+      const nomePessoa = info.nome || perfil;
+      doc.setFontSize(18); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+      doc.text(nomePessoa.substring(0,36), M+36, 20);
 
-      y = 52;
+      // Documento
+      if (info.doc) {
+        doc.setFontSize(9); doc.setFont(undefined,"normal"); doc.setTextColor(200,210,255);
+        doc.text(info.doc, M+36, 27);
+      }
 
-      /* ---- SECAO: PERFIL ---- */
+      // Subtítulo
+      doc.setFontSize(8); doc.setFont(undefined,"normal"); doc.setTextColor(199,210,254);
+      doc.text("Relatório Financeiro  |  FluxoPro Engine v12", M+36, 38);
+      doc.text("Período: "+periodo+"  |  "+dados.length+" lançamentos", M+36, 45);
+
+      y = 62;
+
+      /* ---- IDENTIFICAÇÃO DO PERFIL ---- */
       doc.setFillColor(...C.cardBg);
-      doc.roundedRect(M, y, cW, 22, 3, 3, "F");
-      doc.setDrawColor(...C.lightGray);
-      doc.setLineWidth(.3);
-      doc.roundedRect(M, y, cW, 22, 3, 3, "S");
-
-      // Label azul lateral
+      doc.roundedRect(M,y,cW,20,3,3,"F");
+      doc.setDrawColor(...C.lightGray); doc.setLineWidth(.3);
+      doc.roundedRect(M,y,cW,20,3,3,"S");
       doc.setFillColor(...C.primary);
-      doc.roundedRect(M, y, 4, 22, 2, 0, "F");
+      doc.roundedRect(M,y,4,20,2,0,"F");
 
-      doc.setFontSize(7);
-      doc.setFont(undefined, "bold");
-      doc.setTextColor(...C.gray);
+      const colW3 = cW/3;
+      doc.setFontSize(6.5); doc.setFont(undefined,"bold"); doc.setTextColor(...C.gray);
+      doc.text("PERFIL",            M+8,    y+7);
+      doc.text("NOME / RAZÃO SOCIAL",M+8+colW3, y+7);
+      doc.text("CPF / CNPJ",        M+8+colW3*2, y+7);
 
-      const colW = cW / 3;
-      doc.text("PERFIL", M + 8, y + 7);
-      doc.text("NOME / RAZAO SOCIAL", M + 8 + colW, y + 7);
-      doc.text("CPF / CNPJ", M + 8 + colW * 2, y + 7);
+      doc.setFontSize(9); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark);
+      doc.text(perfil.substring(0,22),             M+8,    y+15);
+      doc.text((info.nome||"Não informado").substring(0,28), M+8+colW3, y+15);
+      doc.text((info.doc||"Não informado").substring(0,22),  M+8+colW3*2, y+15);
 
-      doc.setFontSize(9.5);
-      doc.setFont(undefined, "bold");
-      doc.setTextColor(...C.dark);
-      doc.text(perfil, M + 8, y + 15);
-      doc.text(info.nome || "Nao informado", M + 8 + colW, y + 15);
-      doc.text(info.doc  || "Nao informado", M + 8 + colW * 2, y + 15);
+      y += 26;
 
-      y += 28;
+      /* ---- KPI CARDS ---- */
+      const kW = (cW-8)/3;
 
-      /* ---- SECAO: KPIs ---- */
-      const kpiW = (cW - 8) / 3;
+      function kpiCard(xPos, yPos, titulo, valor, qtdTxt, bg, border, corValor) {
+        doc.setFillColor(...bg);
+        doc.roundedRect(xPos,yPos,kW,26,3,3,"F");
+        doc.setDrawColor(...border);
+        doc.roundedRect(xPos,yPos,kW,26,3,3,"S");
+        doc.setFontSize(6.5); doc.setFont(undefined,"bold"); doc.setTextColor(...C.gray);
+        doc.text(titulo, xPos+5, yPos+8);
+        doc.setFontSize(12); doc.setFont(undefined,"bold"); doc.setTextColor(...corValor);
+        doc.text(fmt(valor), xPos+5, yPos+18);
+        doc.setFontSize(6.5); doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
+        doc.text(qtdTxt, xPos+5, yPos+23);
+      }
 
-      // Card ENTRADA
-      doc.setFillColor(...C.okLight);
-      doc.roundedRect(M, y, kpiW, 28, 3, 3, "F");
-      doc.setDrawColor(187, 247, 208);
-      doc.roundedRect(M, y, kpiW, 28, 3, 3, "S");
-      doc.setFontSize(7); doc.setFont(undefined,"bold"); doc.setTextColor(...C.gray);
-      doc.text("TOTAL ENTRADAS", M + 5, y + 8);
-      doc.setFontSize(13); doc.setFont(undefined,"bold"); doc.setTextColor(...C.ok);
-      doc.text(fmt(totalEnt), M + 5, y + 18);
-      doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-      doc.text(qtdEnt + " lancamento" + (qtdEnt!==1?"s":""), M + 5, y + 24);
+      kpiCard(M,           y, "ENTRADAS (GANHOS)",   totalEnt, qtdEnt+" lançamento"+(qtdEnt!==1?"s":""), C.okLight,    C.okBorder,   C.ok);
+      kpiCard(M+kW+4,      y, "SAÍDAS (GASTOS)",     totalSai, qtdSai+" lançamento"+(qtdSai!==1?"s":""), C.badLight,   C.badBorder,  C.bad);
+      kpiCard(M+(kW+4)*2,  y, "RESULTADO LÍQUIDO",   resultado,
+        (resultado>=0?"+":"")+pct(Math.abs(resultado),totalEnt)+" das entradas",
+        C.primLight, C.primBorder, resultado>=0?C.primary:C.bad);
 
-      // Card SAIDA
-      const x2 = M + kpiW + 4;
-      doc.setFillColor(...C.badLight);
-      doc.roundedRect(x2, y, kpiW, 28, 3, 3, "F");
-      doc.setDrawColor(254, 202, 202);
-      doc.roundedRect(x2, y, kpiW, 28, 3, 3, "S");
-      doc.setFontSize(7); doc.setFont(undefined,"bold"); doc.setTextColor(...C.gray);
-      doc.text("TOTAL SAIDAS", x2 + 5, y + 8);
-      doc.setFontSize(13); doc.setFont(undefined,"bold"); doc.setTextColor(...C.bad);
-      doc.text(fmt(totalSai), x2 + 5, y + 18);
-      doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-      doc.text(qtdSai + " lancamento" + (qtdSai!==1?"s":""), x2 + 5, y + 24);
+      y += 32;
 
-      // Card RESULTADO
-      const x3 = M + (kpiW + 4) * 2;
-      doc.setFillColor(...C.primLight);
-      doc.roundedRect(x3, y, kpiW, 28, 3, 3, "F");
-      doc.setDrawColor(199, 210, 254);
-      doc.roundedRect(x3, y, kpiW, 28, 3, 3, "S");
-      doc.setFontSize(7); doc.setFont(undefined,"bold"); doc.setTextColor(...C.gray);
-      doc.text("RESULTADO LIQUIDO", x3 + 5, y + 8);
-      doc.setFontSize(13); doc.setFont(undefined,"bold");
-      doc.setTextColor(...(resultado >= 0 ? C.primary : C.bad));
-      doc.text(fmt(resultado), x3 + 5, y + 18);
-      doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-      doc.text((resultado>=0?"+":"") + pct(Math.abs(resultado), totalEnt) + " das entradas", x3 + 5, y + 24);
-
-      y += 34;
-
-      /* ---- SECAO: GRAFICOS ---- */
-      novaPagina(80);
-
-      // Titulo da secao
-      doc.setFillColor(...C.primary);
-      doc.rect(M, y, 3, 14, "F");
+      /* ---- GRÁFICOS ---- */
+      novaPagina(78);
+      doc.setFillColor(...C.primary); doc.rect(M,y,3,14,"F");
       doc.setFontSize(10); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark);
-      doc.text("Resumo Visual", M + 7, y + 9);
-      y += 18;
+      doc.text("Resumo Visual", M+7, y+9);
+      y += 16;
 
-      const imgPizza = cvPizza.toDataURL("image/png", 1);
-      const imgEvo   = cvEvolucao.toDataURL("image/png", 1);
-      const imgTop   = cvTop.toDataURL("image/png", 1);
+      // Labels
+      doc.setFontSize(6.5); doc.setFont(undefined,"bold"); doc.setTextColor(...C.gray);
+      doc.text("CATEGORIAS (SAÍDAS)", M,         y);
+      doc.text("EVOLUÇÃO MENSAL",     M+kW+4,    y);
+      doc.text("ENTRADAS x SAÍDAS",   M+(kW+4)*2,y);
+      y += 3;
 
-      const gW  = (cW - 8) / 3;
-      const gH  = 52;
-      const gh2 = 42;
-
-      doc.setFontSize(7); doc.setFont(undefined,"bold"); doc.setTextColor(...C.gray);
-      doc.text("CATEGORIAS (SAIDAS)", M, y);
-      doc.text("EVOLUCAO MENSAL",     M + gW + 4, y);
-      doc.text("TOP GASTOS",          M + (gW + 4)*2, y);
-      y += 2;
-
-      doc.addImage(imgPizza, "PNG", M,            y, gW, gH, undefined, "FAST");
-      doc.addImage(imgEvo,   "PNG", M + gW + 4,   y, gW, gh2, undefined, "FAST");
-      doc.addImage(imgTop,   "PNG", M + (gW+4)*2, y, gW, gh2, undefined, "FAST");
-
+      const gH = 56;
+      doc.addImage(cvPizza.toDataURL("image/png",1),    "PNG", M,          y, kW, gH, undefined,"FAST");
+      doc.addImage(cvEvolucao.toDataURL("image/png",1), "PNG", M+kW+4,    y, kW, gH, undefined,"FAST");
+      doc.addImage(cvTop.toDataURL("image/png",1),      "PNG", M+(kW+4)*2,y, kW, gH, undefined,"FAST");
       y += gH + 10;
 
-      /* ---- SECAO: TABELA ---- */
-      doc.addPage();
-      y = 20;
-
-      doc.setFillColor(...C.primary);
-      doc.rect(M, y, 3, 14, "F");
+      /* ---- TABELA ---- */
+      doc.addPage(); y = 22;
+      doc.setFillColor(...C.primary); doc.rect(M,y,3,14,"F");
       doc.setFontSize(10); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark);
-      doc.text("Extrato Completo de Lancamentos", M + 7, y + 9);
-      y += 18;
+      doc.text("Extrato Completo de Lançamentos", M+7, y+9);
+      y += 16;
 
-      // Cabecalho da tabela
+      // Cabeçalho tabela
       doc.setFillColor(...C.primary);
-      doc.rect(M, y, cW, 8, "F");
-      doc.setFontSize(7); doc.setFont(undefined,"bold"); doc.setTextColor(...C.white);
-      const cols = [
-        { x: M+2,    w: 18, t: "#"    },
-        { x: M+20,   w: 22, t: "DATA" },
-        { x: M+42,   w: 38, t: "CATEGORIA" },
-        { x: M+80,   w: 20, t: "TIPO" },
-        { x: M+100,  w: 28, t: "VALOR" },
-        { x: M+128,  w: cW-128+M-M, t: "OBS" }
-      ];
-      cols.forEach(c => doc.text(c.t, c.x, y + 5.5));
+      doc.rect(M,y,cW,8,"F");
+      doc.setFontSize(6.5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+      const cols=[{x:M+2,t:"#"},{x:M+10,t:"DATA"},{x:M+32,t:"CATEGORIA"},{x:M+80,t:"TIPO"},{x:M+102,t:"VALOR"},{x:M+130,t:"OBS"}];
+      cols.forEach(c => doc.text(c.t, c.x, y+5.5));
       y += 10;
 
-      dados.forEach((l, idx) => {
+      dados.forEach((l,idx) => {
         novaPagina(7);
-
-        if (idx % 2 === 0) {
-          doc.setFillColor(...C.cardBg);
-          doc.rect(M, y - 3, cW, 6.5, "F");
-        }
-
-        doc.setFontSize(7.5); doc.setFont(undefined, "normal"); doc.setTextColor(...C.dark);
-        doc.text(String(idx + 1), cols[0].x, y);
-        doc.text((l.data || "-").substring(0, 10), cols[1].x, y);
-        doc.text((l.cat || "-").substring(0, 18), cols[2].x, y);
-
-        doc.setFont(undefined, "bold");
-        doc.setTextColor(...(l.tipo === "Entrada" ? C.ok : C.bad));
-        doc.text(l.tipo || "-", cols[3].x, y);
-
-        doc.setTextColor(...(l.tipo === "Entrada" ? C.ok : C.bad));
-        doc.text(fmt(l.valor), cols[4].x, y);
-
-        doc.setFont(undefined, "normal"); doc.setTextColor(...C.gray);
-        doc.text((l.obs || "-").substring(0, 22), cols[5].x, y);
-
+        if (idx%2===0){doc.setFillColor(...C.cardBg); doc.rect(M,y-3,cW,6.5,"F");}
+        const isEnt = ehEntrada(l.tipo);
+        doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
+        doc.text(String(idx+1),                  cols[0].x, y);
+        doc.text((l.data||"—").substring(0,10),  cols[1].x, y);
+        doc.text((l.cat||"—").substring(0,18),   cols[2].x, y);
+        doc.setFont(undefined,"bold"); doc.setTextColor(...(isEnt?C.ok:C.bad));
+        doc.text(l.tipo||"—",                    cols[3].x, y);
+        doc.text(fmt(l.valor),                   cols[4].x, y);
+        doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
+        doc.text((l.obs||"—").substring(0,22),   cols[5].x, y);
         y += 6.5;
       });
+      y += 5;
 
-      y += 4;
-
-      /* ---- SECAO: RELATORIO DETALHADO ---- */
-      novaPagina(100);
-
-      doc.setFillColor(...C.primary);
-      doc.rect(M, y, 3, 14, "F");
+      /* ---- RELATÓRIO DETALHADO ---- */
+      novaPagina(80);
+      doc.setFillColor(...C.primary); doc.rect(M,y,3,14,"F");
       doc.setFontSize(10); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark);
-      doc.text("Relatorio Detalhado", M + 7, y + 9);
-      y += 18;
+      doc.text("Relatório Detalhado", M+7, y+9);
+      y += 16;
 
-      const rW = (cW - 8) / 3;
-
-      function drawRelBox(xPos, titulo, cor, corLight, corBorder, items, total) {
-        const boxH = 16 + items.length * 8 + 12;
-        novaPagina(boxH);
-
-        doc.setFillColor(...corLight);
-        doc.roundedRect(xPos, y, rW, boxH, 3, 3, "F");
-        doc.setDrawColor(...corBorder);
-        doc.setLineWidth(.3);
-        doc.roundedRect(xPos, y, rW, boxH, 3, 3, "S");
-
-        doc.setFillColor(...cor);
-        doc.roundedRect(xPos, y, rW, 10, 3, 0, "F");
-        doc.setFontSize(7.5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
-        doc.text(titulo, xPos + 5, y + 7);
-
-        let ry = y + 15;
-        doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
-        items.forEach(([k,v]) => {
-          doc.text((k).substring(0,18), xPos + 4, ry);
-          doc.setFont(undefined,"bold"); doc.setTextColor(...cor);
-          doc.text(fmt(v), xPos + rW - 4 - doc.getTextWidth(fmt(v)), ry);
-          doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
-          ry += 7.5;
+      function drawRelBox(xPos, yPos, titulo, corTitulo, bgColor, borderColor, items, total) {
+        const boxH = 14 + items.length*7.5 + 12;
+        doc.setFillColor(...bgColor);
+        doc.roundedRect(xPos,yPos,kW,boxH,3,3,"F");
+        doc.setDrawColor(...borderColor); doc.setLineWidth(.3);
+        doc.roundedRect(xPos,yPos,kW,boxH,3,3,"S");
+        doc.setFillColor(...corTitulo);
+        doc.roundedRect(xPos,yPos,kW,9,3,0,"F");
+        doc.setFontSize(7); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+        doc.text(titulo, xPos+5, yPos+6.5);
+        let ry = yPos+15;
+        items.forEach(([k,v])=>{
+          doc.setFontSize(6.5); doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
+          doc.text(k.substring(0,20), xPos+4, ry);
+          doc.setFont(undefined,"bold"); doc.setTextColor(...corTitulo);
+          doc.text(fmt(Math.abs(v)), xPos+kW-4-doc.getTextWidth(fmt(Math.abs(v))), ry);
+          ry += 7;
         });
-
-        // Total
-        doc.setDrawColor(...corBorder);
-        doc.setLineWidth(.5);
-        doc.line(xPos + 4, ry, xPos + rW - 4, ry);
-        ry += 4;
-        doc.setFontSize(8.5); doc.setFont(undefined,"bold"); doc.setTextColor(...cor);
-        doc.text("Total", xPos + 4, ry);
-        doc.text(fmt(total), xPos + rW - 4 - doc.getTextWidth(fmt(total)), ry);
-
+        doc.setDrawColor(...borderColor); doc.setLineWidth(.5);
+        doc.line(xPos+4,ry,xPos+kW-4,ry); ry+=4;
+        doc.setFontSize(8); doc.setFont(undefined,"bold"); doc.setTextColor(...corTitulo);
+        doc.text("Total", xPos+4, ry);
+        doc.text(fmt(Math.abs(total)), xPos+kW-4-doc.getTextWidth(fmt(Math.abs(total))), ry);
         return boxH;
       }
 
-      const topSaiCatsAll = Object.entries(mapacat).sort((a,b) => b[1]-a[1]).slice(0,6);
-      const topEntCatsAll = Object.entries(catEntradas).sort((a,b) => b[1]-a[1]).slice(0,6);
+      drawRelBox(M,            y, "ENTRADAS (GANHOS)",  C.ok,      C.okLight,    C.okBorder,   topEnt, totalEnt);
+      drawRelBox(M+kW+4,       y, "SAÍDAS (GASTOS)",    C.bad,     C.badLight,   C.badBorder,  topSai, totalSai);
+      drawRelBox(M+(kW+4)*2,   y, "RESULTADO LÍQUIDO",
+        resultado>=0?C.primary:C.bad, C.primLight, C.primBorder,
+        [["Entradas",totalEnt],["(-) Saídas",-totalSai],["Margem",resultado]],
+        resultado);
 
-      const h1 = drawRelBox(M,          "ENTRADAS",   C.ok,      C.okLight,   [187,247,208], topEntCatsAll, totalEnt);
-      const h2 = drawRelBox(M + rW + 4, "SAIDAS",     C.bad,     C.badLight,  [254,202,202], topSaiCatsAll, totalSai);
+      y = y + 80 + 10;
 
-      // Box RESULTADO LIQUIDO
-      const netItems = [
-        ["Total entradas",   totalEnt],
-        ["(-) Total saidas", -totalSai],
-        ["Margem liquida",   resultado]
-      ];
-      drawRelBox(M + (rW + 4)*2, "RESULTADO", resultado >= 0 ? C.primary : C.bad,
-        C.primLight, [199,210,254], netItems.map(([k,v]) => [k, Math.abs(v)]), Math.abs(resultado));
-
-      y = y + Math.max(h1, h2) + 10;
-
-      /* ---- SECAO: ANALISE INTERPRETATIVA ---- */
+      /* ---- NARRATIVA ---- */
       novaPagina(60);
-
-      doc.setFillColor(...C.primary);
-      doc.rect(M, y, 3, 14, "F");
+      doc.setFillColor(...C.primary); doc.rect(M,y,3,14,"F");
       doc.setFontSize(10); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark);
-      doc.text("Analise Interpretativa", M + 7, y + 9);
-      y += 18;
+      doc.text("Análise Interpretativa", M+7, y+9);
+      y += 16;
 
-      const narraTextos = [
-        `O periodo analisado compreende ${dados.length} lancamentos (${qtdEnt} entradas e ${qtdSai} saidas), de ${datas[0]||"-"} a ${datas[datas.length-1]||"-"}.`,
-        `Entradas totalizaram ${fmt(totalEnt)}, com principal categoria: ${maiorEntrada}. Saidas totalizaram ${fmt(totalSai)}, maior concentracao em: ${maiorGasto} (${fmt(mapacat[maiorGasto]||0)} - ${pct(mapacat[maiorGasto]||0, totalSai)} das saidas).`,
-        `Resultado liquido: ${fmt(resultado)} — margem de ${pct(resultado, totalEnt)} sobre entradas. Saude financeira do periodo: ${resultado>0?"POSITIVA":resultado<0?"NEGATIVA":"NEUTRA"}.${resultado<0?" Recomenda-se revisao dos gastos.":""}`
+      const nTxts = [
+        `Período: ${dados.length} lançamentos (${qtdEnt} entradas / ${qtdSai} saídas). De ${datas[0]||"—"} a ${datas[datas.length-1]||"—"}.`,
+        `Entradas: ${fmt(totalEnt)} — principal categoria: ${topEnt[0]?topEnt[0][0]:"—"}. Saídas: ${fmt(totalSai)} — maior gasto: ${topSai[0]?topSai[0][0]:"—"} (${fmt(mapacat[topSai[0]?topSai[0][0]:""]||0)} / ${pct(mapacat[topSai[0]?topSai[0][0]:""]||0,totalSai)} das saídas).`,
+        `Resultado líquido: ${fmt(resultado)} — margem de ${pct(resultado,totalEnt)} sobre entradas. Saúde financeira: ${resultado>0?"POSITIVA":resultado<0?"NEGATIVA":"NEUTRA"}.${resultado<0?" Recomenda-se revisão dos gastos.":""}`
       ];
-
       doc.setFontSize(8.5); doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
-      narraTextos.forEach(t => {
-        const lines = doc.splitTextToSize(t, cW - 4);
-        novaPagina(lines.length * 5 + 6);
-        doc.text(lines, M + 4, y);
-        y += lines.length * 5 + 5;
+      nTxts.forEach(t=>{
+        const lines = doc.splitTextToSize(t, cW-4);
+        novaPagina(lines.length*5+6);
+        doc.text(lines, M+4, y);
+        y += lines.length*5+5;
       });
 
       /* ---- RODAPÉ EM TODAS AS PÁGINAS ---- */
-      const totalPag = doc.internal.getNumberOfPages();
-      for (let p = 1; p <= totalPag; p++) {
+      const nPag = doc.internal.getNumberOfPages();
+      for (let p=1;p<=nPag;p++){
         doc.setPage(p);
-
-        // Faixa rodapé
-        doc.setFillColor(...C.cardBg);
-        doc.rect(0, H - 14, W, 14, "F");
-        doc.setDrawColor(...C.lightGray);
-        doc.setLineWidth(.3);
-        doc.line(0, H - 14, W, H - 14);
-
-        // Linha de cor no topo do rodapé
-        doc.setFillColor(...C.primary);
-        doc.rect(0, H - 14, W, 1.5, "F");
-
+        doc.setFillColor(...C.cardBg); doc.rect(0,H-14,W,14,"F");
+        doc.setFillColor(...C.primary); doc.rect(0,H-14,W,1.5,"F");
+        doc.setDrawColor(...C.lightGray); doc.setLineWidth(.2);
+        doc.line(0,H-14,W,H-14);
         doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-        doc.text("FluxoPro Engine v12  |  Gerado em " + new Date().toLocaleDateString("pt-BR"), M, H - 5);
-        doc.text("Perfil: " + perfil + "  |  Pagina " + p + " de " + totalPag, W - M, H - 5, { align: "right" });
+        doc.text("FluxoPro Engine v12  |  "+new Date().toLocaleDateString("pt-BR"), M, H-5);
+        doc.text((info.nome||perfil)+"  |  Página "+p+" de "+nPag, W-M, H-5,{align:"right"});
       }
 
-      doc.save("fluxopro_" + perfil + "_" + Date.now() + ".pdf");
+      doc.save("fluxopro_"+perfil+"_"+Date.now()+".pdf");
       loading.classList.remove("show");
 
-    } catch(e) {
+    } catch(e){
       console.error(e);
       loading.classList.remove("show");
-      alert("Erro ao gerar PDF: " + e.message);
+      alert("Erro ao gerar PDF: "+e.message);
     }
-  }, 400);
+  },400);
 }
 </script>
 </body>
