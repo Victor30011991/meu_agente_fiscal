@@ -61,7 +61,6 @@ tbody tr:nth-child(even){background:#fafbff}
 .ent{background:#f0fdf4;color:#059669}
 .sai{background:#fef2f2;color:#dc2626}
 
-/* GRÁFICOS — 3 colunas iguais */
 .chart-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 20px}
 .chart-box{border:1px solid #f1f3f9;border-radius:10px;padding:12px;display:flex;flex-direction:column}
 .chart-box h3{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7280;margin-bottom:8px;text-align:center}
@@ -101,7 +100,6 @@ tbody tr:nth-child(even){background:#fafbff}
   <div class="loading-text" id="loadingText">Gerando documento...</div>
 </div>
 
-<!-- 3 canvases ocultos — MESMO tamanho para PDF consistente -->
 <div style="position:absolute;left:-9999px;width:480px;opacity:.01;pointer-events:none">
   <canvas id="cvPizza"    width="480" height="380"></canvas>
   <canvas id="cvEvolucao" width="480" height="380"></canvas>
@@ -121,7 +119,6 @@ tbody tr:nth-child(even){background:#fafbff}
     </div>
   </div>
 
-  <!-- Perfil -->
   <div class="card">
     <div class="card-head"><span class="dot" style="background:#4f46e5"></span><h2>Identificação do Perfil</h2></div>
     <div class="perfil-info">
@@ -131,7 +128,6 @@ tbody tr:nth-child(even){background:#fafbff}
     </div>
   </div>
 
-  <!-- KPIs -->
   <div class="card">
     <div class="card-head"><span class="dot" style="background:#059669"></span><h2>Painel de Saldos</h2></div>
     <div class="kpi-grid">
@@ -153,7 +149,6 @@ tbody tr:nth-child(even){background:#fafbff}
     </div>
   </div>
 
-  <!-- Gráficos preview -->
   <div class="card">
     <div class="card-head"><span class="dot" style="background:#7c3aed"></span><h2>Resumo Visual</h2></div>
     <div class="chart-row">
@@ -163,7 +158,6 @@ tbody tr:nth-child(even){background:#fafbff}
     </div>
   </div>
 
-  <!-- Extrato -->
   <div class="card">
     <div class="card-head"><span class="dot" style="background:#d97706"></span><h2>Extrato Completo de Lançamentos</h2></div>
     <div id="tabelaWrap">
@@ -176,13 +170,11 @@ tbody tr:nth-child(even){background:#fafbff}
     </div>
   </div>
 
-  <!-- Análise -->
   <div class="card">
     <div class="card-head"><span class="dot" style="background:#059669"></span><h2>Relatório Detalhado</h2></div>
     <div class="analise-grid" id="analiseGrid"></div>
   </div>
 
-  <!-- Narrativa -->
   <div class="card">
     <div class="card-head"><span class="dot" style="background:#1a1f36"></span><h2>Análise Interpretativa</h2></div>
     <div class="narrativa" id="narrativa"></div>
@@ -191,27 +183,33 @@ tbody tr:nth-child(even){background:#fafbff}
 </div>
 
 <script>
-/* ================================================
-   INICIALIZAÇÃO
-   ================================================ */
 const KEY = "fluxopro_v12";
 let db, perfil, dados, info;
-
 const PALETTE = ["#4f46e5","#059669","#dc2626","#d97706","#7c3aed","#db2777","#0891b2","#65a30d","#ea580c","#2563eb"];
 
-/* Helper tipo — normaliza acentos */
 function ehEntrada(tipo) { return String(tipo||"").trim().toLowerCase() === "entrada"; }
 function ehSaida(tipo)   {
   const t = String(tipo||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
   return t === "saida";
 }
 
+/* ================================================
+   INICIALIZAÇÃO (COM ORGANIZAÇÃO POR DATA)
+   ================================================ */
 try {
-  db     = JSON.parse(localStorage.getItem(KEY));
+  db = JSON.parse(localStorage.getItem(KEY));
   if (!db || !db.profiles) throw new Error("Base não encontrada. Abra o FluxoPro primeiro.");
   perfil = db.active;
-  dados  = db.profiles[perfil] || [];
-  info   = db.profileInfo?.[perfil] || {};
+  
+  // LOGICA DE ORDENAÇÃO: Garante que os lançamentos fiquem em ordem cronológica
+  const dadosBrutos = db.profiles[perfil] || [];
+  dados = dadosBrutos.sort((a, b) => {
+    if (!a.data) return 1;
+    if (!b.data) return -1;
+    return new Date(a.data) - new Date(b.data);
+  });
+
+  info = db.profileInfo?.[perfil] || {};
 } catch(err) {
   document.querySelector(".page").innerHTML =
     "<div class='card'><div class='card-body empty'><h2>Erro</h2><p>"+err.message+"</p></div></div>";
@@ -221,9 +219,7 @@ try {
 function fmt(v) { return new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0); }
 function pct(a,b) { return b ? (a/b*100).toFixed(1)+"%" : "—"; }
 
-/* ================================================
-   CÁLCULOS
-   ================================================ */
+/* CÁLCULOS */
 let totalEnt=0, totalSai=0;
 const mapacat={}, catEntradas={};
 dados.forEach(l => {
@@ -237,29 +233,25 @@ dados.forEach(l => {
   }
 });
 const resultado = totalEnt - totalSai;
-const qtdEnt    = dados.filter(l => ehEntrada(l.tipo)).length;
-const qtdSai    = dados.filter(l => ehSaida(l.tipo)).length;
+const qtdEnt = dados.filter(l => ehEntrada(l.tipo)).length;
+const qtdSai = dados.filter(l => ehSaida(l.tipo)).length;
 
-/* ================================================
-   PREENCHER PÁGINA HTML
-   ================================================ */
-const datas  = dados.map(l=>l.data).filter(Boolean).sort();
+/* PREENCHER PÁGINA */
+const datas = dados.map(l=>l.data).filter(Boolean).sort();
 const periodo = datas.length ? datas[0]+" a "+datas[datas.length-1] : "—";
 
 document.getElementById("headerSub").innerText = "Perfil: "+perfil+"  |  "+dados.length+" lançamentos  |  "+periodo;
 document.getElementById("piPerfil").innerText = perfil;
 document.getElementById("piNome").innerText   = info.nome || "Não informado";
 document.getElementById("piDoc").innerText    = info.doc  || "Não informado";
+document.getElementById("kEnt").innerText     = fmt(totalEnt);
+document.getElementById("kSai").innerText     = fmt(totalSai);
+document.getElementById("kNet").innerText     = fmt(resultado);
+document.getElementById("kNet").style.color   = resultado >= 0 ? "#059669" : "#dc2626";
+document.getElementById("kEntQtd").innerText  = qtdEnt+" lançamento"+(qtdEnt!==1?"s":"");
+document.getElementById("kSaiQtd").innerText  = qtdSai+" lançamento"+(qtdSai!==1?"s":"");
+document.getElementById("kNetPct").innerText  = (resultado>=0?"+":"")+pct(Math.abs(resultado),totalEnt)+" das entradas";
 
-document.getElementById("kEnt").innerText    = fmt(totalEnt);
-document.getElementById("kSai").innerText    = fmt(totalSai);
-document.getElementById("kNet").innerText    = fmt(resultado);
-document.getElementById("kNet").style.color  = resultado >= 0 ? "#059669" : "#dc2626";
-document.getElementById("kEntQtd").innerText = qtdEnt+" lançamento"+(qtdEnt!==1?"s":"");
-document.getElementById("kSaiQtd").innerText = qtdSai+" lançamento"+(qtdSai!==1?"s":"");
-document.getElementById("kNetPct").innerText = (resultado>=0?"+":"")+pct(Math.abs(resultado),totalEnt)+" das entradas";
-
-/* Tabela */
 if (!dados.length) {
   document.getElementById("tabelaWrap").innerHTML = "<div class='empty'>Nenhum lançamento</div>";
 } else {
@@ -274,7 +266,6 @@ if (!dados.length) {
   </tr>`).join("");
 }
 
-/* Análise detalhada */
 const topEnt = Object.entries(catEntradas).sort((a,b)=>b[1]-a[1]).slice(0,5);
 const topSai = Object.entries(mapacat).sort((a,b)=>b[1]-a[1]).slice(0,5);
 
@@ -299,10 +290,9 @@ document.getElementById("analiseGrid").innerHTML = `
   </div>
 `;
 
-/* Narrativa */
-const maiorGasto   = topSai[0]   ? topSai[0][0]   : "—";
-const maiorEntrada = topEnt[0]   ? topEnt[0][0]   : "—";
-const corSaude     = resultado > 0 ? "#059669" : resultado < 0 ? "#dc2626" : "#d97706";
+const maiorGasto = topSai[0] ? topSai[0][0] : "—";
+const maiorEntrada = topEnt[0] ? topEnt[0][0] : "—";
+const corSaude = resultado > 0 ? "#059669" : resultado < 0 ? "#dc2626" : "#d97706";
 document.getElementById("narrativa").innerHTML = `
   <p>O período analisado compreende <strong>${dados.length} lançamentos</strong> (${qtdEnt} entradas e ${qtdSai} saídas), de <strong>${datas[0]||"—"}</strong> a <strong>${datas[datas.length-1]||"—"}</strong>.</p>
   <p>As entradas totalizaram <strong style="color:#059669">${fmt(totalEnt)}</strong>, com principal categoria: <strong>${maiorEntrada}</strong>.
@@ -313,9 +303,6 @@ document.getElementById("narrativa").innerHTML = `
   </p>
 `;
 
-/* ================================================
-   HELPER MONTHLY
-   ================================================ */
 function buildMonthly(d) {
   const map = {};
   d.forEach(l => {
@@ -332,9 +319,6 @@ function buildMonthly(d) {
   };
 }
 
-/* ================================================
-   GRÁFICOS PREVIEW (página)
-   ================================================ */
 const gc = {color:"#6b7280", gridColor:"#f1f3f9"};
 const catL = Object.keys(mapacat), catV = Object.values(mapacat);
 const monthly = buildMonthly(dados);
@@ -358,9 +342,6 @@ new Chart(chartBar2, {
   options:{responsive:true,scales:{x:{grid:{display:false},ticks:{color:gc.color,font:{size:10}}},y:{grid:{color:gc.gridColor},ticks:{color:gc.color,font:{size:9},callback:v=>"R$"+(v>=1000?(v/1000).toFixed(0)+"k":v)},beginAtZero:true}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>" "+fmt(ctx.parsed.y)}}}}
 });
 
-/* ================================================
-   CANVASES OCULTOS PARA PDF — todos 480x380
-   ================================================ */
 const offPizza = new Chart(cvPizza, {
   type:"doughnut",
   data:{labels:catL,datasets:[{data:catV,backgroundColor:PALETTE.slice(0,catL.length),borderWidth:0,hoverOffset:10}]},
@@ -380,9 +361,6 @@ const offTop = new Chart(cvTop, {
   options:{responsive:false,animation:false,scales:{x:{grid:{display:false},ticks:{font:{size:12},color:"#6b7280"}},y:{grid:{color:"#f1f3f9"},ticks:{font:{size:12},color:"#6b7280",callback:v=>"R$"+(v>=1000?(v/1000).toFixed(0)+"k":v)},beginAtZero:true}},plugins:{legend:{display:false},tooltip:{enabled:false}}}
 });
 
-/* ================================================
-   EXCEL
-   ================================================ */
 function exportExcel() {
   if (!dados.length){alert("Sem dados");return;}
   const rows = dados.map(l=>({Data:l.data||"—",Categoria:l.cat||"—",Tipo:l.tipo||"—",Valor:Number(l.valor||0),Observacao:l.obs||"—"}));
@@ -392,9 +370,6 @@ function exportExcel() {
   XLSX.writeFile(wb,"fluxopro_"+perfil+"_"+Date.now()+".xlsx");
 }
 
-/* ================================================
-   PDF — estrutura redesenhada com nome em destaque
-   ================================================ */
 function exportPDF() {
   if (!dados.length){alert("Sem dados");return;}
   loading.classList.add("show");
@@ -424,68 +399,47 @@ function exportPDF() {
         if (y+h > H-22){doc.addPage(); y=22;}
       }
 
-      /* ---- BANNER CAPA — nome da pessoa em destaque ---- */
-      // Faixa primária de topo
-      doc.setFillColor(...C.primary);
-      doc.rect(0,0,W,52,"F");
-
-      // Gradiente simulado (segunda faixa escura)
-      doc.setFillColor(...C.primaryD);
-      doc.rect(0,36,W,16,"F");
-
-      // Ícone
-      doc.setFillColor(255,255,255,0.12);
-      doc.roundedRect(M,8,30,28,5,5,"F");
+      doc.setFillColor(...C.primary); doc.rect(0,0,W,52,"F");
+      doc.setFillColor(...C.primaryD); doc.rect(0,36,W,16,"F");
+      doc.setFillColor(255,255,255,0.12); doc.roundedRect(M,8,30,28,5,5,"F");
       doc.setFontSize(22); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
       doc.text("F", M+10.5, 27);
 
-      // Nome da pessoa — GRANDE
       const nomePessoa = info.nome || perfil;
       doc.setFontSize(18); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
       doc.text(nomePessoa.substring(0,36), M+36, 20);
 
-      // Documento
       if (info.doc) {
         doc.setFontSize(9); doc.setFont(undefined,"normal"); doc.setTextColor(200,210,255);
         doc.text(info.doc, M+36, 27);
       }
 
-      // Subtítulo
       doc.setFontSize(8); doc.setFont(undefined,"normal"); doc.setTextColor(199,210,254);
       doc.text("Relatório Financeiro  |  FluxoPro Engine v12", M+36, 38);
       doc.text("Período: "+periodo+"  |  "+dados.length+" lançamentos", M+36, 45);
 
       y = 62;
-
-      /* ---- IDENTIFICAÇÃO DO PERFIL ---- */
-      doc.setFillColor(...C.cardBg);
-      doc.roundedRect(M,y,cW,20,3,3,"F");
-      doc.setDrawColor(...C.lightGray); doc.setLineWidth(.3);
-      doc.roundedRect(M,y,cW,20,3,3,"S");
-      doc.setFillColor(...C.primary);
-      doc.roundedRect(M,y,4,20,2,0,"F");
+      doc.setFillColor(...C.cardBg); doc.roundedRect(M,y,cW,20,3,3,"F");
+      doc.setDrawColor(...C.lightGray); doc.setLineWidth(.3); doc.roundedRect(M,y,cW,20,3,3,"S");
+      doc.setFillColor(...C.primary); doc.roundedRect(M,y,4,20,2,0,"F");
 
       const colW3 = cW/3;
       doc.setFontSize(6.5); doc.setFont(undefined,"bold"); doc.setTextColor(...C.gray);
-      doc.text("PERFIL",            M+8,    y+7);
+      doc.text("PERFIL", M+8, y+7);
       doc.text("NOME / RAZÃO SOCIAL",M+8+colW3, y+7);
-      doc.text("CPF / CNPJ",        M+8+colW3*2, y+7);
+      doc.text("CPF / CNPJ", M+8+colW3*2, y+7);
 
       doc.setFontSize(9); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark);
-      doc.text(perfil.substring(0,22),             M+8,    y+15);
+      doc.text(perfil.substring(0,22), M+8, y+15);
       doc.text((info.nome||"Não informado").substring(0,28), M+8+colW3, y+15);
-      doc.text((info.doc||"Não informado").substring(0,22),  M+8+colW3*2, y+15);
+      doc.text((info.doc||"Não informado").substring(0,22), M+8+colW3*2, y+15);
 
       y += 26;
-
-      /* ---- KPI CARDS ---- */
       const kW = (cW-8)/3;
 
       function kpiCard(xPos, yPos, titulo, valor, qtdTxt, bg, border, corValor) {
-        doc.setFillColor(...bg);
-        doc.roundedRect(xPos,yPos,kW,26,3,3,"F");
-        doc.setDrawColor(...border);
-        doc.roundedRect(xPos,yPos,kW,26,3,3,"S");
+        doc.setFillColor(...bg); doc.roundedRect(xPos,yPos,kW,26,3,3,"F");
+        doc.setDrawColor(...border); doc.roundedRect(xPos,yPos,kW,26,3,3,"S");
         doc.setFontSize(6.5); doc.setFont(undefined,"bold"); doc.setTextColor(...C.gray);
         doc.text(titulo, xPos+5, yPos+8);
         doc.setFontSize(12); doc.setFont(undefined,"bold"); doc.setTextColor(...corValor);
@@ -494,44 +448,36 @@ function exportPDF() {
         doc.text(qtdTxt, xPos+5, yPos+23);
       }
 
-      kpiCard(M,           y, "ENTRADAS (GANHOS)",   totalEnt, qtdEnt+" lançamento"+(qtdEnt!==1?"s":""), C.okLight,    C.okBorder,   C.ok);
-      kpiCard(M+kW+4,      y, "SAÍDAS (GASTOS)",     totalSai, qtdSai+" lançamento"+(qtdSai!==1?"s":""), C.badLight,   C.badBorder,  C.bad);
-      kpiCard(M+(kW+4)*2,  y, "RESULTADO LÍQUIDO",   resultado,
-        (resultado>=0?"+":"")+pct(Math.abs(resultado),totalEnt)+" das entradas",
-        C.primLight, C.primBorder, resultado>=0?C.primary:C.bad);
+      kpiCard(M, y, "ENTRADAS (GANHOS)", totalEnt, qtdEnt+" lançamento"+(qtdEnt!==1?"s":""), C.okLight, C.okBorder, C.ok);
+      kpiCard(M+kW+4, y, "SAÍDAS (GASTOS)", totalSai, qtdSai+" lançamento"+(qtdSai!==1?"s":""), C.badLight, C.badBorder, C.bad);
+      kpiCard(M+(kW+4)*2, y, "RESULTADO LÍQUIDO", resultado, (resultado>=0?"+":"")+pct(Math.abs(resultado),totalEnt)+" das entradas", C.primLight, C.primBorder, resultado>=0?C.primary:C.bad);
 
       y += 32;
-
-      /* ---- GRÁFICOS ---- */
       novaPagina(78);
       doc.setFillColor(...C.primary); doc.rect(M,y,3,14,"F");
       doc.setFontSize(10); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark);
       doc.text("Resumo Visual", M+7, y+9);
       y += 16;
 
-      // Labels
       doc.setFontSize(6.5); doc.setFont(undefined,"bold"); doc.setTextColor(...C.gray);
-      doc.text("CATEGORIAS (SAÍDAS)", M,         y);
-      doc.text("EVOLUÇÃO MENSAL",     M+kW+4,    y);
-      doc.text("ENTRADAS x SAÍDAS",   M+(kW+4)*2,y);
+      doc.text("CATEGORIAS (SAÍDAS)", M, y);
+      doc.text("EVOLUÇÃO MENSAL", M+kW+4, y);
+      doc.text("ENTRADAS x SAÍDAS", M+(kW+4)*2,y);
       y += 3;
 
       const gH = 56;
-      doc.addImage(cvPizza.toDataURL("image/png",1),    "PNG", M,          y, kW, gH, undefined,"FAST");
-      doc.addImage(cvEvolucao.toDataURL("image/png",1), "PNG", M+kW+4,    y, kW, gH, undefined,"FAST");
-      doc.addImage(cvTop.toDataURL("image/png",1),      "PNG", M+(kW+4)*2,y, kW, gH, undefined,"FAST");
+      doc.addImage(cvPizza.toDataURL("image/png",1), "PNG", M, y, kW, gH, undefined,"FAST");
+      doc.addImage(cvEvolucao.toDataURL("image/png",1), "PNG", M+kW+4, y, kW, gH, undefined,"FAST");
+      doc.addImage(cvTop.toDataURL("image/png",1), "PNG", M+(kW+4)*2,y, kW, gH, undefined,"FAST");
       y += gH + 10;
 
-      /* ---- TABELA ---- */
       doc.addPage(); y = 22;
       doc.setFillColor(...C.primary); doc.rect(M,y,3,14,"F");
       doc.setFontSize(10); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark);
       doc.text("Extrato Completo de Lançamentos", M+7, y+9);
       y += 16;
 
-      // Cabeçalho tabela
-      doc.setFillColor(...C.primary);
-      doc.rect(M,y,cW,8,"F");
+      doc.setFillColor(...C.primary); doc.rect(M,y,cW,8,"F");
       doc.setFontSize(6.5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
       const cols=[{x:M+2,t:"#"},{x:M+10,t:"DATA"},{x:M+32,t:"CATEGORIA"},{x:M+80,t:"TIPO"},{x:M+102,t:"VALOR"},{x:M+130,t:"OBS"}];
       cols.forEach(c => doc.text(c.t, c.x, y+5.5));
@@ -542,19 +488,18 @@ function exportPDF() {
         if (idx%2===0){doc.setFillColor(...C.cardBg); doc.rect(M,y-3,cW,6.5,"F");}
         const isEnt = ehEntrada(l.tipo);
         doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
-        doc.text(String(idx+1),                  cols[0].x, y);
-        doc.text((l.data||"—").substring(0,10),  cols[1].x, y);
-        doc.text((l.cat||"—").substring(0,18),   cols[2].x, y);
+        doc.text(String(idx+1), cols[0].x, y);
+        doc.text((l.data||"—").substring(0,10), cols[1].x, y);
+        doc.text((l.cat||"—").substring(0,18), cols[2].x, y);
         doc.setFont(undefined,"bold"); doc.setTextColor(...(isEnt?C.ok:C.bad));
-        doc.text(l.tipo||"—",                    cols[3].x, y);
-        doc.text(fmt(l.valor),                   cols[4].x, y);
+        doc.text(l.tipo||"—", cols[3].x, y);
+        doc.text(fmt(l.valor), cols[4].x, y);
         doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-        doc.text((l.obs||"—").substring(0,22),   cols[5].x, y);
+        doc.text((l.obs||"—").substring(0,22), cols[5].x, y);
         y += 6.5;
       });
       y += 5;
 
-      /* ---- RELATÓRIO DETALHADO ---- */
       novaPagina(80);
       doc.setFillColor(...C.primary); doc.rect(M,y,3,14,"F");
       doc.setFontSize(10); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark);
@@ -563,12 +508,9 @@ function exportPDF() {
 
       function drawRelBox(xPos, yPos, titulo, corTitulo, bgColor, borderColor, items, total) {
         const boxH = 14 + items.length*7.5 + 12;
-        doc.setFillColor(...bgColor);
-        doc.roundedRect(xPos,yPos,kW,boxH,3,3,"F");
-        doc.setDrawColor(...borderColor); doc.setLineWidth(.3);
-        doc.roundedRect(xPos,yPos,kW,boxH,3,3,"S");
-        doc.setFillColor(...corTitulo);
-        doc.roundedRect(xPos,yPos,kW,9,3,0,"F");
+        doc.setFillColor(...bgColor); doc.roundedRect(xPos,yPos,kW,boxH,3,3,"F");
+        doc.setDrawColor(...borderColor); doc.setLineWidth(.3); doc.roundedRect(xPos,yPos,kW,boxH,3,3,"S");
+        doc.setFillColor(...corTitulo); doc.roundedRect(xPos,yPos,kW,9,3,0,"F");
         doc.setFontSize(7); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
         doc.text(titulo, xPos+5, yPos+6.5);
         let ry = yPos+15;
@@ -579,24 +521,18 @@ function exportPDF() {
           doc.text(fmt(Math.abs(v)), xPos+kW-4-doc.getTextWidth(fmt(Math.abs(v))), ry);
           ry += 7;
         });
-        doc.setDrawColor(...borderColor); doc.setLineWidth(.5);
-        doc.line(xPos+4,ry,xPos+kW-4,ry); ry+=4;
+        doc.setDrawColor(...borderColor); doc.setLineWidth(.5); doc.line(xPos+4,ry,xPos+kW-4,ry); ry+=4;
         doc.setFontSize(8); doc.setFont(undefined,"bold"); doc.setTextColor(...corTitulo);
         doc.text("Total", xPos+4, ry);
         doc.text(fmt(Math.abs(total)), xPos+kW-4-doc.getTextWidth(fmt(Math.abs(total))), ry);
         return boxH;
       }
 
-      drawRelBox(M,            y, "ENTRADAS (GANHOS)",  C.ok,      C.okLight,    C.okBorder,   topEnt, totalEnt);
-      drawRelBox(M+kW+4,       y, "SAÍDAS (GASTOS)",    C.bad,     C.badLight,   C.badBorder,  topSai, totalSai);
-      drawRelBox(M+(kW+4)*2,   y, "RESULTADO LÍQUIDO",
-        resultado>=0?C.primary:C.bad, C.primLight, C.primBorder,
-        [["Entradas",totalEnt],["(-) Saídas",-totalSai],["Margem",resultado]],
-        resultado);
+      drawRelBox(M, y, "ENTRADAS (GANHOS)", C.ok, C.okLight, C.okBorder, topEnt, totalEnt);
+      drawRelBox(M+kW+4, y, "SAÍDAS (GASTOS)", C.bad, C.badLight, C.badBorder, topSai, totalSai);
+      drawRelBox(M+(kW+4)*2, y, "RESULTADO LÍQUIDO", resultado>=0?C.primary:C.bad, C.primLight, C.primBorder, [["Entradas",totalEnt],["(-) Saídas",-totalSai],["Margem",resultado]], resultado);
 
       y = y + 80 + 10;
-
-      /* ---- NARRATIVA ---- */
       novaPagina(60);
       doc.setFillColor(...C.primary); doc.rect(M,y,3,14,"F");
       doc.setFontSize(10); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark);
@@ -616,14 +552,12 @@ function exportPDF() {
         y += lines.length*5+5;
       });
 
-      /* ---- RODAPÉ EM TODAS AS PÁGINAS ---- */
       const nPag = doc.internal.getNumberOfPages();
       for (let p=1;p<=nPag;p++){
         doc.setPage(p);
         doc.setFillColor(...C.cardBg); doc.rect(0,H-14,W,14,"F");
         doc.setFillColor(...C.primary); doc.rect(0,H-14,W,1.5,"F");
-        doc.setDrawColor(...C.lightGray); doc.setLineWidth(.2);
-        doc.line(0,H-14,W,H-14);
+        doc.setDrawColor(...C.lightGray); doc.setLineWidth(.2); doc.line(0,H-14,W,H-14);
         doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
         doc.text("FluxoPro Engine v12  |  "+new Date().toLocaleDateString("pt-BR"), M, H-5);
         doc.text((info.nome||perfil)+"  |  Página "+p+" de "+nPag, W-M, H-5,{align:"right"});
@@ -635,9 +569,9 @@ function exportPDF() {
     } catch(e){
       console.error(e);
       loading.classList.remove("show");
-      alert("Erro ao gerar PDF: "+e.message);
+      alert("Erro ao gerar PDF.");
     }
-  },400);
+  }, 800);
 }
 </script>
 </body>
