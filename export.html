@@ -19,11 +19,15 @@ body{margin:0;font-family:Inter,sans-serif;background:#f5f7fb;color:#1f2937}
 button{padding:10px 14px;border:0;border-radius:10px;font-weight:700;cursor:pointer;transition:all .2s}
 button:hover{opacity:.8;transform:translateY(-1px)}
 .btn-excel{background:#10b981;color:#fff}
-.btn-pdf{background:#ef4444;color:#fff}
+.btn-pdf{background:#4f46e5;color:#fff}
 
 .resumo{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin:20px 0}
-.box{background:#e0f7fa;padding:15px;border-radius:12px;font-weight:700;text-align:center;font-size:14px}
+.box{background:#e0f7fa;padding:20px;border-radius:12px;font-weight:700;text-align:center;font-size:14px;transition:all .3s}
 .box span{display:block;font-size:16px;margin-top:5px;font-weight:800}
+
+.box.entrada{background:#d1fae5;color:#065f46}
+.box.saida{background:#fee2e2;color:#991b1b}
+.box.result{background:#e0e7ff;color:#3730a3}
 
 table{width:100%;border-collapse:collapse;margin-top:10px}
 th,td{padding:10px;border-bottom:1px solid #eee;text-align:left}
@@ -53,12 +57,14 @@ canvas{background:#fff;border-radius:12px;padding:10px;box-shadow:0 5px 15px rgb
     <h2 id="perfilTitulo"></h2>
     <div id="perfilDados"></div>
 
+    <!-- Painel de Saldos -->
     <div class="resumo" id="resumoSaldos">
       <div class="box entrada">Entradas<br><span id="ent"></span></div>
       <div class="box saida">Saídas<br><span id="sai"></span></div>
-      <div class="box">Resultado<br><span id="res"></span></div>
+      <div class="box result">Resultado<br><span id="res"></span></div>
     </div>
 
+    <!-- Tabela de Lançamentos -->
     <div class="card">
       <table>
         <thead>
@@ -74,6 +80,7 @@ canvas{background:#fff;border-radius:12px;padding:10px;box-shadow:0 5px 15px rgb
       </table>
     </div>
 
+    <!-- Gráficos -->
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between">
       <canvas id="chartPizza" width="300" height="300"></canvas>
       <canvas id="chartPerc" width="300" height="300"></canvas>
@@ -125,13 +132,13 @@ function renderDados(){
   ent.innerText=money(totalEnt);
   sai.innerText=money(totalSai);
   res.innerText=money(resultado);
-  res.style.color = resultado>=0?"#10b981":"#ef4444";
+  res.style.color = resultado>=0?"#065f46":"#991b1b";
 
   tb.innerHTML = dados.map(l=>`
     <tr>
       <td>${l.data||"-"}</td>
       <td>${l.cat||"-"}</td>
-      <td style="color:${l.tipo==="Entrada"?"#10b981":"#ef4444"}">${l.tipo}</td>
+      <td style="color:${l.tipo==="Entrada"?"#065f46":"#991b1b"}">${l.tipo}</td>
       <td>${money(l.valor)}</td>
       <td>${l.obs||"-"}</td>
     </tr>`).join("");
@@ -209,7 +216,7 @@ document.getElementById("btnPDF").onclick = function(){
     doc.text(`Documento: ${info.doc||"-"}`,M,y+32);
     y+=40;
 
-    // ===== Painel de saldos =====
+    // ===== Painel de Saldos =====
     const totalEnt = dados.filter(l=>l.tipo==="Entrada").reduce((a,l)=>a+Number(l.valor||0),0);
     const totalSai = dados.filter(l=>l.tipo==="Saída").reduce((a,l)=>a+Number(l.valor||0),0);
     const resultado = totalEnt-totalSai;
@@ -224,27 +231,27 @@ document.getElementById("btnPDF").onclick = function(){
     boxes.forEach(b=>{
       doc.setFillColor(...b.color);
       doc.setDrawColor(...b.color);
-      doc.roundedRect(boxX,y,60,15,3,"FD");
+      doc.roundedRect(boxX,y,60,20,5,"FD");
       doc.setTextColor(255,255,255);
-      doc.setFontSize(9); doc.text(b.text,boxX+3,y+5);
+      doc.setFontSize(9); doc.text(b.text,boxX+5,y+7);
       doc.setFont(undefined,"bold");
-      doc.text(money(b.val),boxX+3,y+11);
+      doc.text(money(b.val),boxX+5,y+15);
       boxX += 70;
     });
-    y+=25;
+    y+=30;
 
     // ===== Tabela =====
     doc.setFont(undefined,"bold"); doc.setFontSize(9);
     doc.setTextColor(31,41,55);
     doc.text("Lançamentos",M,y); y+=5;
     doc.setFont(undefined,"normal"); doc.setFontSize(8);
-    tbData = 0;
+
     dados.forEach(l=>{
       if(y>H-20){doc.addPage();y=20;}
       doc.text(l.data||"-",M,y);
       doc.text((l.cat||"-").substring(0,15),M+25,y);
       doc.setFont(undefined,"bold");
-      doc.setTextColor(l.tipo==="Entrada"?16,185,129:239,68,68);
+      doc.setTextColor(l.tipo==="Entrada"?16:239, l.tipo==="Entrada"?185:68, l.tipo==="Entrada"?129:68);
       doc.text(l.tipo||"-",M+75,y);
       doc.setFont(undefined,"normal"); doc.setTextColor(31,41,55);
       doc.text(money(l.valor),M+95,y);
@@ -252,7 +259,6 @@ document.getElementById("btnPDF").onclick = function(){
       y+=5;
     });
 
-    // ===== PDF pronto =====
     doc.save(`fluxopro_${perfil}_${Date.now()}.pdf`);
     loading.classList.remove("show");
   },300);
