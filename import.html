@@ -1,220 +1,155 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>FluxoPro – Importação</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-  
-  <!-- Bibliotecas -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<meta charset="UTF-8">
+<title>FluxoPro – Importação</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <style>
-    body{font-family:Inter;background:#f5f7fb;margin:0;color:#1f2937;}
-    .container{max-width:1100px;margin:auto;padding:30px;}
-    .card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 10px 20px rgba(0,0,0,.04);margin-bottom:20px;}
-    table{width:100%;border-collapse:collapse;}
-    th, td{padding:8px;border-bottom:1px solid #ddd;font-size:14px;text-align:left;}
-    th{background:#f9fafb;font-weight:700;}
-    button{padding:10px 14px;border:0;border-radius:10px;font-weight:700;cursor:pointer;transition:all .2s;}
-    button:hover{opacity:.8;transform:translateY(-1px);}
-    .btn-main{background:#4f46e5;color:#fff;}
-    .btn-cancel{background:#ef4444;color:#fff;}
-    input[type="file"]{padding:10px;border:2px dashed #4f46e5;border-radius:10px;cursor:pointer;width:100%;}
-    .status{padding:10px;border-radius:10px;margin:10px 0;font-weight:700;}
-    .status.success{background:#ecfdf5;color:#10b981;}
-    .status.error{background:#fef2f2;color:#ef4444;}
-    .status.warning{background:#fef9c3;color:#ca8a04;}
-    .actions{display:flex;gap:10px;flex-wrap:wrap;}
-    .badge{padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;}
-    .badge-entrada{background:#ecfdf5;color:#10b981;}
-    .badge-saida{background:#fef2f2;color:#ef4444;}
-    @media(max-width:600px){
-      .actions{flex-direction:column;}
-      input[type="file"]{width:100%;}
-    }
-  </style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+body{margin:0;font-family:Inter;background:#f5f7fb;color:#1f2937}
+.container{max-width:1100px;margin:auto;padding:30px}
+.card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 10px 20px rgba(0,0,0,.04);margin-bottom:20px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px;border-bottom:1px solid #ddd;font-size:14px;text-align:left}
+th{background:#f9fafb;font-weight:700}
+button{padding:10px 14px;border:0;border-radius:10px;font-weight:700;cursor:pointer;transition:all .2s}
+button:hover{opacity:.8;transform:translateY(-1px)}
+.btn-main{background:#4f46e5;color:#fff}
+.btn-cancel{background:#ef4444;color:#fff}
+input[type="file"]{padding:10px;border:2px dashed #4f46e5;border-radius:10px;cursor:pointer;width:100%;font-family:inherit}
+.status{padding:10px;border-radius:10px;margin:10px 0;font-weight:700}
+.status.success{background:#ecfdf5;color:#10b981}
+.status.error{background:#fef2f2;color:#ef4444}
+.status.warning{background:#fef9c3;color:#ca8a04}
+.info{background:#eff6ff;padding:15px;border-radius:10px;border-left:4px solid #4f46e5;margin-bottom:20px}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700}
+.badge-entrada{background:#ecfdf5;color:#10b981}
+.badge-saida{background:#fef2f2;color:#ef4444}
+.empty{text-align:center;padding:40px;color:#999}
+</style>
 </head>
 <body>
-  <div class="container">
 
-    <!-- UPLOAD -->
-    <div class="card">
-      <h2>📥 Importação Assistida</h2>
-      <input type="file" id="file" accept=".xlsx,.xls,.pdf">
-      <div id="statusBox"></div>
+<div class="container">
+
+  <div class="card">
+    <h2>📥 Importação Assistida</h2>
+    <div class="info">
+      <strong>📁 Perfil de destino:</strong> <span id="perfilNome"></span><br>
+      <small>Os dados serão adicionados sem remover existentes</small>
     </div>
+    <div class="info" style="background:#fef9c3;border-left-color:#ca8a04">
+      <strong>⚠️ Formato do Excel esperado:</strong><br>
+      • Colunas: Data | Categoria | Tipo | Valor | Observação<br>
+      • Tipo: "Entrada" ou "Saída"<br>
+      • Valor numérico<br>
+      • Data: AAAA-MM-DD ou DD/MM/AAAA
+    </div>
+    <input type="file" id="file" accept=".xlsx,.xls">
+    <div id="statusBox"></div>
+  </div>
 
-    <!-- PREVIEW -->
-    <div class="card" id="previewCard" style="display:none">
+  <div class="card" id="previewCard" style="display:none">
+    <h3>📋 Prévia dos dados (50 linhas)</h3>
+    <p><strong>Total válidos:</strong> <span id="countValid">0</span></p>
+    <p><strong>Ignorados:</strong> <span id="countIgnored">0</span></p>
+    <div style="overflow-x:auto">
       <table>
         <thead>
           <tr>
-            <th>#</th>
-            <th>Data</th>
-            <th>Categoria</th>
-            <th>Tipo</th>
-            <th>Valor</th>
-            <th>Obs</th>
-            <th>Status</th>
+            <th>#</th><th>Data</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Observação</th><th>Status</th>
           </tr>
         </thead>
         <tbody id="tb"></tbody>
       </table>
-      <div class="actions" style="margin-top:10px">
-        <button class="btn-main" onclick="confirmar()">Confirmar</button>
-        <button class="btn-cancel" onclick="window.close()">Cancelar</button>
-      </div>
     </div>
-
+    <div class="actions" style="margin-top:20px">
+      <button class="btn-main" onclick="confirmar()">✅ Confirmar importação</button>
+      <button class="btn-cancel" onclick="cancelar()">❌ Cancelar</button>
+    </div>
   </div>
+
+</div>
 
 <script>
 const KEY="fluxopro_v12";
-const params=new URLSearchParams(location.search);
-let perfil=params.get("perfil");
+let db = JSON.parse(localStorage.getItem(KEY)) || {profiles:{default:[]},active:'default'};
+let perfil=db.active;
+let buffer=[],ignored=[];
 
-let buffer=[], ignored=[], db;
+document.getElementById("perfilNome").innerText=perfil;
 
-db = JSON.parse(localStorage.getItem(KEY));
-if(!perfil) perfil = db.active;
-
-/* Normalizar e validar dados */
 function normalizeValue(v){
-  let s = String(v||"").replace(/[^\d,.-]/g,"").replace(",",".");
-  let n = parseFloat(s);
-  return isNaN(n)?null:n;
+  if(!v) return null;
+  let n=parseFloat(String(v).replace(/[^\d,.-]/g,"").replace(",","."));
+  return isNaN(n)||n===0?null:n;
 }
-
 function validateDate(d){
+  if(!d) return null;
   if(/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
-  if(/^\d{2}\/\d{2}\/\d{4}$/.test(d)){
-    const [a,b,c] = d.split("/");
-    return `${c}-${b}-${a}`;
-  }
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(d)){const[a,b,c]=d.split("/");return `${c}-${b}-${a}`;}
   return null;
 }
-
 function validateTipo(t){
-  t = String(t||"").toLowerCase();
-  if(t==="entrada") return "Entrada";
-  if(t==="saída"||t==="saida") return "Saída";
+  const tipo=String(t||"").trim();
+  if(tipo.toLowerCase()==="entrada") return "Entrada";
+  if(tipo.toLowerCase()==="saída"||tipo.toLowerCase()==="saida") return "Saída";
   return null;
 }
 
-/* UPLOAD DE ARQUIVOS */
-file.onchange = async () => {
-  buffer = [];
-  ignored = [];
-  const f = file.files[0];
-  if(!f) return;
+file.onchange=()=>{buffer=[];ignored=[];const reader=new FileReader();
+reader.onload=e=>{
+  try{
+    const wb=XLSX.read(e.target.result,{type:"binary"});
+    const sheet=wb.Sheets[wb.SheetNames[0]];
+    const data=XLSX.utils.sheet_to_json(sheet,{defval:""});
+    if(!data.length)return showStatus("⚠️ Arquivo vazio","warning");
 
-  const ext = f.name.split(".").pop().toLowerCase();
-  if(ext === "pdf") await importarPDF(f);
-  else importarExcel(f);
-};
-
-/* Excel */
-function importarExcel(f){
-  const r = new FileReader();
-  r.onload = e => {
-    const wb = XLSX.read(e.target.result, { type: "binary" });
-    const sh = wb.Sheets[wb.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(sh, { defval:"" });
-    processar(data);
-  };
-  r.readAsBinaryString(f);
-}
-
-/* PDF */
-async function importarPDF(f){
-  const ab = await f.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({data: ab}).promise;
-  let linhas = [];
-
-  for(let p=1; p<=pdf.numPages; p++){
-    const page = await pdf.getPage(p);
-    const c = await page.getTextContent();
-
-    let l="", ly=null;
-    c.items.forEach(i => {
-      if(ly!==null && Math.abs(i.transform[5]-ly) > 5){
-        linhas.push(l.trim()); l="";
-      }
-      l += i.str + " ";
-      ly = i.transform[5];
+    data.forEach((linha,index)=>{
+      const data=validateDate(linha.Data);
+      const tipo=validateTipo(linha.Tipo);
+      const valor=normalizeValue(linha.Valor);
+      const cat=linha.Categoria||"Sem categoria";
+      const obs=linha.Observacao||linha.Observação||"";
+      if(!tipo){ignored.push({linha:index+2,motivo:"Tipo inválido",original:linha});return;}
+      if(valor===null){ignored.push({linha:index+2,motivo:"Valor inválido",original:linha});return;}
+      if(!data){ignored.push({linha:index+2,motivo:"Data inválida",original:linha});return;}
+      buffer.push({data,cat,tipo,valor,obs});
     });
-    if(l.trim()) linhas.push(l.trim());
-  }
+    renderPreview();
+  }catch(err){showStatus("❌ Erro: "+err.message,"error");}
+};reader.readAsBinaryString(file.files[0]);}
 
-  const data=[];
-  linhas.forEach(t=>{
-    const m=t.match(/^(\d{4}-\d{2}-\d{2})\s+(.+?)\s+(Entrada|Saída)\s+R\$\s*([\d.,-]+)\s*(.*)$/);
-    if(!m) return;
-    data.push({Data:m[1],Categoria:m[2],Tipo:m[3],Valor:m[4],Observacao:m[5]});
-  });
-
-  processar(data);
-}
-
-/* PROCESSAR DADOS */
-function processar(data){
-  data.forEach((l,i)=>{
-    const d=validateDate(l.Data);
-    const t=validateTipo(l.Tipo);
-    const v=normalizeValue(l.Valor);
-
-    if(!d||!t||v===null){ ignored.push(l); return; }
-
-    buffer.push({
-      data: d,
-      cat: l.Categoria||"Sem categoria",
-      tipo: t,
-      valor: v,
-      obs: l.Observacao||""
-    });
-  });
-
-  render();
-}
-
-/* RENDER PREVIEW */
-function render(){
-  if(!buffer.length){
-    statusBox.innerHTML = "<div class='status error'>Nenhum dado válido</div>";
-    return;
-  }
-
-  previewCard.style.display = "block";
-
-  tb.innerHTML = buffer.map((l,i) => `
+function renderPreview(){
+  document.getElementById("countValid").innerText=buffer.length;
+  document.getElementById("countIgnored").innerText=ignored.length;
+  if(!buffer.length){showStatus("⚠️ Nenhum lançamento válido","error");previewCard.style.display="none";return;}
+  showStatus(`✅ ${buffer.length} lançamentos válidos encontrados!`,"success");
+  previewCard.style.display="block";
+  const preview=buffer.slice(0,50);
+  tb.innerHTML=preview.map((l,i)=>`
     <tr>
-      <td>${i+1}</td>
-      <td>${l.data}</td>
-      <td>${l.cat}</td>
-      <td><span class="badge badge-${l.tipo.toLowerCase()}">${l.tipo}</span></td>
-      <td>${l.valor.toFixed(2)}</td>
-      <td>${l.obs}</td>
-      <td>OK</td>
-    </tr>
-  `).join("");
+      <td>${i+1}</td><td>${l.data}</td><td>${l.cat}</td><td><span class="badge badge-${l.tipo.toLowerCase()}">${l.tipo}</span></td>
+      <td>R$ ${l.valor.toFixed(2)}</td><td>${l.obs||"-"}</td><td style="color:#10b981">✅ OK</td>
+    </tr>`).join("")+
+    ignored.slice(0,20).map(ign=>`<tr style="background:#fef2f2"><td>-</td><td colspan="5" style="color:#ef4444">${ign.motivo}</td><td style="color:#ef4444">❌ Ignorado</td></tr>`).join("");
 }
 
-/* CONFIRMAR IMPORTAÇÃO */
-function confirmar(){
-  buffer.forEach(l=>{
-    db.profiles[perfil].push({id:crypto.randomUUID(), ...l});
-  });
-  localStorage.setItem(KEY, JSON.stringify(db));
-  alert("Importado com sucesso");
+function showStatus(msg,type){statusBox.innerHTML=`<div class="status ${type}">${msg}</div>`;}
 
-  // Atualiza perfil do index automaticamente
-  if(window.opener && !window.opener.closed){
-    window.opener.refreshAll?.();
-  }
+function confirmar(){
+  if(!buffer.length)return alert("❌ Nenhum lançamento válido");
+  if(!confirm(`Importar ${buffer.length} lançamentos para ${perfil}?`))return;
+  buffer.forEach(l=>{db.profiles[perfil].push({id:crypto.randomUUID(),...l});});
+  localStorage.setItem(KEY,JSON.stringify(db));
+  alert(`✅ Importação concluída!`);
   window.close();
 }
+function cancelar(){if(confirm("❌ Cancelar importação?"))window.close();}
 </script>
 </body>
 </html>
