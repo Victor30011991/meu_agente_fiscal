@@ -1,3 +1,27 @@
-body{background:#fff1f2}
-.card{border:2px solid #fb7185}
-
+:root {
+  --bg:           #fff1f2;
+  --bg2:          #ffe4e6;
+  --card:         #ffffff;
+  --card-border:  #fecdd3;
+  --header-bg:    #ffffff;
+  --header-border:#fecdd3;
+  --text:         #4c0519;
+  --text2:        #be123c;
+  --text-inv:     #ffffff;
+  --primary:      #e11d48;
+  --primary-l:    #ffe4e6;
+  --primary-d:    #9f1239;
+  --ok:           #059669;
+  --ok-l:         #d1fae5;
+  --bad:          #dc2626;
+  --bad-l:        #fee2e2;
+  --warn:         #d97706;
+  --warn-l:       #fef3c7;
+  --table-alt:    #fff1f2;
+  --table-hover:  #ffe4e6;
+  --input-bg:     #fff1f2;
+  --input-border: #fda4af;
+  --shadow-sm:    0 1px 3px rgba(225,29,72,.08);
+  --shadow:       0 4px 16px rgba(225,29,72,.12);
+  --shadow-lg:    0 10px 30px rgba(225,29,72,.15);
+}
