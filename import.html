@@ -5,7 +5,11 @@
 <title>FluxoPro – Importação</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+<!-- Bibliotecas -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.16.105/pdf.min.js"></script>
+
 <style>
 body{font-family:Inter;background:#f5f7fb;margin:0;color:#1f2937}
 .container{max-width:1100px;margin:auto;padding:30px}
@@ -43,14 +47,15 @@ input[type="file"]{padding:10px;border:2px dashed #4f46e5;border-radius:10px;cur
     </div>
 
     <div class="info" style="background:#fef9c3;border-left-color:#ca8a04">
-      <strong>⚠️ Formato do Excel esperado:</strong><br>
-      • Colunas: Data | Categoria | Tipo | Valor | Observação<br>
-      • Tipo deve ser exatamente "Entrada" ou "Saída"<br>
+      <strong>⚠️ Formato esperado:</strong><br>
+      • Excel: Colunas: Data | Categoria | Tipo | Valor | Observação<br>
+      • PDF: Texto com linhas no mesmo formato (pipe "|" recomendado)<br>
+      • Tipo deve ser "Entrada" ou "Saída"<br>
       • Valor deve ser numérico (ex: 1500 ou 1500.50)<br>
       • Data no formato: AAAA-MM-DD ou DD/MM/AAAA
     </div>
 
-    <input type="file" id="file" accept=".xlsx,.xls">
+    <input type="file" id="file" accept=".xlsx,.xls,.pdf">
     
     <div id="statusBox"></div>
   </div>
@@ -133,7 +138,7 @@ function normalizeValue(v){
   let s = String(v)
     .replace(/[^\d,.-]/g,"")
     .replace(",", ".");
-  
+
   let n = parseFloat(s);
   return isNaN(n) || n === 0 ? null : n;
 }
@@ -144,23 +149,17 @@ function validateDate(d){
   
   let date;
   
-  // Tentar formato AAAA-MM-DD
   if(/^\d{4}-\d{2}-\d{2}$/.test(d)){
     date = d;
-  }
-  // Tentar formato DD/MM/AAAA
-  else if(/^\d{2}\/\d{2}\/\d{4}$/.test(d)){
+  } else if(/^\d{2}\/\d{2}\/\d{4}$/.test(d)){
     const [dia, mes, ano] = d.split("/");
     date = `${ano}-${mes}-${dia}`;
-  }
-  else {
+  } else {
     return null;
   }
   
-  // Validar se é data válida
   const [y, m, day] = date.split("-").map(Number);
   const testDate = new Date(y, m-1, day);
-  
   if(testDate.getFullYear() === y && testDate.getMonth() === m-1 && testDate.getDate() === day){
     return date;
   }
@@ -176,71 +175,103 @@ function validateTipo(t){
   return null;
 }
 
-// ✅ PROCESSAR ARQUIVO
-file.onchange = () => {
+// ✅ PROCESSAR ARQUIVO (EXCEL OU PDF)
+file.onchange = async () => {
   buffer = [];
   ignored = [];
-  
-  const reader = new FileReader();
-  
-  reader.onload = e => {
-    try {
-      const wb = XLSX.read(e.target.result, {type:"binary"});
-      const sheet = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(sheet, {defval:""});
-      
-      if(!data.length){
-        showStatus("⚠️ Arquivo vazio ou sem dados válidos", "warning");
-        return;
+  const arquivo = file.files[0];
+  const ext = arquivo.name.split('.').pop().toLowerCase();
+
+  if(ext === "xlsx" || ext === "xls") {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, {type:"binary"});
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(sheet, {defval:""});
+        processarLinhas(data);
+      } catch(err) {
+        showStatus("❌ Erro ao ler Excel: " + err.message, "error");
       }
-      
-      // ✅ VALIDAR CADA LINHA
-      data.forEach((linha, index) => {
-        const data = validateDate(linha.Data);
-        const tipo = validateTipo(linha.Tipo);
-        const valor = normalizeValue(linha.Valor);
-        const cat = String(linha.Categoria||"").trim();
-        const obs = String(linha.Observacao || linha.Observação || "").trim();
-        
-        // ✅ VALIDAÇÕES RÍGIDAS
-        if(!tipo){
-          ignored.push({linha: index+2, motivo: "Tipo inválido (use 'Entrada' ou 'Saída')", original: linha});
-          return;
-        }
-        
-        if(valor === null){
-          ignored.push({linha: index+2, motivo: "Valor inválido ou zero", original: linha});
-          return;
-        }
-        
-        if(!data){
-          ignored.push({linha: index+2, motivo: "Data inválida (use AAAA-MM-DD ou DD/MM/AAAA)", original: linha});
-          return;
-        }
-        
-        // ✅ DADOS VÁLIDOS
-        buffer.push({
-          data,
-          cat: cat || "Sem categoria",
-          tipo,
-          valor,
-          obs
-        });
+    };
+    reader.readAsBinaryString(arquivo);
+  } 
+  else if(ext === "pdf") {
+    try {
+      const arrayBuffer = await arquivo.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+      let textoCompleto = "";
+
+      for(let i=1; i<=pdf.numPages; i++){
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items.map(item => item.str).join(" ");
+        textoCompleto += pageText + "\n";
+      }
+
+      const linhas = textoCompleto.split("\n").map(l => {
+        const partes = l.split(/\s*\|\s*/); // separar por pipe |
+        return {
+          Data: partes[0],
+          Categoria: partes[1],
+          Tipo: partes[2],
+          Valor: partes[3],
+          Observacao: partes[4] || ""
+        };
       });
-      
-      renderPreview();
-      
+
+      processarLinhas(linhas);
+
     } catch(err) {
-      showStatus("❌ Erro ao ler arquivo: " + err.message, "error");
+      showStatus("❌ Erro ao ler PDF: " + err.message, "error");
     }
-  };
-  
-  reader.readAsBinaryString(file.files[0]);
+  } 
+  else {
+    showStatus("⚠️ Formato de arquivo não suportado", "warning");
+  }
 };
+
+// ✅ PROCESSAR LINHAS
+function processarLinhas(data){
+  if(!data.length){
+    showStatus("⚠️ Arquivo vazio ou sem dados válidos", "warning");
+    return;
+  }
+
+  data.forEach((linha, index) => {
+    const dataValida = validateDate(linha.Data);
+    const tipo = validateTipo(linha.Tipo);
+    const valor = normalizeValue(linha.Valor);
+    const cat = String(linha.Categoria||"").trim();
+    const obs = String(linha.Observacao || linha.Observação || "").trim();
+
+    if(!tipo){
+      ignored.push({linha: index+2, motivo: "Tipo inválido (use 'Entrada' ou 'Saída')", original: linha});
+      return;
+    }
+    if(valor === null){
+      ignored.push({linha: index+2, motivo: "Valor inválido ou zero", original: linha});
+      return;
+    }
+    if(!dataValida){
+      ignored.push({linha: index+2, motivo: "Data inválida (use AAAA-MM-DD ou DD/MM/AAAA)", original: linha});
+      return;
+    }
+
+    buffer.push({
+      data: dataValida,
+      cat: cat || "Sem categoria",
+      tipo,
+      valor,
+      obs
+    });
+  });
+
+  renderPreview();
+}
 
 // ✅ RENDERIZAR PRÉVIA
 function renderPreview(){
-  
   document.getElementById("countValid").innerText = buffer.length;
   document.getElementById("countIgnored").innerText = ignored.length;
   
@@ -253,7 +284,6 @@ function renderPreview(){
   showStatus(`✅ ${buffer.length} lançamentos válidos encontrados! Revise abaixo e confirme.`, "success");
   previewCard.style.display = "block";
   
-  // Mostrar primeiros 50 + ignorados
   const preview = buffer.slice(0, 50);
   
   tb.innerHTML = preview.map((l, i)=>`
@@ -267,7 +297,6 @@ function renderPreview(){
     <td style="color:#10b981">✅ OK</td>
   </tr>
   `).join("") + 
-  
   ignored.slice(0, 20).map(ign=>`
   <tr style="background:#fef2f2">
     <td>-</td>
@@ -288,7 +317,6 @@ function showStatus(msg, type){
 
 // ✅ CONFIRMAR IMPORTAÇÃO
 function confirmar(){
-  
   if(!buffer.length){
     alert("❌ Nenhum lançamento válido para importar");
     return;
@@ -309,7 +337,6 @@ function confirmar(){
     localStorage.setItem(KEY, JSON.stringify(db));
     
     alert(`✅ Importação concluída com sucesso!\n\n${buffer.length} lançamentos adicionados ao perfil "${perfil}"`);
-    
     window.close();
     
   } catch(err) {
