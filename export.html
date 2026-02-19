@@ -2,19 +2,18 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>FluxoPro - Relatório Oficial</title>
+<title>FluxoPro - Relatório Inteligente</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-/* Estilização Base */
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Inter,sans-serif;background:#f0f2f8;color:#1a1f36}
 .page{max-width:960px;margin:0 auto;padding:24px 20px}
 
-/* Topo e Botões */
+/* HEADER E BOTÕES */
 .top-bar{display:flex;justify-content:space-between;align-items:center;background:#fff;border-radius:14px;padding:16px 20px;border:1px solid #e2e5ef;box-shadow:0 2px 8px rgba(0,0,0,.05);margin-bottom:20px;gap:12px;flex-wrap:wrap}
 .top-bar h1{font-size:17px;font-weight:800;color:#1a1f36}
 .top-bar span{font-size:12px;color:#6b7280}
@@ -24,101 +23,87 @@ button:hover{opacity:.85;transform:translateY(-1px)}
 .btn-excel{background:#059669;color:#fff}
 .btn-pdf{background:#4f46e5;color:#fff}
 
-/* Cards e Tabelas */
+/* CARDS */
 .card{background:#fff;border-radius:14px;border:1px solid #e2e5ef;box-shadow:0 2px 8px rgba(0,0,0,.05);margin-bottom:16px;overflow:hidden}
 .card-head{padding:14px 20px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f1f3f9}
 .card-head h2{font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px}
 .dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
 
-/* KPIs */
+/* PAINEL DE SALDOS */
 .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 20px}
 .kpi{border-radius:10px;padding:14px;text-align:center;border:1px solid transparent}
 .kpi-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
 .kpi-val{font-size:19px;font-weight:800;letter-spacing:-1px}
-.kpi-ent{background:#f0fdf4;border-color:#bbf7d0} .kpi-ent .kpi-val{color:#059669}
-.kpi-sai{background:#fef2f2;border-color:#fecaca} .kpi-sai .kpi-val{color:#dc2626}
-.kpi-net{background:#eef2ff;border-color:#c7d2fe} .kpi-net .kpi-val{color:#4f46e5}
+.kpi-ent{background:#f0fdf4;border-color:#bbf7d0;color:#059669}
+.kpi-sai{background:#fef2f2;border-color:#fecaca;color:#dc2626}
+.kpi-net{background:#eef2ff;border-color:#c7d2fe;color:#4f46e5}
 
-/* Tabela de Extrato */
+/* GRÁFICOS */
+.chart-container{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px 20px}
+.chart-box{border:1px solid #f1f3f9;border-radius:12px;padding:15px;background:#fff;text-align:center}
+.chart-box h3{font-size:11px;margin-bottom:15px;color:#6b7280;text-transform:uppercase}
+
+/* TABELA */
 table{width:100%;border-collapse:collapse}
-th{padding:9px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;background:#f8fafc;border-bottom:1px solid #e2e5ef;color:#6b7280}
-td{padding:9px 12px;font-size:13px;border-bottom:1px solid #f1f3f9}
-.badge{padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase}
-.ent{background:#f0fdf4;color:#059669} .sai{background:#fef2f2;color:#dc2626}
+th{padding:10px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;background:#f8fafc;color:#6b7280;border-bottom:1px solid #e2e5ef}
+td{padding:10px 12px;font-size:13px;border-bottom:1px solid #f1f3f9}
+.badge{padding:3px 8px;border-radius:12px;font-size:10px;font-weight:700;text-transform:uppercase}
+.ent{background:#f0fdf4;color:#059669}
+.sai{background:#fef2f2;color:#dc2626}
 
-/* Gráficos */
-.chart-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px 20px}
-.chart-box{border:1px solid #f1f3f9;border-radius:10px;padding:12px;text-align:center}
-
-/* Loading */
-.loading{display:none;position:fixed;inset:0;background:rgba(10,15,30,.55);backdrop-filter:blur(4px);z-index:999;flex-direction:column;align-items:center;justify-content:center;color:#fff}
+.loading{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;align-items:center;justify-content:center;color:#fff;font-weight:bold}
 .loading.show{display:flex}
-.spinner{width:40px;height:40px;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 
-<div class="loading" id="loading">
-    <div class="spinner"></div>
-    <p style="margin-top:10px">Gerando documento...</p>
-</div>
-
-<div style="position:absolute;left:-9999px;">
-    <canvas id="cvPizza" width="400" height="300"></canvas>
-    <canvas id="cvEvolucao" width="400" height="300"></canvas>
-    <canvas id="cvTop" width="400" height="300"></canvas>
-</div>
+<div class="loading" id="loading">Gerando Documentos...</div>
 
 <div class="page">
     <div class="top-bar">
         <div>
-            <h1>📈 Relatório FluxoPro</h1>
-            <span id="headerSub">A processar lançamentos...</span>
+            <h1>📊 Relatório Dinâmico FluxoPro</h1>
+            <span id="headerSub">Organizando dados cronologicamente...</span>
         </div>
         <div class="btn-group">
-            <button class="btn-excel" onclick="exportExcel()">💾 Baixar Excel</button>
-            <button class="btn-pdf" onclick="exportPDF()">📄 Baixar PDF</button>
+            <button class="btn-excel" onclick="exportExcel()">Baixar Excel</button>
+            <button class="btn-pdf" onclick="exportPDF()">Baixar PDF</button>
         </div>
     </div>
 
     <div class="card">
-        <div class="card-head"><span class="dot" style="background:#4f46e5"></span><h2>Identificação</h2></div>
-        <div style="padding:16px 20px; display:grid; grid-template-columns: 1fr 1fr; gap:10px">
-            <div><label style="font-size:10px; font-weight:700; color:#9ca3af">NOME/RAZÃO SOCIAL</label><div id="piNome" style="font-weight:600">-</div></div>
-            <div><label style="font-size:10px; font-weight:700; color:#9ca3af">CPF/CNPJ</label><div id="piDoc" style="font-weight:600">-</div></div>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-head"><span class="dot" style="background:#059669"></span><h2>Painel Financeiro</h2></div>
         <div class="kpi-grid">
             <div class="kpi kpi-ent">
-                <div class="kpi-label">Entradas</div>
-                <div class="kpi-val" id="kEnt">R$ 0</div>
+                <div class="kpi-label">Total Entradas</div>
+                <div id="vEnt" class="kpi-val">R$ 0,00</div>
             </div>
             <div class="kpi kpi-sai">
-                <div class="kpi-label">Saídas</div>
-                <div class="kpi-val" id="kSai">R$ 0</div>
+                <div class="kpi-label">Total Saídas</div>
+                <div id="vSai" class="kpi-val">R$ 0,00</div>
             </div>
             <div class="kpi kpi-net">
-                <div class="kpi-label">Líquido</div>
-                <div class="kpi-val" id="kNet">R$ 0</div>
+                <div class="kpi-label">Saldo Final</div>
+                <div id="vNet" class="kpi-val">R$ 0,00</div>
             </div>
         </div>
     </div>
 
     <div class="card">
-        <div class="card-head"><span class="dot" style="background:#7c3aed"></span><h2>Resumo Gráfico</h2></div>
-        <div class="chart-row">
-            <div class="chart-box"><h3>Gastos por Categoria</h3><canvas id="chartPizza" height="200"></canvas></div>
-            <div class="chart-box"><h3>Evolução</h3><canvas id="chartEvo" height="200"></canvas></div>
-            <div class="chart-box"><h3>Volume</h3><canvas id="chartBar" height="200"></canvas></div>
+        <div class="card-head"><span class="dot" style="background:#7c3aed"></span><h2>Análise Automática de Categorias</h2></div>
+        <div class="chart-container">
+            <div class="chart-box">
+                <h3>Distribuição por Categoria</h3>
+                <canvas id="canvasPizza"></canvas>
+            </div>
+            <div class="chart-box">
+                <h3>Volume por Tipo (Entrada vs Saída)</h3>
+                <canvas id="canvasBarra"></canvas>
+            </div>
         </div>
     </div>
 
     <div class="card">
-        <div class="card-head"><span class="dot" style="background:#d97706"></span><h2>Extrato Cronológico Detalhado</h2></div>
+        <div class="card-head"><span class="dot" style="background:#d97706"></span><h2>Extrato Completo (Ordenado por Data)</h2></div>
         <table>
             <thead>
                 <tr>
@@ -126,7 +111,6 @@ td{padding:9px 12px;font-size:13px;border-bottom:1px solid #f1f3f9}
                     <th>Categoria</th>
                     <th>Tipo</th>
                     <th style="text-align:right">Valor</th>
-                    <th>Observação</th>
                 </tr>
             </thead>
             <tbody id="tbBody"></tbody>
@@ -136,83 +120,101 @@ td{padding:9px 12px;font-size:13px;border-bottom:1px solid #f1f3f9}
 
 <script>
 const KEY = "fluxopro_v12";
-let db, dados, perfil, info;
+let dadosOrdenados = [];
+const CORES = ["#4f46e5","#059669","#dc2626","#d97706","#7c3aed","#db2777","#0891b2","#65a30d","#f59e0b","#10b981"];
 
 function fmt(v) { return new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0); }
 
-// INICIALIZAÇÃO E CORREÇÃO DE LOGICA
+// INICIALIZAÇÃO E ORDENAÇÃO
 try {
-    db = JSON.parse(localStorage.getItem(KEY));
-    if (!db) throw new Error("Base não encontrada");
-    
-    perfil = db.active;
-    info = db.profileInfo ? db.profileInfo[perfil] : {};
-    
-    // CORREÇÃO CRITICAL: Ordenação por data (Y-M-D) antes de qualquer renderização
+    const db = JSON.parse(localStorage.getItem(KEY));
+    const perfil = db.active;
     const brutos = db.profiles[perfil] || [];
-    dados = brutos.sort((a, b) => new Date(a.data) - new Date(b.data));
-
-    render();
+    
+    // CORREÇÃO DE DATA: Transforma strings em datas reais para ordenar corretamente
+    dadosOrdenados = brutos.sort((a, b) => new Date(a.data) - new Date(b.data));
+    
+    processarDados();
 } catch(e) { 
-    alert("Erro ao carregar dados. Certifique-se de que existem lançamentos no FluxoPro.");
+    console.error("Erro ao carregar base:", e);
+    alert("Dados não encontrados. Verifique se o FluxoPro possui lançamentos.");
 }
 
-function render() {
-    let tEnt = 0, tSai = 0;
+function processarDados() {
+    let somaEnt = 0, somaSai = 0;
+    const categoriasMapa = {}; // Para o gráfico de pizza dinâmico
     const tb = document.getElementById("tbBody");
     tb.innerHTML = "";
 
-    // Preencher Identificação
-    document.getElementById("piNome").innerText = info.nome || perfil;
-    document.getElementById("piDoc").innerText = info.doc || "---";
+    dadosOrdenados.forEach(item => {
+        const val = parseFloat(item.valor || 0);
+        const tipo = (item.tipo || "").toLowerCase();
+        const isEntrada = tipo.includes("entrada");
+        
+        if(isEntrada) somaEnt += val; else somaSai += val;
 
-    // Mapeamento para gráficos
-    const catGastos = {};
+        // MAPEAR CATEGORIAS PARA O GRÁFICO (Soma automática de qualquer nome que existir)
+        const catNome = item.cat || "Geral";
+        categoriasMapa[catNome] = (categoriasMapa[catNome] || 0) + val;
 
-    dados.forEach(l => {
-        const v = Number(l.valor || 0);
-        const isEnt = l.tipo.toLowerCase().includes("entrada");
-        isEnt ? tEnt += v : tSai += v;
-
-        if(!isEnt) catGastos[l.cat] = (catGastos[l.cat] || 0) + v;
-
+        // INSERIR NA TABELA
         tb.innerHTML += `
             <tr>
-                <td style="font-weight:600">${l.data}</td>
-                <td>${l.cat}</td>
-                <td><span class="badge ${isEnt?'ent':'sai'}">${l.tipo}</span></td>
-                <td style="text-align:right; font-weight:bold; color:${isEnt?'#059669':'#dc2626'}">${fmt(v)}</td>
-                <td style="font-size:11px; color:#9ca3af">${l.obs || ''}</td>
+                <td><b>${item.data}</b></td>
+                <td>${item.cat}</td>
+                <td><span class="badge ${isEntrada?'ent':'sai'}">${item.tipo}</span></td>
+                <td style="text-align:right; font-weight:bold; color:${isEntrada?'#059669':'#dc2626'}">${fmt(val)}</td>
             </tr>`;
     });
 
-    document.getElementById("kEnt").innerText = fmt(tEnt);
-    document.getElementById("kSai").innerText = fmt(tSai);
-    const net = tEnt - tSai;
-    document.getElementById("kNet").innerText = fmt(net);
-    document.getElementById("kNet").style.color = net >= 0 ? "#059669" : "#dc2626";
-    document.getElementById("headerSub").innerText = `Perfil: ${perfil} | ${dados.length} lançamentos ordenados`;
-    
-    initCharts(tEnt, tSai, catGastos);
+    // ATUALIZAR PAINEL
+    document.getElementById("vEnt").innerText = fmt(somaEnt);
+    document.getElementById("vSai").innerText = fmt(somaSai);
+    const liquido = somaEnt - somaSai;
+    document.getElementById("vNet").innerText = fmt(liquido);
+    document.getElementById("vNet").style.color = liquido >= 0 ? "#059669" : "#dc2626";
+    document.getElementById("headerSub").innerText = `Exibindo ${dadosOrdenados.length} lançamentos em ordem cronológica.`;
+
+    renderizarGraficos(somaEnt, somaSai, categoriasMapa);
 }
 
-function initCharts(ent, sai, catGastos) {
-    // Gráfico de Barras Volume
-    new Chart(document.getElementById('chartBar'), {
-        type: 'bar',
-        data: { labels: ['Entradas', 'Saídas'], datasets: [{ data: [ent, sai], backgroundColor: ['#059669', '#dc2626'] }]},
-        options: { plugins: { legend: { display: false } }, responsive: true }
+function renderizarGraficos(ent, sai, mapa) {
+    // 1. Gráfico de Categorias (Lê qualquer categoria criada)
+    new Chart(document.getElementById('canvasPizza'), {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(mapa),
+            datasets: [{
+                data: Object.values(mapa),
+                backgroundColor: CORES,
+                borderWidth: 0
+            }]
+        },
+        options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } } }
     });
 
-    // Gráfico de Pizza Categorias
-    new Chart(document.getElementById('chartPizza'), {
-        type: 'doughnut',
-        data: { 
-            labels: Object.keys(catGastos), 
-            datasets: [{ data: Object.values(catGastos), backgroundColor: ['#4f46e5', '#7c3aed', '#db2777', '#ea580c', '#d97706'] }]
+    // 2. Gráfico de Tipos (Soma total de Entradas vs Saídas)
+    new Chart(document.getElementById('canvasBarra'), {
+        type: 'bar',
+        data: {
+            labels: ['Entradas', 'Saídas'],
+            datasets: [{
+                label: 'Volume (R$)',
+                data: [ent, sai],
+                backgroundColor: ['#059669', '#dc2626'],
+                borderRadius: 5
+            }]
         },
-        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } } }
+        options: { plugins: { legend: { display: false } } }
     });
+}
+
+// FUNÇÕES DE EXPORTAÇÃO
+function exportExcel() {
+    const ws = XLSX.utils.json_to_sheet(dadosOrdenados);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Lancamentos_Ordenados");
+    XLSX.writeFile(wb, "Relatorio_FluxoPro.xlsx");
 }
 
 function exportPDF() {
@@ -223,50 +225,33 @@ function exportPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
-        // Cabeçalho PDF
-        doc.setFillColor(79, 70, 229);
-        doc.rect(0, 0, 210, 40, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(18);
-        doc.text("RELATÓRIO FINANCEIRO FLUXOPRO", 14, 20);
+        doc.setFontSize(16);
+        doc.text("EXTRATO FINANCEIRO FLUXOPRO", 14, 20);
         doc.setFontSize(10);
-        doc.text(`Perfil: ${perfil} | Emitido em: ${new Date().toLocaleDateString()}`, 14, 28);
-
-        // Tabela no PDF (Usando a lista já ordenada 'dados')
-        doc.setTextColor(26, 31, 54);
-        doc.setFont(undefined, 'bold');
-        doc.text("EXTRATO CRONOLÓGICO", 14, 50);
+        doc.text("Dados organizados por data cronológica", 14, 28);
         
-        let y = 60;
-        doc.setFontSize(8);
+        let y = 40;
+        doc.setFont(undefined, 'bold');
         doc.text("DATA", 14, y);
-        doc.text("CATEGORIA", 40, y);
-        doc.text("TIPO", 90, y);
-        doc.text("VALOR", 130, y);
-        doc.line(14, y+2, 196, y+2);
-        y += 8;
+        doc.text("CATEGORIA", 45, y);
+        doc.text("TIPO", 95, y);
+        doc.text("VALOR", 145, y);
+        doc.line(14, y+2, 190, y+2);
+        y += 10;
 
         doc.setFont(undefined, 'normal');
-        dados.forEach((l) => {
+        dadosOrdenados.forEach(l => {
             if (y > 280) { doc.addPage(); y = 20; }
             doc.text(l.data, 14, y);
-            doc.text(l.cat.substring(0, 20), 40, y);
-            doc.text(l.tipo, 90, y);
-            doc.text(fmt(l.valor), 130, y);
-            y += 6;
+            doc.text(String(l.cat).substring(0, 20), 45, y);
+            doc.text(l.tipo, 95, y);
+            doc.text(fmt(l.valor), 145, y);
+            y += 7;
         });
-        
-        doc.save(`FluxoPro_Ordenado_${perfil}.pdf`);
-        loading.classList.remove("show");
-    }, 800);
-}
 
-function exportExcel() {
-    // Exporta os dados já ordenados
-    const ws = XLSX.utils.json_to_sheet(dados);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Lançamentos");
-    XLSX.writeFile(wb, `FluxoPro_Ordenado_${perfil}.xlsx`);
+        doc.save("Relatorio_FluxoPro_Final.pdf");
+        loading.classList.remove("show");
+    }, 500);
 }
 </script>
 </body>
