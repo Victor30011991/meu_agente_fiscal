@@ -14,24 +14,23 @@
 <style>
 body{margin:0;font-family:Inter,sans-serif;background:#f5f7fb;color:#1f2937}
 .container{max-width:1000px;margin:auto;padding:30px}
-.card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 10px 20px rgba(0,0,0,.04);margin-bottom:20px}
+.card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 5px 15px rgba(0,0,0,.05);margin-bottom:20px}
 .top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:20px}
 button{padding:10px 14px;border:0;border-radius:10px;font-weight:700;cursor:pointer;transition:all .2s}
 button:hover{opacity:.8;transform:translateY(-1px)}
 .btn-excel{background:#10b981;color:#fff}
-.btn-pdf{background:#4f46e5;color:#fff}
+.btn-pdf{background:#ef4444;color:#fff}
 
-.resumo{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin:20px 0}
-.box{background:#e0f7fa;padding:20px;border-radius:12px;font-weight:700;text-align:center;font-size:14px;transition:all .3s}
+.resumo{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin:20px 0}
+.box{padding:12px;border-radius:10px;font-weight:700;text-align:center;font-size:14px;position:relative}
 .box span{display:block;font-size:16px;margin-top:5px;font-weight:800}
+.box::after{content:"";position:absolute;right:0;top:0;width:1px;height:100%;background:#ddd}
 
-.box.entrada{background:#d1fae5;color:#065f46}
-.box.saida{background:#fee2e2;color:#991b1b}
-.box.result{background:#e0e7ff;color:#3730a3}
+.box:last-child::after{display:none}
 
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{padding:10px;border-bottom:1px solid #eee;text-align:left}
-th{background:#fafafa}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}
+th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}
+th{background:#fafafa;font-weight:600}
 
 canvas{background:#fff;border-radius:12px;padding:10px;box-shadow:0 5px 15px rgba(0,0,0,.05);margin-bottom:15px}
 
@@ -57,14 +56,13 @@ canvas{background:#fff;border-radius:12px;padding:10px;box-shadow:0 5px 15px rgb
     <h2 id="perfilTitulo"></h2>
     <div id="perfilDados"></div>
 
-    <!-- Painel de Saldos -->
     <div class="resumo" id="resumoSaldos">
-      <div class="box entrada">Entradas<br><span id="ent"></span></div>
-      <div class="box saida">Saídas<br><span id="sai"></span></div>
-      <div class="box result">Resultado<br><span id="res"></span></div>
+      <div class="box entrada" id="boxEnt">Entradas<br><span id="ent"></span></div>
+      <div class="box saida" id="boxSai">Saídas<br><span id="sai"></span></div>
+      <div class="box liquido" id="boxRes">Líquido<br><span id="res"></span></div>
+      <div class="box saude" id="boxSaude">Saúde Financeira<br><span id="saude"></span></div>
     </div>
 
-    <!-- Tabela de Lançamentos -->
     <div class="card">
       <table>
         <thead>
@@ -80,7 +78,6 @@ canvas{background:#fff;border-radius:12px;padding:10px;box-shadow:0 5px 15px rgb
       </table>
     </div>
 
-    <!-- Gráficos -->
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between">
       <canvas id="chartPizza" width="300" height="300"></canvas>
       <canvas id="chartPerc" width="300" height="300"></canvas>
@@ -96,7 +93,6 @@ document.addEventListener("DOMContentLoaded",()=>{
 const KEY="fluxopro_v12";
 let db = JSON.parse(localStorage.getItem(KEY)) || {active:"default", profiles:{default:[]}, profileInfo:{}};
 
-// Inicializa perfil ativo
 if(!db.active || !db.profiles[db.active]) {
   db.active = Object.keys(db.profiles)[0] || "default";
   if(!db.profiles[db.active]) db.profiles[db.active]=[];
@@ -109,6 +105,7 @@ let info = db.profileInfo?.[perfil] || {};
 const ent = document.getElementById("ent");
 const sai = document.getElementById("sai");
 const res = document.getElementById("res");
+const saude = document.getElementById("saude");
 const tb  = document.getElementById("tb");
 const perfilTitulo = document.getElementById("perfilTitulo");
 const perfilDados  = document.getElementById("perfilDados");
@@ -116,29 +113,41 @@ const loading = document.getElementById("loading");
 
 function money(v){ return new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0); }
 
+function calcularSaude(entTotal,saiTotal){
+  const liquido = entTotal-saiTotal;
+  let msg = "Saudável";
+  if(entTotal===0 && saiTotal===0) msg="Sem movimentação";
+  else if(liquido < 0) msg="Atenção: gastos maiores que entradas";
+  else if(liquido < entTotal*0.3) msg="Moderado: atenção ao saldo";
+  return msg;
+}
+
 function renderDados(){
   let totalEnt=0,totalSai=0;
+  let categoriasEnt={}, categoriasSai={};
+
   dados.forEach(l=>{
     let v=Number(l.valor||0);
-    if(l.tipo==="Entrada") totalEnt+=v;
-    else if(l.tipo==="Saída") totalSai+=v;
+    if(l.tipo==="Entrada"){ totalEnt+=v; categoriasEnt[l.cat]=(categoriasEnt[l.cat]||0)+v;}
+    else if(l.tipo==="Saída"){ totalSai+=v; categoriasSai[l.cat]=(categoriasSai[l.cat]||0)+v;}
   });
 
-  let resultado = totalEnt-totalSai;
+  const liquido = totalEnt-totalSai;
 
   perfilTitulo.innerText="Perfil: "+perfil;
   perfilDados.innerHTML=`<p><b>Nome:</b> ${info.nome||"-"}</p><p><b>Documento:</b> ${info.doc||"-"}</p>`;
 
   ent.innerText=money(totalEnt);
   sai.innerText=money(totalSai);
-  res.innerText=money(resultado);
-  res.style.color = resultado>=0?"#065f46":"#991b1b";
+  res.innerText=money(liquido);
+  res.style.color = liquido>=0?"#10b981":"#ef4444";
+  saude.innerText = calcularSaude(totalEnt,totalSai);
 
   tb.innerHTML = dados.map(l=>`
     <tr>
       <td>${l.data||"-"}</td>
       <td>${l.cat||"-"}</td>
-      <td style="color:${l.tipo==="Entrada"?"#065f46":"#991b1b"}">${l.tipo}</td>
+      <td style="color:${l.tipo==="Entrada"?"#10b981":"#ef4444"}">${l.tipo}</td>
       <td>${money(l.valor)}</td>
       <td>${l.obs||"-"}</td>
     </tr>`).join("");
@@ -202,47 +211,54 @@ document.getElementById("btnPDF").onclick = function(){
     const W=210,H=297,M=12;
     let y=20;
 
-    // ===== Cabeçalho colorido =====
-    doc.setFillColor(79,70,229);
-    doc.rect(0,0,W,30,"F");
-    doc.setFontSize(14); doc.setTextColor(255,255,255);
-    doc.setFont(undefined,"bold");
-    doc.text("Relatório FluxoPro",M,20);
+    // ===== Cabeçalho colorido (tema) =====
+    doc.setFillColor(79,70,229); // Pode alterar dinamicamente de acordo com tema
+    doc.rect(0,0,W,25,"F");
+    doc.setFontSize(14); doc.setTextColor(255,255,255); doc.setFont(undefined,"bold");
+    doc.text("Relatório FluxoPro",M,18);
 
     // ===== Perfil =====
     doc.setFontSize(10); doc.setFont(undefined,"normal"); doc.setTextColor(31,41,55);
-    doc.text(`Perfil: ${perfil}`,M,y+20);
-    doc.text(`Nome: ${info.nome||"-"}`,M,y+26);
-    doc.text(`Documento: ${info.doc||"-"}`,M,y+32);
-    y+=40;
+    y+=10;
+    doc.text(`Perfil: ${perfil}`,M,y);
+    doc.text(`Nome: ${info.nome||"-"}`,M,y+6);
+    doc.text(`Documento: ${info.doc||"-"}`,M,y+12);
+    y+=20;
 
-    // ===== Painel de Saldos =====
+    // ===== Painel de Resumo Financeiro =====
     const totalEnt = dados.filter(l=>l.tipo==="Entrada").reduce((a,l)=>a+Number(l.valor||0),0);
     const totalSai = dados.filter(l=>l.tipo==="Saída").reduce((a,l)=>a+Number(l.valor||0),0);
-    const resultado = totalEnt-totalSai;
+    const liquido = totalEnt-totalSai;
+    const saudeMsg = calcularSaude(totalEnt,totalSai);
 
     const boxes = [
       {text:"Entradas",val:totalEnt,color:[16,185,129]},
       {text:"Saídas",val:totalSai,color:[239,68,68]},
-      {text:"Resultado",val:resultado,color:[79,70,229]}
+      {text:"Líquido",val:liquido,color:[79,70,229]},
+      {text:"Saúde Financeira",val:0,color:[107,114,128],msg:saudeMsg}
     ];
 
     let boxX = M;
     boxes.forEach(b=>{
       doc.setFillColor(...b.color);
       doc.setDrawColor(...b.color);
-      doc.roundedRect(boxX,y,60,20,5,"FD");
+      doc.roundedRect(boxX,y,45,18,3,"FD");
       doc.setTextColor(255,255,255);
-      doc.setFontSize(9); doc.text(b.text,boxX+5,y+7);
+      doc.setFontSize(8);
       doc.setFont(undefined,"bold");
-      doc.text(money(b.val),boxX+5,y+15);
-      boxX += 70;
+      doc.text(b.text,boxX+2,y+5);
+      if(b.text!=="Saúde Financeira"){
+        doc.text(money(b.val),boxX+2,y+13);
+      } else {
+        doc.setFont(undefined,"normal");
+        doc.text(b.msg,boxX+2,y+13);
+      }
+      boxX += 50;
     });
-    y+=30;
+    y+=25;
 
     // ===== Tabela =====
-    doc.setFont(undefined,"bold"); doc.setFontSize(9);
-    doc.setTextColor(31,41,55);
+    doc.setFont(undefined,"bold"); doc.setFontSize(9); doc.setTextColor(31,41,55);
     doc.text("Lançamentos",M,y); y+=5;
     doc.setFont(undefined,"normal"); doc.setFontSize(8);
 
@@ -251,14 +267,15 @@ document.getElementById("btnPDF").onclick = function(){
       doc.text(l.data||"-",M,y);
       doc.text((l.cat||"-").substring(0,15),M+25,y);
       doc.setFont(undefined,"bold");
-      doc.setTextColor(l.tipo==="Entrada"?16:239, l.tipo==="Entrada"?185:68, l.tipo==="Entrada"?129:68);
-      doc.text(l.tipo||"-",M+75,y);
+      doc.setTextColor(l.tipo==="Entrada"?16,185,129:239,68,68);
+      doc.text(l.tipo||"-",M+60,y);
       doc.setFont(undefined,"normal"); doc.setTextColor(31,41,55);
-      doc.text(money(l.valor),M+95,y);
-      doc.text((l.obs||"-").substring(0,25),M+120,y);
+      doc.text(money(l.valor),M+80,y);
+      doc.text((l.obs||"-").substring(0,25),M+100,y);
       y+=5;
     });
 
+    // ===== PDF pronto =====
     doc.save(`fluxopro_${perfil}_${Date.now()}.pdf`);
     loading.classList.remove("show");
   },300);
