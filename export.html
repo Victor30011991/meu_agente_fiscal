@@ -10,21 +10,27 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 body{margin:0;font-family:Inter;background:#f5f7fb;color:#1f2937}
-.container{max-width:1000px;margin:auto;padding:30px}
-.top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:20px}
-button{padding:10px 14px;border:0;border-radius:10px;font-weight:700;cursor:pointer;transition:all .2s}
-button:hover{opacity:.8;transform:translateY(-1px)}
+.container{max-width:1200px;margin:auto;padding:20px}
+.top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:20px;gap:10px}
+.top h1{margin:0;font-weight:800;color:#fff;background:#4f46e5;padding:14px 20px;border-radius:12px;flex:1;text-align:center}
+button{padding:10px 16px;border:0;border-radius:10px;font-weight:700;cursor:pointer;transition:all .2s}
+button:hover{opacity:.85;transform:translateY(-1px)}
 .btn-excel{background:#10b981;color:#fff}
 .btn-pdf{background:#ef4444;color:#fff}
-.card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 10px 20px rgba(0,0,0,.04);margin-bottom:20px}
-.resumo{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0}
-.box{border-radius:12px;padding:15px;text-align:center;font-weight:700;color:#fff}
-.entrada{background:#22c55e}
-.saida{background:#ef4444}
-.liquido{background:#3b82f6}
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{padding:8px;border-bottom:1px solid #eee;text-align:left;font-size:12px}
-th{background:#fafafa}
+.saldos{display:flex;gap:10px;margin:20px 0;flex-wrap:wrap;justify-content:space-between}
+.saldo-box{flex:1;background:#eef9f6;padding:16px;border-radius:12px;text-align:center;font-weight:700;box-shadow:0 5px 15px rgba(0,0,0,.05)}
+.saldo-box span{display:block;font-size:1.4rem;margin-top:4px}
+.entrada{color:#10b981}
+.saida{color:#ef4444}
+.liquido{color:#4f46e5}
+table{width:100%;border-collapse:collapse;margin-top:10px;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 10px 20px rgba(0,0,0,.05)}
+th,td{padding:10px;text-align:left;border-bottom:1px solid #eee}
+th{background:#fafafa;font-weight:700}
+.zebra{background:#f9fafb}
+.graficos{display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;justify-content:space-between}
+canvas{background:#fff;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,.05)}
+.relatorio{margin-top:20px;background:#fff;border-radius:12px;padding:16px;box-shadow:0 5px 15px rgba(0,0,0,.05)}
+.relatorio p{margin:6px 0;font-size:0.95rem}
 .loading{display:none;align-items:center;justify-content:center;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:9999}
 .loading.show{display:flex}
 .spinner{border:4px solid #f3f4f6;border-top:4px solid #4f46e5;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite}
@@ -44,183 +50,194 @@ th{background:#fafafa}
     </div>
   </div>
 
-  <div class="card">
-    <h2 id="perfilTitulo"></h2>
-    <div id="perfilDados"></div>
-
-    <div class="resumo">
-      <div class="box entrada" id="ent"></div>
-      <div class="box saida" id="sai"></div>
-      <div class="box liquido" id="res"></div>
+  <div class="saldos">
+    <div class="saldo-box">
+      Entradas
+      <span id="ent" class="entrada">R$0,00</span>
     </div>
-
-    <div id="conteudo">
-      <table>
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Categoria</th>
-            <th>Tipo</th>
-            <th>Valor</th>
-            <th>Observação</th>
-          </tr>
-        </thead>
-        <tbody id="tb"></tbody>
-      </table>
+    <div class="saldo-box">
+      Saídas
+      <span id="sai" class="saida">R$0,00</span>
+    </div>
+    <div class="saldo-box">
+      Saldo Líquido
+      <span id="res" class="liquido">R$0,00</span>
     </div>
   </div>
-</div>
 
-<!-- Gráficos offscreen -->
-<div style="position:absolute;left:-9999px;width:400px">
-  <canvas id="chartPizza" width="400" height="400"></canvas>
-  <canvas id="chartPerc" width="400" height="400"></canvas>
-  <canvas id="chartResumo" width="400" height="300"></canvas>
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Categoria</th>
+        <th>Tipo</th>
+        <th>Valor</th>
+        <th>Observação</th>
+      </tr>
+    </thead>
+    <tbody id="tb"></tbody>
+  </table>
+
+  <div class="graficos">
+    <canvas id="chartPizza" width="400" height="300"></canvas>
+    <canvas id="chartPerc" width="400" height="300"></canvas>
+    <canvas id="chartResumo" width="400" height="300"></canvas>
+  </div>
+
+  <div class="relatorio" id="relatorio"></div>
 </div>
 
 <script>
 const KEY="fluxopro_v12";
-let db = JSON.parse(localStorage.getItem(KEY)) || {active:"default", profiles:{default:[]}, profileInfo:{}};
+
+let db = JSON.parse(localStorage.getItem(KEY)) || {active:"default",profiles:{default:[]},profileInfo:{}};
 let perfil = db.active;
 let dados = db.profiles[perfil] || [];
-let info = db.profileInfo?.[perfil] || {};
+let info  = db.profileInfo?.[perfil] || {};
 
 function money(v){ return new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0); }
 
-document.getElementById("perfilTitulo").innerText = "Perfil: " + perfil;
-document.getElementById("perfilDados").innerHTML = `<p><b>Nome:</b> ${info.nome||"-"}</p><p><b>Documento:</b> ${info.doc||"-"}</p>`;
-
 let totalEnt=0,totalSai=0;
-dados.forEach(l=>{ const v=Number(l.valor||0); if(l.tipo==="Entrada") totalEnt+=v; if(l.tipo==="Saída") totalSai+=v; });
-const resultado=totalEnt-totalSai;
+dados.forEach(l=>{
+  const v=Number(l.valor||0);
+  if(l.tipo==="Entrada") totalEnt+=v;
+  if(l.tipo==="Saída") totalSai+=v;
+});
 
-document.getElementById("ent").innerText = "Entradas\n" + money(totalEnt);
-document.getElementById("sai").innerText = "Saídas\n" + money(totalSai);
-document.getElementById("res").innerText = "Resultado\n" + money(resultado);
+document.getElementById("ent").innerText = money(totalEnt);
+document.getElementById("sai").innerText = money(totalSai);
+const resultado = totalEnt-totalSai;
+const resEl = document.getElementById("res");
+resEl.innerText = money(resultado);
+resEl.style.color = resultado>=0?"#10b981":"#ef4444";
 
 const tb = document.getElementById("tb");
-tb.innerHTML = dados.map(l=>`
-<tr>
+tb.innerHTML = dados.map((l,i)=>`
+<tr class="${i%2===0?'zebra':''}">
 <td>${l.data||"-"}</td>
 <td>${l.cat||"-"}</td>
 <td style="color:${l.tipo==="Entrada"?"#10b981":"#ef4444"}">${l.tipo}</td>
 <td>${money(l.valor)}</td>
 <td>${l.obs||"-"}</td>
-</tr>`).join("");
+</tr>
+`).join("");
 
-/* ==== Gráficos ==== */
-let charts = {};
+let charts={};
 function createCharts(){
   let mapa={};
-  dados.forEach(l=>{ if(l.tipo==="Saída") mapa[l.cat||"Outros"]=(mapa[l.cat||"Outros"]||0)+Number(l.valor||0); });
+  dados.forEach(l=>{
+    if(l.tipo==="Saída") mapa[l.cat||"Outros"]=(mapa[l.cat||"Outros"]||0)+Number(l.valor||0);
+  });
 
-  charts.pizza=new Chart(chartPizza,{type:"doughnut",data:{labels:Object.keys(mapa),datasets:[{data:Object.values(mapa),backgroundColor:["#3b82f6","#10b981","#ef4444","#f59e0b","#8b5cf6"]}]},options:{responsive:false,plugins:{legend:{position:"bottom"}}}});
-  charts.perc=new Chart(chartPerc,{type:"pie",data:{labels:["Entradas","Saídas"],datasets:[{data:[totalEnt,totalSai],backgroundColor:["#10b981","#ef4444"]}]},options:{responsive:false,plugins:{legend:{position:"bottom"}}}});
-  charts.resumo=new Chart(chartResumo,{type:"bar",data:{labels:["Entradas","Saídas","Resultado"],datasets:[{data:[totalEnt,totalSai,resultado],backgroundColor:["#10b981","#ef4444","#3b82f6"]}]},options:{responsive:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+  charts.pizza = new Chart(document.getElementById("chartPizza"),{
+    type:"doughnut",
+    data:{labels:Object.keys(mapa),datasets:[{data:Object.values(mapa),backgroundColor:["#ef4444","#f59e0b","#4f46e5","#10b981"]}]},
+    options:{responsive:true,plugins:{legend:{position:"bottom"}}}
+  });
+
+  charts.perc = new Chart(document.getElementById("chartPerc"),{
+    type:"pie",
+    data:{labels:["Entradas","Saídas"],datasets:[{data:[totalEnt,totalSai],backgroundColor:["#10b981","#ef4444"]}]},
+    options:{responsive:true,plugins:{legend:{position:"bottom"}}}
+  });
+
+  charts.resumo = new Chart(document.getElementById("chartResumo"),{
+    type:"bar",
+    data:{labels:["Entradas","Saídas","Resultado"],datasets:[{data:[totalEnt,totalSai,resultado],backgroundColor:["#10b981","#ef4444","#4f46e5"]}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}
+  });
 }
 createCharts();
 
-/* ==== Export Excel ==== */
+function generateReportHTML(){
+  const r = document.getElementById("relatorio");
+  r.innerHTML = `
+<p><b>Total de Entradas:</b> ${money(totalEnt)}</p>
+<p><b>Total de Saídas:</b> ${money(totalSai)}</p>
+<p><b>Saldo Líquido:</b> ${money(resultado)}</p>
+<p><b>Saúde Financeira:</b> ${resultado>=0?'Positiva':'Negativa'}</p>
+<p>Este relatório apresenta o resumo das finanças do período selecionado. Entradas representam receitas recebidas, saídas representam despesas e o saldo líquido indica se o perfil está com saldo positivo ou negativo.</p>
+`;
+}
+generateReportHTML();
+
 function exportExcel(){
-  if(!dados.length){alert("Sem dados"); return;}
-  let ws = XLSX.utils.json_to_sheet(dados);
-  let wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,"FluxoPro");
+  if(!dados.length){alert("Sem dados para exportar");return;}
+  const ws = XLSX.utils.json_to_sheet(dados.map(l=>({
+    Data:l.data,
+    Categoria:l.cat,
+    Tipo:l.tipo,
+    Valor:l.valor,
+    Observacao:l.obs
+  })));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Lançamentos");
   XLSX.writeFile(wb,`fluxopro_${perfil}_${Date.now()}.xlsx`);
 }
 
-/* ==== Export PDF ==== */
-async function exportPDF(){
-  if(!dados.length){alert("Sem dados"); return;}
-  const loading=document.getElementById("loading");
+function exportPDF(){
+  if(!dados.length){alert("Sem dados para exportar");return;}
+  const loading = document.getElementById("loading");
   loading.classList.add("show");
-
-  setTimeout(async ()=>{
+  setTimeout(()=>{
     const {jsPDF} = window.jspdf;
     const doc = new jsPDF("p","mm","a4");
-    const W = 210, H = 297, M=12;
-    let y = 20;
+    const W=210,H=297,M=12;
+    let y=20;
+    function novaPagina(h){if(y+h>H-15){doc.addPage();y=20;}}
 
     // Cabeçalho colorido
-    doc.setFillColor(59,130,246); // azul tema
+    doc.setFillColor(79,70,229);
     doc.rect(0,0,W,30,"F");
-    doc.setFontSize(16); doc.setTextColor(255,255,255); doc.setFont(undefined,"bold");
-    doc.text("Relatório FluxoPro", W/2, 18, {align:"center"});
+    doc.setFontSize(16);
+    doc.setTextColor(255,255,255);
+    doc.setFont(undefined,"bold");
+    doc.text("Relatório FluxoPro", W/2, 20, {align:"center"});
 
+    y+=15;
+
+    // Painel de saldos
+    novaPagina(20);
+    const boxW = (W-2*M-10)/3;
+    doc.setFontSize(9);
+    [["Entradas",totalEnt],[ "Saídas", totalSai],[ "Saldo Líquido", resultado]].forEach((b,i)=>{
+      const x = M + i*(boxW+5);
+      doc.setFillColor(238,249,246);
+      doc.roundedRect(x,y,boxW,15,3,3,"F");
+      doc.setTextColor(31,41,55);
+      doc.text(b[0], x+2, y+5);
+      doc.setTextColor(b[1]>=0? (i===2?79,70,229:16,185,129):239,68,68);
+      doc.text(money(b[1]), x+2, y+12);
+    });
     y+=25;
 
-    doc.setFontSize(10); doc.setFont(undefined,"normal"); doc.setTextColor(31,41,55);
-    doc.text(`Perfil: ${perfil}`, M, y); y+=4;
-    doc.text(`Nome: ${info.nome||"-"}`, M, y); y+=4;
-    doc.text(`Documento: ${info.doc||"-"}`, M, y); y+=6;
-
-    // Painel de saldos moderno
-    const boxW = (W-2*M-20)/3, boxH = 15;
-    const boxes = [
-      {label:"Entradas", value:money(totalEnt), color:[16,185,129]},
-      {label:"Saídas", value:money(totalSai), color:[239,68,68]},
-      {label:"Resultado", value:money(resultado), color:[59,130,246]}
-    ];
-    let xBox = M;
-    boxes.forEach(b=>{
-      doc.setFillColor(...b.color);
-      doc.roundedRect(xBox,y,boxW,boxH,2,2,"F");
-      doc.setTextColor(255,255,255); doc.setFontSize(9); doc.setFont(undefined,"bold");
-      doc.text(`${b.label}: ${b.value}`, xBox+boxW/2, y+10, {align:"center"});
-      xBox += boxW+10;
-    });
-    y+=boxH+15;
-
-    // Gráficos - transformar em imagens
-    const chartElements = [chartPizza, chartPerc, chartResumo];
-    let chartX = M, chartY = y;
-    for(let c of chartElements){
-      const img = c.toDataURL("image/png",1.0);
-      doc.addImage(img,"PNG",chartX,chartY,60,60);
-      chartX += 70;
-    }
-    y+=70;
-
     // Tabela
-    doc.setFont(undefined,"bold"); doc.setFontSize(9); doc.setTextColor(31,41,55);
+    doc.setFontSize(8);
+    doc.setTextColor(31,41,55);
     doc.text("Lançamentos",M,y); y+=5;
-    doc.setFont(undefined,"normal"); doc.setFontSize(8);
-
-    // Cabeçalho tabela
-    const headers=["Data","Categoria","Tipo","Valor","Observação"];
-    let x = M;
-    headers.forEach((h,i)=>{ doc.text(h,x,y); x+=i===0?25:i===1?35:i===2?25:i===3?25:30; });
-    y+=4;
-
+    doc.text("Data",M,y); doc.text("Categoria",M+25,y); doc.text("Tipo",M+75,y);
+    doc.text("Valor",M+95,y); doc.text("Obs",M+120,y); y+=4;
+    doc.setFont(undefined,"normal");
     dados.forEach((l,i)=>{
-      if(y>H-20){doc.addPage(); y=20;}
-      x = M;
-      doc.text(l.data||"-",x,y); x+=25;
-      doc.text((l.cat||"-").substring(0,15),x,y); x+=35;
+      novaPagina(6);
+      if(i%2===0){doc.setFillColor(249,250,251); doc.rect(M,y-3,W-2*M,5,"F");}
+      doc.setTextColor(31,41,55);
+      doc.text(l.data||"-",M,y);
+      doc.text((l.cat||"-").substring(0,15),M+25,y);
       doc.setFont(undefined,"bold");
       doc.setTextColor(l.tipo==="Entrada"?16,185,129:239,68,68);
-      doc.text(l.tipo||"-",x,y); x+=25;
-      doc.setFont(undefined,"normal"); doc.setTextColor(31,41,55);
-      doc.text(money(l.valor),x,y); x+=25;
-      doc.text((l.obs||"-").substring(0,22),x,y);
+      doc.text(l.tipo||"-",M+75,y);
+      doc.setFont(undefined,"normal");
+      doc.setTextColor(31,41,55);
+      doc.text(money(l.valor),M+95,y);
+      doc.text((l.obs||"-").substring(0,22),M+120,y);
       y+=5;
     });
 
-    // Relatório resumido
-    y+=5;
-    doc.setFont(undefined,"bold"); doc.setFontSize(9); doc.setTextColor(31,41,55);
-    doc.text("Resumo detalhado:",M,y); y+=5;
-    doc.setFont(undefined,"normal"); doc.setFontSize(8);
-    doc.text(`Total de Entradas: ${money(totalEnt)}`,M,y); y+=4;
-    doc.text(`Total de Saídas: ${money(totalSai)}`,M,y); y+=4;
-    doc.text(`Saldo Líquido: ${money(resultado)} (${resultado>=0?"Positivo":"Negativo"})`,M,y); y+=4;
-    doc.text(`Número de lançamentos: ${dados.length}`,M,y); y+=4;
-
     doc.save(`fluxopro_${perfil}_${Date.now()}.pdf`);
     loading.classList.remove("show");
-  },300);
+  },200);
 }
 </script>
-
 </body>
 </html>
