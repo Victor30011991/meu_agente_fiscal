@@ -10,30 +10,29 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 body{margin:0;font-family:Inter;background:#f5f7fb;color:#1f2937}
-.container{max-width:1100px;margin:auto;padding:30px}
-.top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding:20px;border-radius:12px;background:#4f46e5;color:#fff}
-.top h1{margin:0;font-size:1.5rem}
-.top button{padding:10px 14px;border:0;border-radius:10px;font-weight:700;cursor:pointer;transition:all .2s}
-.top button:hover{opacity:.8;transform:translateY(-1px)}
-.btn-excel{background:#10b981;color:#fff}
-.btn-pdf{background:#ef4444;color:#fff}
-.card{background:#fff;border-radius:16px;padding:20px;margin-top:20px;box-shadow:0 10px 20px rgba(0,0,0,.04)}
-.resumo{display:flex;gap:10px;margin:15px 0}
-.box{flex:1;text-align:center;padding:15px;border-radius:12px;font-weight:700;color:#1f2937;font-size:0.9rem}
-.box span{display:block;font-size:1.1rem;margin-top:5px;font-weight:800}
-.entrada{background:rgba(16,185,129,0.15);color:#10b981}
-.saida{background:rgba(239,68,68,0.15);color:#ef4444}
-.resultado{background:rgba(79,70,229,0.15);color:#4f46e5}
+.container{max-width:1000px;margin:auto;padding:30px}
+.header-card{background:#4f46e5;color:#fff;border-radius:16px;padding:20px;margin-bottom:20px;text-align:center}
+.card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 10px 20px rgba(0,0,0,.04);margin-bottom:20px}
 .table-container{overflow-x:auto}
 table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{padding:8px;border-bottom:1px solid #eee;text-align:left;font-size:0.85rem}
+th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}
 th{background:#fafafa}
-.charts{display:flex;gap:15px;justify-content:space-between;margin-top:20px}
-.charts canvas{background:#fff;border-radius:12px;padding:10px;flex:1}
+button{padding:10px 14px;border:0;border-radius:10px;font-weight:700;cursor:pointer;transition:all .2s;margin-right:5px}
+button:hover{opacity:.8;transform:translateY(-1px)}
+.btn-excel{background:#10b981;color:#fff}
+.btn-pdf{background:#ef4444;color:#fff}
+.resumo{display:flex;gap:10px;justify-content:center;margin-bottom:20px}
+.box{flex:1;background:#e0e7ff;padding:15px;border-radius:12px;text-align:center;font-weight:700;box-shadow:0 4px 10px rgba(0,0,0,.05)}
+.entrada{color:#10b981}
+.saida{color:#ef4444}
+.result{font-size:16px;font-weight:700}
+.chart-row{display:flex;gap:10px;justify-content:center;margin-bottom:20px}
+.chart-row canvas{background:#fff;border-radius:12px;padding:10px;box-shadow:0 4px 10px rgba(0,0,0,.05)}
 .loading{display:none;align-items:center;justify-content:center;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:9999}
 .loading.show{display:flex}
 .spinner{border:4px solid #f3f4f6;border-top:4px solid #4f46e5;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:40px;color:#999}
 </style>
 </head>
 <body>
@@ -41,188 +40,173 @@ th{background:#fafafa}
 <div class="loading" id="loading"><div class="spinner"></div></div>
 
 <div class="container">
-  <div class="top">
-    <h1>Relatório FluxoPro</h1>
-    <div>
-      <button class="btn-excel" onclick="exportExcel()">Baixar Excel</button>
-      <button class="btn-pdf" onclick="exportPDF()">Baixar PDF</button>
-    </div>
+
+  <!-- Cabeçalho -->
+  <div class="header-card">
+    <h1>Relatório Financeiro – FluxoPro</h1>
+  </div>
+
+  <!-- Botões -->
+  <div style="text-align:center;margin-bottom:20px">
+    <button class="btn-excel" onclick="exportExcel()">Baixar Excel</button>
+    <button class="btn-pdf" onclick="exportPDF()">Baixar PDF</button>
   </div>
 
   <!-- Perfil -->
-  <div class="card">
+  <div class="card" id="perfilCard">
     <h2 id="perfilTitulo"></h2>
-    <div id="perfilDados"></div>
-
-    <!-- Painel de Saldos -->
-    <div class="resumo">
-      <div class="box entrada">Entradas<br><span id="ent"></span></div>
-      <div class="box saida">Saídas<br><span id="sai"></span></div>
-      <div class="box resultado">Resultado<br><span id="res"></span></div>
-    </div>
-
-    <!-- Gráficos -->
-    <div class="charts">
-      <canvas id="chartPizza" width="400" height="300"></canvas>
-      <canvas id="chartPerc" width="400" height="300"></canvas>
-      <canvas id="chartResumo" width="400" height="300"></canvas>
-    </div>
-
-    <!-- Tabela -->
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Categoria</th>
-            <th>Tipo</th>
-            <th>Valor</th>
-            <th>Observação</th>
-          </tr>
-        </thead>
-        <tbody id="tb"></tbody>
-      </table>
-    </div>
+    <p id="perfilDados"></p>
   </div>
+
+  <!-- Resumo financeiro -->
+  <div class="resumo">
+    <div class="box"><div>Entradas</div><div id="ent" class="entrada result"></div></div>
+    <div class="box"><div>Saídas</div><div id="sai" class="saida result"></div></div>
+    <div class="box"><div>Resultado</div><div id="res" class="result"></div></div>
+  </div>
+
+  <!-- Gráficos -->
+  <div class="chart-row">
+    <canvas id="chartPizza" width="300" height="300"></canvas>
+    <canvas id="chartPerc" width="300" height="300"></canvas>
+    <canvas id="chartResumo" width="300" height="300"></canvas>
+  </div>
+
+  <!-- Tabela de lançamentos -->
+  <div class="card table-container">
+    <h3>Lançamentos</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Categoria</th>
+          <th>Tipo</th>
+          <th>Valor</th>
+          <th>Observação</th>
+        </tr>
+      </thead>
+      <tbody id="tb"></tbody>
+    </table>
+  </div>
+
 </div>
 
 <script>
 const KEY="fluxopro_v12";
+const loading=document.getElementById("loading");
 
-// Carregar DB
+// Função para formatar valores
+function money(v){return new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0);}
+
+// Carregar dados do localStorage
 let db = JSON.parse(localStorage.getItem(KEY)) || {active:"default", profiles:{default:[]}, profileInfo:{}};
 let perfil = db.active;
 let dados = db.profiles[perfil] || [];
 let info = db.profileInfo?.[perfil] || {};
 
-// Formatar moeda
-function money(v){return new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0);}
-
-// Totais
+// Calcular totais
 let totalEnt=0,totalSai=0;
 dados.forEach(l=>{
-  const v = Number(l.valor||0);
+  const v=Number(l.valor||0);
   if(l.tipo==="Entrada") totalEnt+=v;
   if(l.tipo==="Saída") totalSai+=v;
 });
 const resultado = totalEnt-totalSai;
 
-// Preencher perfil
-document.getElementById("perfilTitulo").innerText = "Perfil: " + perfil;
-document.getElementById("perfilDados").innerHTML = `
-<p><b>Nome:</b> ${info.nome || "-"}</p>
-<p><b>Documento:</b> ${info.doc || "-"}</p>
-`;
-
-// Preencher saldos
+// Atualizar tela
+document.getElementById("perfilTitulo").innerText = "Perfil: "+perfil;
+document.getElementById("perfilDados").innerHTML = `<b>Nome:</b> ${info.nome||"-"}<br><b>Documento:</b> ${info.doc||"-"}`;
 document.getElementById("ent").innerText = money(totalEnt);
 document.getElementById("sai").innerText = money(totalSai);
-document.getElementById("res").innerText = money(resultado);
-document.getElementById("res").style.color = resultado>=0 ? "#10b981" : "#ef4444";
+const resEl = document.getElementById("res");
+resEl.innerText = money(resultado);
+resEl.style.color = resultado>=0?"#10b981":"#ef4444";
 
 // Preencher tabela
-document.getElementById("tb").innerHTML = dados.map(l=>`
+const tbody=document.getElementById("tb");
+tbody.innerHTML = dados.length ? dados.map(l=>`
 <tr>
 <td>${l.data||"-"}</td>
 <td>${l.cat||"-"}</td>
 <td style="color:${l.tipo==="Entrada"?"#10b981":"#ef4444"}">${l.tipo}</td>
 <td>${money(l.valor)}</td>
 <td>${l.obs||"-"}</td>
-</tr>
-`).join("");
+</tr>`).join("") : `<tr><td colspan="5" class="empty">Nenhum lançamento</td></tr>`;
 
-// Criar gráficos
-let mapa = {};
-dados.forEach(l=>{
-  if(l.tipo==="Saída") mapa[l.cat||"Outros"] = (mapa[l.cat||"Outros"]||0) + Number(l.valor||0);
-});
-
+// Gráficos
 const ctxPizza = document.getElementById("chartPizza").getContext("2d");
 const ctxPerc = document.getElementById("chartPerc").getContext("2d");
-const ctxRes = document.getElementById("chartResumo").getContext("2d");
+const ctxResumo = document.getElementById("chartResumo").getContext("2d");
 
-new Chart(ctxPizza,{type:"doughnut",data:{labels:Object.keys(mapa),datasets:[{data:Object.values(mapa),backgroundColor:['#4f46e5','#10b981','#f59e0b','#ef4444','#6366f1']}]},options:{responsive:false,plugins:{legend:{position:"bottom"}}}});
-new Chart(ctxPerc,{type:"pie",data:{labels:["Entradas","Saídas"],datasets:[{data:[totalEnt,totalSai],backgroundColor:['#10b981','#ef4444']}]},options:{responsive:false,plugins:{legend:{position:"bottom"}}}});
-new Chart(ctxRes,{type:"bar",data:{labels:["Entradas","Saídas","Resultado"],datasets:[{data:[totalEnt,totalSai,resultado],backgroundColor:['#10b981','#ef4444','#4f46e5']}]},options:{responsive:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+function createCharts(){
+  let mapa={};
+  dados.forEach(l=>{
+    if(l.tipo==="Saída") mapa[l.cat||"Outros"]=(mapa[l.cat||"Outros"]||0)+Number(l.valor||0);
+  });
 
-// Exportar Excel
+  new Chart(ctxPizza,{type:"doughnut",
+    data:{labels:Object.keys(mapa),datasets:[{data:Object.values(mapa),backgroundColor:["#4f46e5","#6366f1","#10b981","#f59e0b","#fb7185"]}]},
+    options:{responsive:true,plugins:{legend:{position:"bottom"}}}
+  });
+
+  new Chart(ctxPerc,{type:"pie",
+    data:{labels:["Entradas","Saídas"],datasets:[{data:[totalEnt,totalSai],backgroundColor:["#10b981","#ef4444"]}]},
+    options:{responsive:true,plugins:{legend:{position:"bottom"}}}
+  });
+
+  new Chart(ctxResumo,{type:"bar",
+    data:{labels:["Entradas","Saídas","Resultado"],datasets:[{data:[totalEnt,totalSai,resultado],backgroundColor:["#10b981","#ef4444","#4f46e5"]}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}
+  });
+}
+createCharts();
+
+// Função Excel
 function exportExcel(){
-  if(!dados.length){alert("Sem dados");return;}
+  if(!dados.length){alert("Nenhum dado para exportar");return;}
+  const ws = XLSX.utils.json_to_sheet(dados);
   const wb = XLSX.utils.book_new();
-  const ws_data = [
-    ["Data","Categoria","Tipo","Valor","Observação"],
-    ...dados.map(l=>[l.data,l.cat,l.tipo,l.valor,l.obs])
-  ];
-  const ws = XLSX.utils.aoa_to_sheet(ws_data);
-  XLSX.utils.book_append_sheet(wb, ws, "FluxoPro");
+  XLSX.utils.book_append_sheet(wb, ws, perfil);
   XLSX.writeFile(wb, `fluxopro_${perfil}_${Date.now()}.xlsx`);
 }
 
-// Exportar PDF
+// Função PDF
 function exportPDF(){
-  if(!dados.length){alert("Sem dados");return;}
-  const loading = document.getElementById("loading");
-  loading.classList.add("show");
-  setTimeout(()=>{
-    const {jsPDF} = window.jspdf;
-    const doc = new jsPDF("p","mm","a4");
-    const W=210, H=297, M=12;
-    let y=20;
+  if(!dados.length){alert("Nenhum dado para exportar");return;}
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF("p","mm","a4");
+  let y=20;
 
-    function novaPagina(h){ if(y+h>H-15){doc.addPage(); y=20;} }
-    function linha(){ doc.setDrawColor(220,220,220); doc.setLineWidth(0.2); doc.line(M,y,W-M,y); y+=6;}
+  // Cabeçalho colorido
+  doc.setFillColor(79,70,229);
+  doc.rect(0,0,210,25,"F");
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(16);
+  doc.text("Relatório Financeiro – FluxoPro",105,y, {align:"center"});
+  y+=15;
 
-    // Cabeçalho colorido
-    doc.setFillColor(79,70,229);
-    doc.rect(0,0,W,28,"F");
-    doc.setFontSize(14); doc.setTextColor(255,255,255); doc.setFont(undefined,"bold");
-    doc.text("Relatório FluxoPro", M, 18);
+  doc.setFontSize(10);
+  doc.setTextColor(0,0,0);
+  doc.text(`Perfil: ${perfil}`,12,y); y+=4;
+  doc.text(`Nome: ${info.nome||"-"}`,12,y); y+=4;
+  doc.text(`Documento: ${info.doc||"-"}`,12,y); y+=8;
 
-    y+=12;
-    linha();
+  // Painel de saldos
+  doc.setFont(undefined,"bold");
+  doc.text("Resumo Financeiro",12,y); y+=6;
+  doc.setFont(undefined,"normal");
+  doc.text(`Entradas: ${money(totalEnt)}`,12,y); y+=4;
+  doc.text(`Saídas: ${money(totalSai)}`,12,y); y+=4;
+  doc.text(`Resultado: ${money(resultado)}`,12,y); y+=10;
 
-    // Painel de Saldos
-    doc.setFontSize(10); doc.setFont(undefined,"bold");
-    const boxWidth = (W-2*M-20)/3;
-    // Entradas
-    doc.setFillColor(16,185,129,0.15);
-    doc.rect(M,y,boxWidth,12,"F");
-    doc.setTextColor(16,185,129);
-    doc.text(`Entradas: ${money(totalEnt)}`, M+2, y+9);
-    // Saídas
-    doc.setFillColor(239,68,68,0.15);
-    doc.rect(M+boxWidth+10,y,boxWidth,12,"F");
-    doc.setTextColor(239,68,68);
-    doc.text(`Saídas: ${money(totalSai)}`, M+boxWidth+12, y+9);
-    // Resultado
-    doc.setFillColor(79,70,229,0.15);
-    doc.rect(M+2*(boxWidth+10),y,boxWidth,12,"F");
-    doc.setTextColor(79,70,229);
-    doc.text(`Resultado: ${money(resultado)}`, M+2*(boxWidth+10)+2, y+9);
-    y+=20; linha();
+  // Lançamentos resumidos
+  doc.text("Lançamentos:",12,y); y+=6;
+  dados.forEach(l=>{
+    doc.text(`${l.data} | ${l.cat} | ${l.tipo} | ${money(l.valor)} | ${l.obs||"-"}`,12,y); y+=5;
+    if(y>280){doc.addPage();y=20;}
+  });
 
-    // Tabela
-    doc.setFontSize(9); doc.setTextColor(31,41,55); doc.setFont(undefined,"bold");
-    doc.text("Lançamentos",M,y); y+=6;
-    doc.setFont(undefined,"normal");
-    dados.forEach((l,i)=>{
-      novaPagina(5);
-      if(i%2===0){doc.setFillColor(245,247,250); doc.rect(M,y-3,W-2*M,5,"F");}
-      doc.setTextColor(31,41,55);
-      doc.text(l.data||"-", M, y);
-      doc.text((l.cat||"-").substring(0,15), M+25, y);
-      doc.setFont(undefined,"bold");
-      doc.setTextColor(l.tipo==="Entrada"?16,185,129:239,68,68);
-      doc.text(l.tipo||"-", M+75, y);
-      doc.setFont(undefined,"normal"); doc.setTextColor(31,41,55);
-      doc.text(money(l.valor), M+95, y);
-      doc.text((l.obs||"-").substring(0,22), M+120, y);
-      y+=5;
-    });
-
-    doc.save(`fluxopro_${perfil}_${Date.now()}.pdf`);
-    loading.classList.remove("show");
-  },300);
+  doc.save(`fluxopro_${perfil}_${Date.now()}.pdf`);
 }
 </script>
 </body>
