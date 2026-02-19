@@ -2,1559 +2,671 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>FluxoPro Engine v12</title>
+<title>FluxoPro - Relatório</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link id="themeCSS" rel="stylesheet" href="">
-
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-/* =====================================================
-   CSS VARIABLES — base (padrão claro)
-   Cada themes/*.css sobrescreve essas variáveis.
-   ===================================================== */
-:root {
-  --bg:           #f0f2f8;
-  --bg2:          #e8eaf2;
-  --card:         #ffffff;
-  --card-border:  #e2e5ef;
-  --header-bg:    #ffffff;
-  --header-border:#e2e5ef;
-  --text:         #1a1f36;
-  --text2:        #6b7280;
-  --text-inv:     #ffffff;
-  --primary:      #4f46e5;
-  --primary-l:    #eef2ff;
-  --primary-d:    #3730a3;
-  --ok:           #059669;
-  --ok-l:         #d1fae5;
-  --bad:          #dc2626;
-  --bad-l:        #fee2e2;
-  --warn:         #d97706;
-  --warn-l:       #fef3c7;
-  --table-alt:    #f8fafc;
-  --table-hover:  #f1f5ff;
-  --input-bg:     #f8fafc;
-  --input-border: #d1d5db;
-  --shadow-sm:    0 1px 3px rgba(0,0,0,.06);
-  --shadow:       0 4px 16px rgba(0,0,0,.07);
-  --shadow-lg:    0 10px 30px rgba(0,0,0,.10);
-  --radius:       14px;
-  --radius-sm:    8px;
-}
-
-/* =====================================================
-   RESET & BASE
-   ===================================================== */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: Inter, system-ui, sans-serif;
-  font-size: 14px;
-  background: var(--bg);
-  color: var(--text);
-  transition: background .3s, color .3s;
-  min-height: 100vh;
-}
-
-/* =====================================================
-   HEADER
-   ===================================================== */
-header {
-  background: var(--header-bg);
-  border-bottom: 1px solid var(--header-border);
-  padding: 12px 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: var(--shadow-sm);
-}
-
-.header-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.header-brand .logo {
-  width: 34px; height: 34px;
-  background: var(--primary);
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 17px; font-weight: 800; color: #fff;
-  flex-shrink: 0;
-}
-.header-brand h1 {
-  font-size: 16px; font-weight: 800;
-  color: var(--text); letter-spacing: -.3px;
-}
-.header-brand span {
-  font-size: 11px; color: var(--text2);
-  display: block; font-weight: 400;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-/* =====================================================
-   TABS
-   ===================================================== */
-.tabs {
-  display: flex; gap: 4px;
-  background: var(--bg2);
-  padding: 4px;
-  border-radius: 10px;
-  border: 1px solid var(--card-border);
-}
-.tabs button {
-  border: none; padding: 6px 14px;
-  border-radius: 7px; cursor: pointer;
-  font-weight: 600; font-size: 13px;
-  background: transparent; color: var(--text2);
-  transition: all .2s; font-family: inherit;
-}
-.tabs button.active {
-  background: var(--card);
-  color: var(--primary);
-  box-shadow: var(--shadow-sm);
-}
-
-/* =====================================================
-   LAYOUT PRINCIPAL
-   ===================================================== */
-.container { max-width: 1380px; margin: 0 auto; padding: 24px 20px; }
-
-.layout {
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 20px;
-  align-items: flex-start;
-}
-.sidebar {
-  position: sticky; top: 72px;
-  display: flex; flex-direction: column; gap: 14px;
-}
-
-@media (max-width: 960px) {
-  .layout { grid-template-columns: 1fr; }
-  .sidebar { position: relative; top: 0; }
-}
-
-/* =====================================================
-   CARDS
-   ===================================================== */
-.card {
-  background: var(--card);
-  border-radius: var(--radius);
-  border: 1px solid var(--card-border);
-  box-shadow: var(--shadow);
-  transition: background .3s, border-color .3s;
-  overflow: hidden;
-}
-.card-head {
-  padding: 14px 18px;
-  display: flex; align-items: center; justify-content: space-between;
-  border-bottom: 1px solid var(--card-border);
-  gap: 8px;
-}
-.card-title {
-  font-size: 11px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .5px;
-  color: var(--text2);
-  display: flex; align-items: center; gap: 7px;
-}
-.card-title .dot {
-  width: 7px; height: 7px;
-  border-radius: 50%; background: var(--primary);
-  flex-shrink: 0;
-}
-
-/* =====================================================
-   KPI ROW — painel principal (após dados do perfil)
-   ===================================================== */
-.kpi-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  padding: 16px 18px 18px;
-}
-@media (max-width: 600px) { .kpi-row { grid-template-columns: 1fr; } }
-
-.kpi-card {
-  border-radius: 10px;
-  padding: 14px 16px;
-  border: 1px solid transparent;
-  transition: all .3s;
-}
-.kpi-card.ent { background: var(--ok-l);  border-color: #bbf7d0; }
-.kpi-card.sai { background: var(--bad-l); border-color: #fecaca; }
-.kpi-card.net { background: var(--primary-l); border-color: #c7d2fe; }
-
-.kpi-label {
-  font-size: 10px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .5px;
-  margin-bottom: 6px;
-}
-.kpi-card.ent .kpi-label { color: #047857; }
-.kpi-card.sai .kpi-label { color: #b91c1c; }
-.kpi-card.net .kpi-label { color: var(--primary-d); }
-
-.kpi-value {
-  font-size: 20px; font-weight: 800;
-  letter-spacing: -1px; line-height: 1;
-  margin-bottom: 4px;
-}
-.kpi-card.ent .kpi-value { color: var(--ok); }
-.kpi-card.sai .kpi-value { color: var(--bad); }
-.kpi-card.net .kpi-value { color: var(--primary); }
-
-.kpi-meta {
-  font-size: 11px; color: var(--text2);
-  display: flex; align-items: center; gap: 4px;
-}
-.kpi-bar {
-  height: 3px; border-radius: 2px;
-  background: rgba(0,0,0,.08); margin-top: 8px;
-  overflow: hidden;
-}
-.kpi-bar-fill { height: 100%; border-radius: 2px; transition: width .6s ease; }
-
-/* =====================================================
-   SIDEBAR — gráficos
-   ===================================================== */
-.chart-wrap { padding: 12px 18px 14px; }
-.chart-note { font-size: 11px; color: var(--text2); padding: 0 18px 14px; line-height: 1.5; }
-
-/* =====================================================
-   PERFIL GRID
-   ===================================================== */
-.perfil-grid {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 10px; padding: 14px 18px 18px;
-}
-.perfil-field label {
-  display: block; font-size: 10px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .5px;
-  color: var(--text2); margin-bottom: 4px;
-}
-.perfil-field input {
-  width: 100%; padding: 8px 11px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--input-border);
-  background: var(--input-bg); color: var(--text);
-  font-family: inherit; font-size: 13px; font-weight: 500;
-  transition: border-color .2s;
-}
-.perfil-field input:focus {
-  outline: none; border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(79,70,229,.1);
-}
-
-/* =====================================================
-   AÇÕES PAINEL
-   ===================================================== */
-.lanc-header {
-  display: flex; gap: 10px;
-  align-items: center; flex-wrap: wrap;
-  margin-bottom: 14px;
-}
-.btn-new {
-  display: flex; align-items: center; gap: 6px;
-  padding: 10px 18px; border: none;
-  border-radius: var(--radius-sm);
-  background: var(--primary); color: #fff;
-  font-weight: 700; font-size: 13px;
-  cursor: pointer; transition: all .2s;
-  box-shadow: 0 2px 8px rgba(79,70,229,.28);
-  font-family: inherit;
-}
-.btn-new:hover { background: var(--primary-d); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(79,70,229,.38); }
-.btn-sec {
-  display: flex; align-items: center; gap: 6px;
-  padding: 9px 14px; border: 1px solid var(--card-border);
-  border-radius: var(--radius-sm); background: var(--card);
-  color: var(--text); font-weight: 600; font-size: 12px;
-  cursor: pointer; transition: all .2s; font-family: inherit;
-}
-.btn-sec:hover { background: var(--primary-l); border-color: var(--primary); color: var(--primary); }
-
-/* =====================================================
-   FILTROS
-   ===================================================== */
-.filter-bar {
-  display: flex; gap: 8px; flex-wrap: wrap;
-  padding: 0 18px 12px;
-}
-.filter-bar select,
-.filter-bar input[type="text"],
-.filter-bar input[type="month"] {
-  padding: 7px 10px; border-radius: var(--radius-sm);
-  border: 1px solid var(--input-border);
-  background: var(--input-bg); color: var(--text);
-  font-family: inherit; font-size: 13px;
-  transition: border-color .2s;
-}
-.filter-bar select:focus, .filter-bar input:focus {
-  outline: none; border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(79,70,229,.1);
-}
-.filter-search {
-  flex: 1; min-width: 150px;
-  padding-left: 32px !important;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: 10px center;
-}
-
-/* =====================================================
-   TABELA
-   ===================================================== */
-.table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; }
-thead tr { background: var(--bg2); }
-th {
-  padding: 9px 12px; text-align: left;
-  font-size: 10px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .5px;
-  color: var(--text2); white-space: nowrap;
-  border-bottom: 1px solid var(--card-border);
-}
-td {
-  padding: 9px 12px; border-bottom: 1px solid var(--card-border);
-  font-size: 13px; color: var(--text); vertical-align: middle;
-}
-tbody tr:last-child td { border-bottom: none; }
-tbody tr:nth-child(even) { background: var(--table-alt); }
-tbody tr:hover { background: var(--table-hover); }
-td[contenteditable] { cursor: text; transition: all .15s; }
-td[contenteditable]:focus {
-  outline: 2px solid var(--primary); outline-offset: -1px;
-  background: var(--primary-l); border-radius: 3px;
-}
-
-/* =====================================================
-   BADGES TIPO
-   ===================================================== */
-.badge {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 4px 10px; border-radius: 20px;
-  font-weight: 700; font-size: 10px; cursor: pointer;
-  transition: all .2s; text-transform: uppercase; letter-spacing: .3px;
-  white-space: nowrap;
-}
-.badge:hover { filter: brightness(.92); transform: scale(1.03); }
-.badge::before {
-  content: ''; width: 5px; height: 5px;
-  border-radius: 50%; background: currentColor;
-}
-.entrada { background: var(--ok-l);  color: var(--ok); }
-.saida   { background: var(--bad-l); color: var(--bad); }
-
-/* =====================================================
-   RODAPÉ DA TABELA
-   ===================================================== */
-.table-footer {
-  padding: 9px 18px;
-  display: flex; align-items: center; justify-content: space-between;
-  font-size: 11px; color: var(--text2);
-  border-top: 1px solid var(--card-border);
-  background: var(--table-alt);
-}
-
-/* =====================================================
-   APAGAR
-   ===================================================== */
-.btn-del {
-  width: 28px; height: 28px; border-radius: 6px;
-  border: none; background: transparent; color: var(--text2);
-  cursor: pointer; display: flex; align-items: center;
-  justify-content: center; font-size: 14px; transition: all .2s;
-  font-family: inherit;
-}
-.btn-del:hover { background: var(--bad-l); color: var(--bad); }
-
-/* =====================================================
-   EMPTY STATE
-   ===================================================== */
-.empty-state { text-align: center; padding: 44px 20px; color: var(--text2); }
-.empty-state .icon { font-size: 36px; margin-bottom: 10px; }
-.empty-state h3 { font-size: 15px; color: var(--text); margin-bottom: 5px; font-weight: 700; }
-.empty-state p  { font-size: 12px; line-height: 1.6; }
-
-/* =====================================================
-   CONFIGURAÇÕES
-   ===================================================== */
-.conf-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  padding: 16px 18px 20px;
-}
-@media (max-width: 700px) { .conf-grid { grid-template-columns: 1fr; } }
-
-.conf-block {
-  background: var(--bg2);
-  border: 1px solid var(--card-border);
-  border-radius: 10px;
-  padding: 14px;
-}
-.conf-block h4 {
-  font-size: 11px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .5px;
-  color: var(--text2); margin-bottom: 12px;
-  display: flex; align-items: center; gap: 6px;
-}
-.conf-block h4 span { font-size: 14px; }
-
-/* seletor de temas dentro de conf */
-.theme-selector {
-  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
-}
-.theme-btn {
-  width: 32px; height: 32px; border-radius: 50%;
-  border: 2px solid transparent; cursor: pointer;
-  transition: transform .2s, box-shadow .2s;
-}
-.theme-btn:hover { transform: scale(1.15); }
-.theme-btn.active {
-  box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--primary);
-}
-.theme-default { background: linear-gradient(135deg,#e0e7ff,#4f46e5); }
-.theme-dark    { background: linear-gradient(135deg,#1e293b,#0f172a); }
-.theme-emerald { background: linear-gradient(135deg,#a7f3d0,#059669); }
-.theme-gold    { background: linear-gradient(135deg,#fde68a,#d97706); }
-.theme-indigo  { background: linear-gradient(135deg,#c7d2fe,#6366f1); }
-.theme-rose    { background: linear-gradient(135deg,#fecdd3,#e11d48); }
-.theme-custom  { background: conic-gradient(red,yellow,lime,cyan,blue,magenta,red); }
-
-.color-picker-wrap { position: relative; display: inline-flex; align-items: center; }
-.color-picker-wrap input[type="color"] {
-  position: absolute; width: 32px; height: 32px;
-  opacity: 0; cursor: pointer; border: none; padding: 0;
-}
-.theme-label {
-  font-size: 11px; color: var(--text2); margin-top: 8px;
-  display: block;
-}
-
-/* conf actions */
-.conf-actions { display: flex; flex-direction: column; gap: 8px; }
-.conf-btn {
-  display: flex; align-items: center; gap: 8px;
-  padding: 9px 14px; border-radius: var(--radius-sm);
-  font-weight: 600; font-size: 12px; cursor: pointer;
-  transition: all .2s; border: 1px solid var(--card-border);
-  background: var(--card); color: var(--text);
-  font-family: inherit; text-align: left;
-}
-.conf-btn:hover { background: var(--primary-l); border-color: var(--primary); color: var(--primary); }
-.conf-btn.danger {
-  border-color: #fecaca; background: var(--bad-l); color: var(--bad);
-}
-.conf-btn.danger:hover { background: var(--bad); color: #fff; }
-
-/* conf info row */
-.conf-info-row {
-  display: flex; justify-content: space-between;
-  font-size: 12px; padding: 5px 0;
-  border-bottom: 1px solid var(--card-border);
-  color: var(--text2);
-}
-.conf-info-row:last-child { border-bottom: none; }
-.conf-info-row strong { color: var(--text); }
-
-/* =====================================================
-   MODAL
-   ===================================================== */
-.modal {
-  position: fixed; inset: 0;
-  background: rgba(10,10,20,.45);
-  backdrop-filter: blur(4px);
-  display: none; align-items: center;
-  justify-content: center; z-index: 9999; padding: 20px;
-}
-.modal-box {
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: 18px; width: 100%; max-width: 420px;
-  box-shadow: var(--shadow-lg); overflow: hidden;
-  animation: modalIn .2s ease;
-}
-@keyframes modalIn {
-  from { transform: scale(.94) translateY(10px); opacity: 0; }
-  to   { transform: scale(1) translateY(0); opacity: 1; }
-}
-.modal-header {
-  padding: 18px 22px 0;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.modal-header h3 { font-size: 16px; font-weight: 800; color: var(--text); }
-.modal-close {
-  width: 28px; height: 28px; border: none;
-  background: var(--bg2); border-radius: 6px;
-  cursor: pointer; color: var(--text2); font-size: 16px;
-  display: flex; align-items: center; justify-content: center;
-  transition: all .2s; font-family: inherit;
-}
-.modal-close:hover { background: var(--bad-l); color: var(--bad); }
-.modal-body { padding: 18px 22px 22px; }
-.form-group { margin-bottom: 12px; }
-.form-group label {
-  display: block; font-size: 10px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .5px;
-  color: var(--text2); margin-bottom: 4px;
-}
-.form-group input,
-.form-group select,
-.form-group textarea {
-  width: 100%; padding: 9px 12px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--input-border);
-  background: var(--input-bg); color: var(--text);
-  font-family: inherit; font-size: 13px;
-  transition: border-color .2s;
-}
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-  outline: none; border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(79,70,229,.1);
-}
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.form-actions { display: flex; gap: 8px; margin-top: 16px; }
-.btn-save {
-  flex: 1; padding: 10px; border: none;
-  border-radius: var(--radius-sm);
-  background: var(--primary); color: #fff;
-  font-weight: 700; font-size: 13px; cursor: pointer;
-  transition: all .2s; font-family: inherit;
-}
-.btn-save:hover { background: var(--primary-d); }
-.btn-cancel-modal {
-  padding: 10px 16px;
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-sm);
-  background: var(--card); color: var(--text2);
-  font-weight: 600; font-size: 13px; cursor: pointer;
-  transition: all .2s; font-family: inherit;
-}
-.btn-cancel-modal:hover { background: var(--bg2); }
-
-/* =====================================================
-   TOAST
-   ===================================================== */
-.toast {
-  position: fixed; bottom: 22px; right: 22px;
-  background: var(--text); color: var(--text-inv);
-  padding: 10px 18px; border-radius: 10px;
-  font-size: 12px; font-weight: 600;
-  box-shadow: var(--shadow-lg); z-index: 10000;
-  animation: toastIn .22s ease;
-}
-@keyframes toastIn {
-  from { transform: translateY(8px) scale(.95); opacity: 0; }
-  to   { transform: translateY(0) scale(1); opacity: 1; }
-}
-
-.hidden { display: none !important; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,sans-serif;background:#f0f2f8;color:#1a1f36;font-size:14px}
+.page{max-width:980px;margin:0 auto;padding:22px 18px}
+.top-bar{display:flex;justify-content:space-between;align-items:center;background:#fff;border-radius:14px;padding:14px 18px;border:1px solid #e2e5ef;box-shadow:0 2px 8px rgba(0,0,0,.05);margin-bottom:18px;gap:12px;flex-wrap:wrap}
+.top-bar h1{font-size:16px;font-weight:800;color:#1a1f36}
+.top-bar span{font-size:11px;color:#6b7280}
+.btn-group{display:flex;gap:8px}
+button{display:flex;align-items:center;gap:6px;padding:9px 16px;border:0;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;transition:all .2s;font-family:Inter,sans-serif}
+button:hover{opacity:.85;transform:translateY(-1px)}
+.btn-excel{background:#059669;color:#fff}
+.btn-pdf{background:#4f46e5;color:#fff}
+.card{background:#fff;border-radius:14px;border:1px solid #e2e5ef;box-shadow:0 2px 8px rgba(0,0,0,.05);margin-bottom:14px;overflow:hidden}
+.card-head{padding:12px 18px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f1f3f9}
+.card-head h2{font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.6px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px 18px}
+.kpi{border-radius:10px;padding:13px;border:1px solid transparent;position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:2px 2px 0 0}
+.kpi-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
+.kpi-val{font-size:17px;font-weight:800;letter-spacing:-1px}
+.kpi-sub{font-size:10px;color:#9ca3af;margin-top:3px}
+.kpi-ent{background:#f0fdf4;border-color:#a7f3d0} .kpi-ent::after{background:#059669} .kpi-ent .kpi-label{color:#047857} .kpi-ent .kpi-val{color:#059669}
+.kpi-sai{background:#fef2f2;border-color:#fecaca} .kpi-sai::after{background:#dc2626} .kpi-sai .kpi-label{color:#b91c1c} .kpi-sai .kpi-val{color:#dc2626}
+.kpi-net{background:#eef2ff;border-color:#c7d2fe} .kpi-net::after{background:#4f46e5} .kpi-net .kpi-label{color:#3730a3}
+.perfil-info{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;padding:13px 18px}
+.pi-item label{display:block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#9ca3af;margin-bottom:3px}
+.pi-item span{font-size:13px;font-weight:600;color:#1a1f36}
+table{width:100%;border-collapse:collapse}
+th{padding:8px 11px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#6b7280;background:#f8fafc;border-bottom:2px solid #e2e5ef;white-space:nowrap}
+td{padding:8px 11px;font-size:12px;color:#1a1f36;border-bottom:1px solid #f1f3f9}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:nth-child(even){background:#fafbff}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;font-size:9px;font-weight:700;text-transform:uppercase}
+.badge::before{content:'';width:4px;height:4px;border-radius:50%;background:currentColor}
+.ent{background:#f0fdf4;color:#059669}
+.sai{background:#fef2f2;color:#dc2626}
+/* gráficos — 3 colunas exatas, mesma altura */
+.chart-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px 18px 16px;align-items:start}
+.chart-box{border:1px solid #f1f3f9;border-radius:10px;padding:11px;display:flex;flex-direction:column;gap:6px}
+.chart-box h3{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;text-align:center}
+.analise-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px 18px 16px}
+.analise-box{border-radius:10px;padding:13px;border:1px solid transparent}
+.analise-box.ent{background:#f0fdf4;border-color:#a7f3d0}
+.analise-box.sai{background:#fef2f2;border-color:#fecaca}
+.analise-box.net{background:#eef2ff;border-color:#c7d2fe}
+.analise-box h3{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:9px}
+.analise-box.ent h3{color:#047857}
+.analise-box.sai h3{color:#b91c1c}
+.analise-box.net h3{color:#3730a3}
+.analise-item{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(0,0,0,.05);font-size:11px}
+.analise-item:last-child{border-bottom:none}
+.analise-item .lbl{color:#6b7280;font-weight:500}
+.analise-item .val{font-weight:700}
+.analise-total{margin-top:8px;padding-top:7px;border-top:2px solid rgba(0,0,0,.08);display:flex;justify-content:space-between;font-weight:800;font-size:12px}
+.narrativa{padding:14px 18px 16px}
+.narrativa p{font-size:12px;line-height:1.75;color:#374151;margin-bottom:7px}
+.narrativa p:last-child{margin-bottom:0}
+.loading{display:none;position:fixed;inset:0;background:rgba(10,15,30,.55);backdrop-filter:blur(4px);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.loading.show{display:flex}
+.spinner{width:44px;height:44px;border:4px solid rgba(255,255,255,.2);border-top:4px solid #fff;border-radius:50%;animation:spin .9s linear infinite}
+.loading-text{color:#fff;font-weight:600;font-size:13px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:40px;color:#9ca3af}
 </style>
 </head>
 <body>
 
-<!-- ==============================================
-     HEADER
-     ============================================== -->
-<header>
-  <div class="header-brand">
-    <div class="logo">F</div>
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loadingText">Gerando documento...</div>
+</div>
+
+<!-- canvases ocultos para PNG no PDF — MESMAS dimensões -->
+<div style="position:absolute;left:-9999px;width:500px;opacity:.01;pointer-events:none">
+  <canvas id="cvPizza"    width="500" height="400"></canvas>
+  <canvas id="cvEvolucao" width="500" height="400"></canvas>
+  <canvas id="cvBar"      width="500" height="400"></canvas>
+</div>
+
+<div class="page">
+
+  <div class="top-bar">
     <div>
-      <h1>FluxoPro</h1>
-      <span>Engine v12 &mdash; Controle financeiro</span>
+      <h1>&#128202; Relatório Financeiro — FluxoPro</h1>
+      <span id="headerSub">Carregando...</span>
+    </div>
+    <div class="btn-group">
+      <button class="btn-excel" onclick="exportExcel()">&#128190; Excel</button>
+      <button class="btn-pdf"   onclick="exportPDF()">  &#128196; PDF</button>
     </div>
   </div>
 
-  <div class="header-right">
-    <select id="perfilSelect"
-      style="padding:7px 10px;border-radius:8px;border:1px solid var(--input-border);
-             background:var(--input-bg);color:var(--text);font-family:inherit;
-             font-size:13px;font-weight:600"></select>
-    <button id="novoPerfil"
-      title="Novo perfil"
-      style="padding:7px 11px;border-radius:8px;border:1px solid var(--input-border);
-             background:var(--input-bg);color:var(--text);font-weight:700;
-             cursor:pointer;font-size:14px;font-family:inherit">+</button>
-
-    <div class="tabs">
-      <button data-tab="lanc" class="active">Lançamentos</button>
-      <button data-tab="conf">Configurações</button>
+  <!-- Perfil -->
+  <div class="card">
+    <div class="card-head"><span class="dot" style="background:#4f46e5"></span><h2>Identificação do Perfil</h2></div>
+    <div class="perfil-info">
+      <div class="pi-item"><label>Perfil</label><span id="piPerfil">—</span></div>
+      <div class="pi-item"><label>Nome / Razão social</label><span id="piNome">—</span></div>
+      <div class="pi-item"><label>CPF / CNPJ</label><span id="piDoc">—</span></div>
     </div>
   </div>
-</header>
 
-<!-- ==============================================
-     CONTAINER PRINCIPAL
-     ============================================== -->
-<div class="container">
-<div class="layout">
-
-  <!-- ============================================
-       SIDEBAR — apenas gráficos
-       ============================================ -->
-  <aside class="sidebar">
-
-    <!-- Gráfico 1: Donut categorias saídas -->
-    <div class="card">
-      <div class="card-head">
-        <span class="card-title">
-          <span class="dot" style="background:var(--primary)"></span>
-          Por Categoria
-        </span>
+  <!-- KPIs -->
+  <div class="card">
+    <div class="card-head"><span class="dot" style="background:#059669"></span><h2>Painel de Saldos</h2></div>
+    <div class="kpi-grid">
+      <div class="kpi kpi-ent">
+        <div class="kpi-label">Entradas — ganhos</div>
+        <div class="kpi-val" id="kEnt">R$ 0</div>
+        <div class="kpi-sub" id="kEntQtd">0 lançamentos</div>
       </div>
-      <div class="chart-wrap">
-        <canvas id="chartPizza" height="200"></canvas>
+      <div class="kpi kpi-sai">
+        <div class="kpi-label">Saídas — gastos</div>
+        <div class="kpi-val" id="kSai">R$ 0</div>
+        <div class="kpi-sub" id="kSaiQtd">0 lançamentos</div>
       </div>
-      <p class="chart-note" id="txtPizza"></p>
-    </div>
-
-    <!-- Gráfico 2: Linha evolução mensal -->
-    <div class="card">
-      <div class="card-head">
-        <span class="card-title">
-          <span class="dot" style="background:var(--ok)"></span>
-          Evolução Mensal
-        </span>
+      <div class="kpi kpi-net">
+        <div class="kpi-label">Resultado líquido</div>
+        <div class="kpi-val" id="kNet" style="color:#4f46e5">R$ 0</div>
+        <div class="kpi-sub" id="kNetPct">—</div>
       </div>
-      <div class="chart-wrap">
-        <canvas id="chartEvolucao" height="180"></canvas>
-      </div>
-      <p class="chart-note" id="txtEvolucao"></p>
-    </div>
-
-    <!-- Gráfico 3: Barras horizontais top gastos -->
-    <div class="card">
-      <div class="card-head">
-        <span class="card-title">
-          <span class="dot" style="background:var(--bad)"></span>
-          Top Gastos
-        </span>
-      </div>
-      <div class="chart-wrap">
-        <canvas id="chartTop" height="180"></canvas>
-      </div>
-      <p class="chart-note" id="txtTop"></p>
-    </div>
-
-  </aside>
-
-  <!-- ============================================
-       CONTEÚDO PRINCIPAL
-       ============================================ -->
-  <main>
-
-    <!-- ==========================================
-         ABA LANÇAMENTOS
-         ========================================== -->
-    <section id="tab-lanc">
-
-      <!-- Botões de ação -->
-      <div class="lanc-header">
-        <button class="btn-new" id="novoLanc">&#10133; Novo lançamento</button>
-        <button class="btn-sec" id="importar">&#128229; Alimentar perfil</button>
-        <button class="btn-sec" id="refreshBtn">&#8635; Refresh</button>
-      </div>
-
-      <!-- Dados do perfil + KPIs no mesmo card -->
-      <div class="card" style="margin-bottom:14px">
-        <div class="card-head">
-          <span class="card-title">
-            <span class="dot" style="background:var(--warn)"></span>
-            Dados do Perfil
-          </span>
-          <span style="font-size:10px;color:var(--text2)" id="periodoLabel"></span>
-        </div>
-        <div class="perfil-grid">
-          <div class="perfil-field">
-            <label>Nome / Razão social</label>
-            <input id="perfilNome" placeholder="Ex: João Silva ou Empresa Ltda.">
-          </div>
-          <div class="perfil-field">
-            <label>CPF ou CNPJ</label>
-            <input id="perfilDoc" placeholder="000.000.000-00 ou 00.000.000/0001-00">
-          </div>
-        </div>
-
-        <!-- KPI Row: Entradas / Saídas / Resultado -->
-        <div class="kpi-row">
-          <div class="kpi-card ent">
-            <div class="kpi-label">Entradas (ganhos)</div>
-            <div class="kpi-value" id="sumEnt">R$ 0,00</div>
-            <div class="kpi-meta" id="sumEntQtd">0 lançamentos</div>
-            <div class="kpi-bar">
-              <div class="kpi-bar-fill" id="barEnt" style="background:var(--ok);width:0%"></div>
-            </div>
-          </div>
-          <div class="kpi-card sai">
-            <div class="kpi-label">Saídas (gastos)</div>
-            <div class="kpi-value" id="sumSai">R$ 0,00</div>
-            <div class="kpi-meta" id="sumSaiQtd">0 lançamentos</div>
-            <div class="kpi-bar">
-              <div class="kpi-bar-fill" id="barSai" style="background:var(--bad);width:0%"></div>
-            </div>
-          </div>
-          <div class="kpi-card net">
-            <div class="kpi-label">Resultado líquido</div>
-            <div class="kpi-value" id="sumRes">R$ 0,00</div>
-            <div class="kpi-meta" id="sumResPct">—</div>
-            <div class="kpi-bar">
-              <div class="kpi-bar-fill" id="barRes" style="background:var(--primary);width:50%"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tabela de lançamentos -->
-      <div class="card">
-        <div class="card-head">
-          <span class="card-title">
-            <span class="dot"></span>
-            Extrato de Lançamentos
-          </span>
-          <span id="totalLanc" style="font-size:11px;color:var(--text2);font-weight:600"></span>
-        </div>
-
-        <!-- Filtros -->
-        <div class="filter-bar" style="padding-top:12px">
-          <input type="text"  class="filter-search" id="fBusca" placeholder="Buscar categoria, observação...">
-          <select id="fTipo">
-            <option value="">Todos os tipos</option>
-            <option value="Entrada">Entradas</option>
-            <option value="Saida">Saídas</option>
-          </select>
-          <input type="month" id="fMes" title="Filtrar por mês">
-          <button class="btn-sec" id="clearFilter" style="padding:7px 10px;font-size:12px">&#10005; Limpar</button>
-        </div>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:100px">Data</th>
-                <th>Categoria</th>
-                <th style="width:100px">Tipo</th>
-                <th style="width:110px;text-align:right">Valor</th>
-                <th>Observação</th>
-                <th style="width:40px"></th>
-              </tr>
-            </thead>
-            <tbody id="tbody"></tbody>
-          </table>
-        </div>
-
-        <div class="table-footer">
-          <span id="footerCount"></span>
-          <span id="footerTotal"></span>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- ==========================================
-         ABA CONFIGURAÇÕES
-         ========================================== -->
-    <section id="tab-conf" class="hidden">
-      <div class="card">
-        <div class="card-head">
-          <span class="card-title">
-            <span class="dot" style="background:var(--warn)"></span>
-            Configurações do Sistema
-          </span>
-        </div>
-
-        <div class="conf-grid">
-
-          <!-- Bloco 1: Aparência — Temas -->
-          <div class="conf-block">
-            <h4><span>&#127912;</span> Tema visual</h4>
-            <div class="theme-selector" id="themeSelector">
-              <button class="theme-btn theme-default active" data-theme="" title="Padrão"></button>
-              <button class="theme-btn theme-dark"    data-theme="dark"    title="Dark"></button>
-              <button class="theme-btn theme-emerald" data-theme="emerald" title="Emerald"></button>
-              <button class="theme-btn theme-gold"    data-theme="gold"    title="Gold"></button>
-              <button class="theme-btn theme-indigo"  data-theme="indigo"  title="Indigo"></button>
-              <button class="theme-btn theme-rose"    data-theme="rose"    title="Rose"></button>
-              <!-- Cor personalizada -->
-              <div class="color-picker-wrap" title="Cor personalizada">
-                <button class="theme-btn theme-custom" data-theme="custom" title="Cor personalizada"></button>
-                <input type="color" id="colorPicker" value="#4f46e5">
-              </div>
-            </div>
-            <span class="theme-label" id="themeLabel">Tema: Padrão</span>
-          </div>
-
-          <!-- Bloco 2: Perfil atual -->
-          <div class="conf-block">
-            <h4><span>&#128100;</span> Perfil ativo</h4>
-            <div id="confPerfilInfo">
-              <div class="conf-info-row"><span>Perfil</span><strong id="confPerfilNome">—</strong></div>
-              <div class="conf-info-row"><span>Nome</span><strong id="confNome">—</strong></div>
-              <div class="conf-info-row"><span>Documento</span><strong id="confDoc">—</strong></div>
-              <div class="conf-info-row"><span>Lançamentos</span><strong id="confQtd">0</strong></div>
-            </div>
-          </div>
-
-          <!-- Bloco 3: Exportação -->
-          <div class="conf-block">
-            <h4><span>&#128202;</span> Exportação</h4>
-            <div class="conf-actions">
-              <button class="conf-btn" id="exportAll">&#128196; Gerar Relatório (PDF + Excel)</button>
-              <button class="conf-btn" onclick="abrirImport()">&#128229; Importar dados (Excel / PDF)</button>
-            </div>
-          </div>
-
-          <!-- Bloco 4: Gerenciar perfis -->
-          <div class="conf-block">
-            <h4><span>&#128193;</span> Gerenciar Perfis</h4>
-            <div class="conf-actions">
-              <button class="conf-btn" id="btnNovoPerfil2">&#10133; Criar novo perfil</button>
-              <button class="conf-btn" id="btnRenamePerfil">&#9999;&#65039; Renomear perfil atual</button>
-              <button class="conf-btn danger" id="btnDeletePerfil">&#128465; Excluir perfil atual</button>
-            </div>
-          </div>
-
-          <!-- Bloco 5: Dados & Backup -->
-          <div class="conf-block">
-            <h4><span>&#128190;</span> Backup de dados</h4>
-            <div class="conf-actions">
-              <button class="conf-btn" id="btnBackup">&#8595; Exportar backup (JSON)</button>
-              <button class="conf-btn" id="btnRestore">&#8593; Restaurar backup (JSON)</button>
-            </div>
-          </div>
-
-          <!-- Bloco 6: Zona de perigo -->
-          <div class="conf-block">
-            <h4><span>&#9888;&#65039;</span> Zona de Perigo</h4>
-            <div class="conf-actions">
-              <button class="conf-btn danger" id="btnLimparPerfil">&#128465; Limpar lançamentos do perfil</button>
-              <button class="conf-btn danger" id="resetAll">&#128465; Reset de fábrica (apagar tudo)</button>
-            </div>
-            <p style="font-size:11px;color:var(--text2);margin-top:10px;line-height:1.5">
-              &#9888;&#65039; Essas ações são irreversíveis. Faça um backup antes de prosseguir.
-            </p>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-  </main>
-</div>
-</div>
-
-<!-- ==============================================
-     MODAL — Novo lançamento
-     ============================================== -->
-<div class="modal" id="modal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h3>Novo Lançamento</h3>
-      <button class="modal-close" onclick="fecharModal()">&#10005;</button>
-    </div>
-    <div class="modal-body">
-      <form id="form">
-        <div class="form-row">
-          <div class="form-group">
-            <label>Data</label>
-            <input type="date" id="data" required>
-          </div>
-          <div class="form-group">
-            <label>Tipo</label>
-            <select id="tipo">
-              <option>Entrada</option>
-              <option>Saída</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Categoria</label>
-            <input type="text" id="cat" placeholder="Ex: Salário, Aluguel..." required>
-          </div>
-          <div class="form-group">
-            <label>Valor (R$)</label>
-            <input type="text" id="valor" placeholder="Ex: 1.500,00" required>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Observação (opcional)</label>
-          <textarea id="obs" placeholder="Detalhes do lançamento..." rows="2"></textarea>
-        </div>
-        <div class="form-actions">
-          <button type="submit" class="btn-save">&#128190; Salvar</button>
-          <button type="button" class="btn-cancel-modal" onclick="fecharModal()">Cancelar</button>
-        </div>
-      </form>
     </div>
   </div>
-</div>
 
-<!-- Input file oculto para restaurar backup -->
-<input type="file" id="restoreInput" accept=".json" style="display:none">
+  <!-- Gráficos -->
+  <div class="card">
+    <div class="card-head"><span class="dot" style="background:#7c3aed"></span><h2>Resumo Visual</h2></div>
+    <div class="chart-row">
+      <div class="chart-box">
+        <h3>Gastos por Categoria</h3>
+        <canvas id="cPizza"    height="210"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>Evolução Mensal</h3>
+        <canvas id="cEvolucao" height="210"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>Entradas x Saídas</h3>
+        <canvas id="cBar"      height="210"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Extrato -->
+  <div class="card">
+    <div class="card-head"><span class="dot" style="background:#d97706"></span><h2>Extrato Completo de Lançamentos</h2></div>
+    <div id="tabelaWrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:36px">#</th>
+            <th style="width:90px">Data</th>
+            <th>Categoria</th>
+            <th style="width:80px">Tipo</th>
+            <th style="width:110px;text-align:right">Valor</th>
+            <th>Observação</th>
+          </tr>
+        </thead>
+        <tbody id="tb"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Análise -->
+  <div class="card">
+    <div class="card-head"><span class="dot" style="background:#059669"></span><h2>Relatório Detalhado</h2></div>
+    <div class="analise-grid" id="analiseGrid"></div>
+  </div>
+
+  <!-- Narrativa -->
+  <div class="card">
+    <div class="card-head"><span class="dot" style="background:#1a1f36"></span><h2>Análise Interpretativa</h2></div>
+    <div class="narrativa" id="narrativa"></div>
+  </div>
+
+</div>
 
 <script>
-/* ================================================
-   CONSTANTES & ESTADO
-   ================================================ */
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function normTipo(t) {
+  return String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
+}
+function ehEntrada(t) { return normTipo(t)==="entrada"; }
+function ehSaida(t)   { return normTipo(t)==="saida"; }
+
+function fmtMoney(v) {
+  return new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(v||0);
+}
+function fmtDate(iso) {
+  if (!iso) return "—";
+  const [y,m,d] = iso.split("-"); return `${d}/${m}/${y}`;
+}
+function pct(a,b) { return b ? (a/b*100).toFixed(1)+"%" : "—"; }
+
+/* ============================================================
+   DADOS
+   ============================================================ */
 const KEY = "fluxopro_v12";
-let charts = {};
-let debounceTimer;
-let filterState = { busca: "", tipo: "", mes: "" };
+let db, perfil, dados, info;
 
-/* ================================================
-   HELPER: normalizar tipo (remove acentos para comparar)
-   Resolve o bug "Saida" vs "Saída" de dados importados
-   ================================================ */
-function ehEntrada(tipo) {
-  return String(tipo || "").trim().toLowerCase() === "entrada";
-}
-function ehSaida(tipo) {
-  const t = String(tipo || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
-  return t === "saida";
+try {
+  db     = JSON.parse(localStorage.getItem(KEY));
+  if (!db||!db.profiles) throw new Error("Base não encontrada. Abra o FluxoPro primeiro.");
+  perfil = db.active;
+  dados  = db.profiles[perfil] || [];
+  info   = db.profileInfo?.[perfil] || {};
+} catch(err) {
+  document.querySelector(".page").innerHTML =
+    "<div class='card'><div style='padding:40px;text-align:center;color:#6b7280'><h2 style='color:#1a1f36;margin-bottom:8px'>Erro ao carregar</h2><p>"+err.message+"</p></div></div>";
+  throw err;
 }
 
-/* ================================================
-   PERSISTÊNCIA
-   ================================================ */
-function loadDB() {
-  return JSON.parse(localStorage.getItem(KEY)) || {
-    active: "default",
-    profiles: { default: [] },
-    profileInfo: {},
-    theme: "",
-    customColor: "#4f46e5"
-  };
-}
-function saveDB(db) { localStorage.setItem(KEY, JSON.stringify(db)); }
+const PALETTE = ["#4f46e5","#059669","#d97706","#7c3aed","#0891b2","#db2777","#65a30d","#ea580c","#2563eb","#dc2626"];
 
-/* ================================================
-   FORMATADORES
-   ================================================ */
-function formatMoney(v) {
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
-}
-function normalizeValue(v) {
-  let s = String(v || "").replace(/[^\d.,-]/g, "").replace(",", ".");
-  let n = parseFloat(s);
-  return isNaN(n) ? null : Math.abs(n);
-}
-function list() {
-  const db = loadDB();
-  return db.profiles[db.active] || [];
-}
-
-/* ================================================
-   FILTROS
-   ================================================ */
-function applyFilters(dados) {
-  return dados.filter(i => {
-    const busca = filterState.busca.toLowerCase();
-    if (busca && !(i.cat || "").toLowerCase().includes(busca) && !(i.obs || "").toLowerCase().includes(busca)) return false;
-    if (filterState.tipo) {
-      if (filterState.tipo === "Entrada" && !ehEntrada(i.tipo)) return false;
-      if (filterState.tipo === "Saida"   && !ehSaida(i.tipo))   return false;
-    }
-    if (filterState.mes && i.data && !i.data.startsWith(filterState.mes)) return false;
-    return true;
-  });
-}
-
-/* ================================================
-   PERFIS
-   ================================================ */
-function renderPerfis() {
-  const db = loadDB();
-  perfilSelect.innerHTML = Object.keys(db.profiles).map(p =>
-    `<option ${p === db.active ? "selected" : ""}>${p}</option>`
-  ).join("");
-}
-
-function renderProfileInfo() {
-  const db   = loadDB();
-  const info = db.profileInfo[db.active] || {};
-  perfilNome.value = info.nome || "";
-  perfilDoc.value  = info.doc  || "";
-}
-
-function saveProfileInfo() {
-  const db = loadDB();
-  if (!db.profileInfo) db.profileInfo = {};
-  db.profileInfo[db.active] = {
-    nome: perfilNome.value.trim(),
-    doc:  perfilDoc.value.trim()
-  };
-  saveDB(db);
-  atualizarConfPerfil();
-}
-
-function atualizarConfPerfil() {
-  const db   = loadDB();
-  const info = db.profileInfo[db.active] || {};
-  const qtd  = (db.profiles[db.active] || []).length;
-  document.getElementById("confPerfilNome").innerText = db.active;
-  document.getElementById("confNome").innerText       = info.nome || "—";
-  document.getElementById("confDoc").innerText        = info.doc  || "—";
-  document.getElementById("confQtd").innerText        = qtd + " lançamento" + (qtd !== 1 ? "s" : "");
-}
-
-/* ================================================
-   TABELA
-   ================================================ */
-function renderTable() {
-  const todos    = list();
-  const filtrado = applyFilters(todos);
-
-  document.getElementById("totalLanc").innerText = todos.length + " total";
-
-  if (!filtrado.length) {
-    tbody.innerHTML = `
-      <tr><td colspan="6">
-        <div class="empty-state">
-          <div class="icon">&#128193;</div>
-          <h3>${todos.length ? "Nenhum resultado para o filtro" : "Nenhum lançamento cadastrado"}</h3>
-          <p>${todos.length ? "Tente outros termos ou limpe o filtro." : "Clique em \"Novo lançamento\" para começar."}</p>
-        </div>
-      </td></tr>`;
-    document.getElementById("footerCount").innerText = "";
-    document.getElementById("footerTotal").innerText = "";
-    return;
+/* ============================================================
+   CÁLCULOS — ponto flutuante seguro com toFixed(2)
+   ============================================================ */
+let totalEnt=0, totalSai=0;
+const mapacat={}, catEntradas={};
+dados.forEach(l => {
+  const v = Number(l.valor||0);
+  if (ehEntrada(l.tipo)) {
+    totalEnt = +(totalEnt + v).toFixed(2);
+    catEntradas[l.cat||"Outros"] = +((catEntradas[l.cat||"Outros"]||0)+v).toFixed(2);
+  } else {
+    totalSai = +(totalSai + v).toFixed(2);
+    mapacat[l.cat||"Outros"] = +((mapacat[l.cat||"Outros"]||0)+v).toFixed(2);
   }
+});
+const resultado = +(totalEnt - totalSai).toFixed(2);
+const qtdEnt    = dados.filter(l=>ehEntrada(l.tipo)).length;
+const qtdSai    = dados.filter(l=>ehSaida(l.tipo)).length;
 
-  let totEnt = 0, totSai = 0;
-  tbody.innerHTML = filtrado.map(i => {
-    ehEntrada(i.tipo) ? totEnt += i.valor : totSai += i.valor;
-    const isEnt = ehEntrada(i.tipo);
-    return `
-    <tr data-id="${i.id}">
-      <td style="font-weight:600;font-size:12px;color:var(--text2)" contenteditable data-f="data">${i.data || ""}</td>
-      <td style="font-weight:600;max-width:140px" contenteditable data-f="cat">${i.cat || ""}</td>
-      <td><span class="badge ${isEnt ? "entrada" : "saida"} btnTipo">${i.tipo}</span></td>
-      <td style="font-weight:700;text-align:right;white-space:nowrap" contenteditable data-f="valor">${formatMoney(i.valor)}</td>
-      <td style="color:var(--text2);max-width:180px;overflow:hidden;text-overflow:ellipsis" contenteditable data-f="obs">${i.obs || ""}</td>
-      <td><button class="btn-del del" title="Apagar">&#128465;</button></td>
-    </tr>`;
-  }).join("");
+/* ============================================================
+   PREENCHER PÁGINA
+   ============================================================ */
+const datas   = dados.map(l=>l.data).filter(Boolean).sort();
+const periodo = datas.length ? fmtDate(datas[0])+" a "+fmtDate(datas[datas.length-1]) : "—";
 
-  const net = totEnt - totSai;
-  document.getElementById("footerCount").innerText = `${filtrado.length} lançamento${filtrado.length !== 1 ? "s" : ""}`;
-  document.getElementById("footerTotal").innerText = `Resultado filtrado: ${formatMoney(net)}`;
+document.getElementById("headerSub").innerText =
+  "Perfil: "+perfil+" | "+dados.length+" lançamentos | "+periodo;
+document.getElementById("piPerfil").innerText = perfil;
+document.getElementById("piNome").innerText   = info.nome || "Não informado";
+document.getElementById("piDoc").innerText    = info.doc  || "Não informado";
+document.getElementById("kEnt").innerText     = fmtMoney(totalEnt);
+document.getElementById("kSai").innerText     = fmtMoney(totalSai);
+document.getElementById("kNet").innerText     = fmtMoney(resultado);
+document.getElementById("kNet").style.color   = resultado>=0?"#4f46e5":"#dc2626";
+document.getElementById("kEntQtd").innerText  = qtdEnt+" lançamento"+(qtdEnt!==1?"s":"");
+document.getElementById("kSaiQtd").innerText  = qtdSai+" lançamento"+(qtdSai!==1?"s":"");
+document.getElementById("kNetPct").innerText  = (resultado>=0?"+":"")+pct(Math.abs(resultado),totalEnt)+" das entradas";
+
+/* tabela */
+if (!dados.length) {
+  document.getElementById("tabelaWrap").innerHTML="<div class='empty'>Nenhum lançamento</div>";
+} else {
+  document.getElementById("tb").innerHTML = dados.map((l,i)=>`
+  <tr>
+    <td style="color:#9ca3af;font-size:10px;font-weight:600">${i+1}</td>
+    <td style="font-weight:600;font-size:11px;color:#6b7280;white-space:nowrap">${fmtDate(l.data)}</td>
+    <td style="font-weight:600">${l.cat||"—"}</td>
+    <td><span class="badge ${ehEntrada(l.tipo)?"ent":"sai"}">${l.tipo}</span></td>
+    <td style="font-weight:700;text-align:right;white-space:nowrap;color:${ehEntrada(l.tipo)?"#059669":"#dc2626"}">${fmtMoney(l.valor)}</td>
+    <td style="color:#9ca3af;font-size:11px">${l.obs||"—"}</td>
+  </tr>`).join("");
 }
 
-/* ================================================
-   KPIs
-   ================================================ */
-function updateResumo() {
-  let e = 0, s = 0;
-  const todos = list();
-  todos.forEach(i => ehEntrada(i.tipo) ? e += i.valor : s += i.valor);
+/* análise */
+const topEnt = Object.entries(catEntradas).sort((a,b)=>b[1]-a[1]).slice(0,6);
+const topSai = Object.entries(mapacat).sort((a,b)=>b[1]-a[1]).slice(0,6);
 
-  const net = e - s;
-  const max = Math.max(e, s, 1);
+document.getElementById("analiseGrid").innerHTML=`
+  <div class="analise-box ent">
+    <h3>Entradas (ganhos)</h3>
+    ${topEnt.map(([k,v])=>`<div class="analise-item"><span class="lbl">${k}</span><span class="val" style="color:#059669">${fmtMoney(v)}</span></div>`).join("")}
+    <div class="analise-total" style="color:#059669"><span>Total</span><span>${fmtMoney(totalEnt)}</span></div>
+  </div>
+  <div class="analise-box sai">
+    <h3>Saídas (gastos)</h3>
+    ${topSai.map(([k,v])=>`<div class="analise-item"><span class="lbl">${k}</span><span class="val" style="color:#dc2626">${fmtMoney(v)}</span></div>`).join("")}
+    <div class="analise-total" style="color:#dc2626"><span>Total</span><span>${fmtMoney(totalSai)}</span></div>
+  </div>
+  <div class="analise-box net">
+    <h3>Resultado Líquido</h3>
+    <div class="analise-item"><span class="lbl">Total entradas</span><span class="val" style="color:#059669">${fmtMoney(totalEnt)}</span></div>
+    <div class="analise-item"><span class="lbl">(–) Total saídas</span><span class="val" style="color:#dc2626">${fmtMoney(totalSai)}</span></div>
+    <div class="analise-item"><span class="lbl">Margem líquida</span><span class="val">${pct(resultado,totalEnt)}</span></div>
+    <div class="analise-item"><span class="lbl">Lançamentos</span><span class="val">${dados.length}</span></div>
+    <div class="analise-total" style="color:${resultado>=0?"#4f46e5":"#dc2626"}"><span>Resultado</span><span>${fmtMoney(resultado)}</span></div>
+  </div>`;
 
-  sumEnt.innerText = formatMoney(e);
-  sumSai.innerText = formatMoney(s);
-  sumRes.innerText = formatMoney(net);
-  sumRes.style.color = net >= 0 ? "var(--ok)" : "var(--bad)";
+/* narrativa */
+const maiorG = topSai[0]?topSai[0][0]:"—";
+const maiorE = topEnt[0]?topEnt[0][0]:"—";
+const corS   = resultado>0?"#059669":resultado<0?"#dc2626":"#d97706";
+document.getElementById("narrativa").innerHTML=`
+  <p>O período analisado compreende <strong>${dados.length} lançamentos</strong> (${qtdEnt} entradas e ${qtdSai} saídas), de <strong>${fmtDate(datas[0])}</strong> a <strong>${fmtDate(datas[datas.length-1])}</strong>.</p>
+  <p>As entradas totalizaram <strong style="color:#059669">${fmtMoney(totalEnt)}</strong>, sendo a principal categoria de receita <strong>${maiorE}</strong>.
+     As saídas totalizaram <strong style="color:#dc2626">${fmtMoney(totalSai)}</strong>,
+     com maior concentração em <strong>${maiorG}</strong> (${fmtMoney(mapacat[maiorG]||0)} — ${pct(mapacat[maiorG]||0,totalSai)} das saídas).</p>
+  <p>O resultado líquido é de <strong style="color:${corS}">${fmtMoney(resultado)}</strong>, representando <strong>${pct(resultado,totalEnt)}</strong> sobre as entradas.
+     A saúde financeira é considerada <strong style="color:${corS}">${resultado>0?"POSITIVA":resultado<0?"NEGATIVA":"NEUTRA"}</strong>${resultado<0?" — recomenda-se revisão dos gastos.":"."}
+  </p>`;
 
-  const qtdEnt = todos.filter(i => ehEntrada(i.tipo)).length;
-  const qtdSai = todos.filter(i => ehSaida(i.tipo)).length;
-  document.getElementById("sumEntQtd").innerText = qtdEnt + " lançamento" + (qtdEnt !== 1 ? "s" : "");
-  document.getElementById("sumSaiQtd").innerText = qtdSai + " lançamento" + (qtdSai !== 1 ? "s" : "");
-  document.getElementById("sumResPct").innerText = e > 0 ? (net >= 0 ? "+" : "") + (net / e * 100).toFixed(1) + "% das entradas" : "—";
-
-  document.getElementById("barEnt").style.width = (e / max * 100).toFixed(1) + "%";
-  document.getElementById("barSai").style.width = (s / max * 100).toFixed(1) + "%";
-  document.getElementById("barRes").style.width = Math.min(100, Math.abs(net) / max * 100).toFixed(1) + "%";
-  document.getElementById("barRes").style.background = net >= 0 ? "var(--primary)" : "var(--bad)";
-
-  const datas = todos.map(i => i.data).filter(Boolean).sort();
-  document.getElementById("periodoLabel").innerText = datas.length
-    ? datas[0] + " — " + datas[datas.length - 1]
-    : "";
-}
-
-/* ================================================
-   PALETA DE CORES
-   ================================================ */
-const PALETTE = [
-  "#4f46e5","#059669","#dc2626","#d97706","#7c3aed",
-  "#db2777","#0891b2","#65a30d","#ea580c","#2563eb"
-];
-
-/* ================================================
-   HELPER: construir dados mensais
-   ================================================ */
-function buildMonthly(dados) {
-  const map = {};
-  dados.forEach(i => {
-    if (!i.data) return;
-    const mes = i.data.substring(0, 7);
-    if (!map[mes]) map[mes] = { ent: 0, sai: 0 };
-    ehEntrada(i.tipo) ? map[mes].ent += i.valor : map[mes].sai += i.valor;
+/* ============================================================
+   HELPER MONTHLY
+   ============================================================ */
+function buildMonthly(d) {
+  const map={};
+  d.forEach(l=>{
+    if (!l.data) return;
+    const mes=l.data.substring(0,7);
+    if (!map[mes]) map[mes]={ent:0,sai:0};
+    ehEntrada(l.tipo) ? map[mes].ent=+(map[mes].ent+Number(l.valor||0)).toFixed(2)
+                      : map[mes].sai=+(map[mes].sai+Number(l.valor||0)).toFixed(2);
   });
-  const keys = Object.keys(map).sort();
+  const keys=Object.keys(map).sort();
   return {
-    labels: keys.map(k => {
-      const [y, m] = k.split("-");
-      return new Date(y, m - 1).toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
-    }),
-    ent: keys.map(k => map[k].ent),
-    sai: keys.map(k => map[k].sai)
+    labels: keys.map(k=>{const[y,m]=k.split("-");return new Date(y,m-1).toLocaleDateString("pt-BR",{month:"short",year:"2-digit"});}),
+    ent: keys.map(k=>map[k].ent),
+    sai: keys.map(k=>map[k].sai)
   };
 }
 
-/* ================================================
-   GRÁFICOS
-   ================================================ */
-function renderDashboard() {
-  const dados     = list();
-  const textColor = getComputedStyle(document.documentElement).getPropertyValue("--text2").trim() || "#6b7280";
-  const gridColor = getComputedStyle(document.documentElement).getPropertyValue("--card-border").trim() || "#e2e5ef";
+/* ============================================================
+   GRÁFICOS PREVIEW (página)
+   ============================================================ */
+const gc={color:"#6b7280",grid:"#f1f3f9"};
+const catL=Object.keys(mapacat).sort((a,b)=>mapacat[b]-mapacat[a]);
+const catV=catL.map(k=>mapacat[k]);
+const monthly=buildMonthly(dados);
 
-  const basePlugins = {
-    legend: { labels: { font: { family: "Inter", size: 11 }, color: textColor, boxWidth: 11, padding: 10 } },
-    tooltip: { bodyFont: { family: "Inter", size: 12 }, callbacks: {
-      label: ctx => " " + formatMoney(ctx.parsed.y ?? ctx.parsed ?? 0)
-    }}
-  };
-
-  if (!dados.length) {
-    ["pizza","evolucao","top"].forEach(k => { if (charts[k]) { charts[k].destroy(); delete charts[k]; } });
-    txtPizza.innerText = txtEvolucao.innerText = txtTop.innerText = "Adicione lançamentos para ver os gráficos.";
-    return;
-  }
-
-  /* --- Gráfico 1: Donut — saídas por categoria --- */
-  const mapacat = {};
-  let totalSai  = 0;
-  dados.forEach(i => {
-    if (ehSaida(i.tipo)) {
-      mapacat[i.cat || "Outros"] = (mapacat[i.cat || "Outros"] || 0) + i.valor;
-      totalSai += i.valor;
-    }
-  });
-  const catLabels = Object.keys(mapacat);
-  const catVals   = Object.values(mapacat);
-
-  if (charts.pizza) charts.pizza.destroy();
-  charts.pizza = new Chart(chartPizza, {
-    type: "doughnut",
-    data: {
-      labels: catLabels,
-      datasets: [{ data: catVals, backgroundColor: PALETTE.slice(0, catLabels.length), borderWidth: 0, hoverOffset: 6 }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: true, cutout: "66%",
-      plugins: {
-        ...basePlugins,
-        legend: { position: "bottom", labels: { ...basePlugins.legend.labels } },
-        tooltip: { callbacks: {
-          label: ctx => ` ${ctx.label}: ${formatMoney(ctx.parsed)} (${totalSai ? (ctx.parsed / totalSai * 100).toFixed(1) : 0}%)`
-        }}
-      }
-    }
-  });
-
-  const topCat = catLabels.reduce((a, k) => (mapacat[k] > (mapacat[a] || 0) ? k : a), catLabels[0] || "");
-  txtPizza.innerText = topCat ? `Maior gasto: ${topCat} (${formatMoney(mapacat[topCat])})` : "";
-
-  /* --- Gráfico 2: Linha — evolução mensal --- */
-  const monthly = buildMonthly(dados);
-
-  if (charts.evolucao) charts.evolucao.destroy();
-  charts.evolucao = new Chart(chartEvolucao, {
-    type: "line",
-    data: {
-      labels: monthly.labels,
-      datasets: [
-        { label: "Entradas", data: monthly.ent, borderColor: "#059669", backgroundColor: "rgba(5,150,105,.08)", fill: true, tension: .4, pointRadius: 4, pointBackgroundColor: "#059669", borderWidth: 2 },
-        { label: "Saídas",   data: monthly.sai, borderColor: "#dc2626", backgroundColor: "rgba(220,38,38,.07)", fill: true, tension: .4, pointRadius: 4, pointBackgroundColor: "#dc2626", borderWidth: 2 }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: true,
-      interaction: { mode: "index", intersect: false },
-      scales: {
-        x: { grid: { color: gridColor }, ticks: { color: textColor, font: { family: "Inter", size: 10 } } },
-        y: { grid: { color: gridColor }, ticks: { color: textColor, font: { family: "Inter", size: 10 }, callback: v => "R$" + (v >= 1000 ? (v/1000).toFixed(1)+"k" : v) }, beginAtZero: true }
-      },
-      plugins: { ...basePlugins, legend: { position: "top", labels: { ...basePlugins.legend.labels } } }
-    }
-  });
-
-  const nMeses = monthly.labels.length;
-  txtEvolucao.innerText = nMeses ? `${nMeses} mês${nMeses !== 1 ? "es" : ""} no período` : "";
-
-  /* --- Gráfico 3: Barras horizontais — top categorias gastos --- */
-  const topEntries = Object.entries(mapacat).sort((a, b) => b[1] - a[1]).slice(0, 6);
-  const topLabels  = topEntries.map(e => e[0]);
-  const topVals    = topEntries.map(e => e[1]);
-
-  if (charts.top) charts.top.destroy();
-  charts.top = new Chart(chartTop, {
-    type: "bar",
-    data: {
-      labels: topLabels,
-      datasets: [{
-        label: "Saídas por categoria",
-        data: topVals,
-        backgroundColor: PALETTE.slice(0, topLabels.length).map(c => c + "bb"),
-        borderColor:     PALETTE.slice(0, topLabels.length),
-        borderWidth: 2, borderRadius: 6
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: true,
-      indexAxis: "y",
-      scales: {
-        x: { grid: { color: gridColor }, ticks: { color: textColor, font: { family: "Inter", size: 10 }, callback: v => "R$" + (v >= 1000 ? (v/1000).toFixed(1)+"k" : v) }, beginAtZero: true },
-        y: { grid: { display: false }, ticks: { color: textColor, font: { family: "Inter", size: 11, weight: "600" } } }
-      },
-      plugins: { ...basePlugins, legend: { display: false } }
-    }
-  });
-
-  txtTop.innerText = topLabels.length ? `${topLabels.length} categoria${topLabels.length !== 1 ? "s" : ""} com saídas` : "";
-}
-
-/* ================================================
-   REFRESH GERAL
-   ================================================ */
-function refreshAll() {
-  renderTable();
-  updateResumo();
-  renderProfileInfo();
-  renderDashboard();
-  atualizarConfPerfil();
-}
-
-/* ================================================
-   TOAST
-   ================================================ */
-function showToast(msg) {
-  const t = document.createElement("div");
-  t.className = "toast"; t.innerText = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2200);
-}
-
-/* ================================================
-   FORMULÁRIO — salvar lançamento
-   ================================================ */
-form.onsubmit = e => {
-  e.preventDefault();
-  const v = normalizeValue(valor.value);
-  if (v === null) return alert("Valor inválido. Use: 1500 ou 1.500,00");
-  const db = loadDB();
-  db.profiles[db.active].push({
-    id:    crypto.randomUUID(),
-    data:  data.value,
-    cat:   cat.value.trim(),
-    tipo:  tipo.value,
-    valor: v,
-    obs:   obs.value.trim()
-  });
-  saveDB(db);
-  fecharModal();
-  form.reset();
-  refreshAll();
-  showToast("Lançamento adicionado!");
-};
-
-function fecharModal() { modal.style.display = "none"; }
-modal.onclick = e => { if (e.target === modal) fecharModal(); };
-novoLanc.onclick = () => {
-  data.value = new Date().toISOString().split("T")[0];
-  modal.style.display = "flex";
-};
-
-/* ================================================
-   TABELA — cliques
-   ================================================ */
-tbody.onclick = e => {
-  const tr = e.target.closest("tr");
-  if (!tr || !tr.dataset.id) return;
-  const db   = loadDB();
-  const item = db.profiles[db.active].find(i => i.id === tr.dataset.id);
-  if (!item) return;
-
-  if (e.target.closest(".del")) {
-    if (confirm("Apagar este lançamento?")) {
-      db.profiles[db.active] = db.profiles[db.active].filter(i => i.id !== item.id);
-      saveDB(db); refreshAll();
-      showToast("Lançamento removido");
-    }
-    return;
-  }
-
-  if (e.target.classList.contains("btnTipo")) {
-    item.tipo = ehEntrada(item.tipo) ? "Saída" : "Entrada";
-    saveDB(db); refreshAll();
-  }
-};
-
-/* ================================================
-   CONTENTEDITABLE — debounce
-   ================================================ */
-tbody.addEventListener("blur", e => {
-  const td = e.target;
-  if (!td.dataset.f) return;
-  const tr   = td.closest("tr");
-  const db   = loadDB();
-  const item = db.profiles[db.active].find(i => i.id === tr.dataset.id);
-  if (!item) return;
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => {
-    if (td.dataset.f === "valor") {
-      const n = normalizeValue(td.innerText);
-      if (n === null) { td.innerText = formatMoney(item.valor); alert("Valor inválido"); return; }
-      item.valor = n;
-    } else {
-      item[td.dataset.f] = td.innerText.trim();
-    }
-    saveDB(db); refreshAll();
-    showToast("Alteração salva");
-  }, 350);
-}, true);
-
-/* ================================================
-   FILTROS
-   ================================================ */
-fBusca.oninput   = () => { filterState.busca = fBusca.value.trim(); renderTable(); };
-fTipo.onchange   = () => { filterState.tipo  = fTipo.value;         renderTable(); };
-fMes.onchange    = () => { filterState.mes   = fMes.value;          renderTable(); };
-clearFilter.onclick = () => {
-  fBusca.value = ""; fTipo.value = ""; fMes.value = "";
-  filterState = { busca: "", tipo: "", mes: "" };
-  renderTable();
-};
-
-/* ================================================
-   PERFIL
-   ================================================ */
-perfilNome.onblur = saveProfileInfo;
-perfilDoc.onblur  = saveProfileInfo;
-
-perfilSelect.onchange = e => {
-  const db = loadDB();
-  db.active = e.target.value;
-  saveDB(db); refreshAll();
-  showToast("Perfil: " + e.target.value);
-};
-
-function criarNovoPerfil() {
-  const n = prompt("Nome do novo perfil:");
-  if (!n || !n.trim()) return;
-  const db = loadDB();
-  if (db.profiles[n]) { alert("Perfil já existe!"); return; }
-  db.profiles[n]    = [];
-  db.profileInfo[n] = {};
-  db.active = n;
-  saveDB(db);
-  renderPerfis(); refreshAll();
-  showToast("Perfil criado: " + n);
-}
-
-novoPerfil.onclick = criarNovoPerfil;
-
-document.getElementById("btnNovoPerfil2").onclick = criarNovoPerfil;
-
-document.getElementById("btnRenamePerfil").onclick = () => {
-  const db = loadDB();
-  const novoNome = prompt(`Novo nome para o perfil "${db.active}":`);
-  if (!novoNome || !novoNome.trim() || novoNome === db.active) return;
-  if (db.profiles[novoNome]) { alert("Nome já existe!"); return; }
-  db.profiles[novoNome]    = db.profiles[db.active];
-  db.profileInfo[novoNome] = db.profileInfo[db.active] || {};
-  delete db.profiles[db.active];
-  delete db.profileInfo[db.active];
-  db.active = novoNome;
-  saveDB(db); renderPerfis(); refreshAll();
-  showToast("Perfil renomeado para: " + novoNome);
-};
-
-document.getElementById("btnDeletePerfil").onclick = () => {
-  const db = loadDB();
-  const perfis = Object.keys(db.profiles);
-  if (perfis.length <= 1) { alert("Você precisa ter pelo menos 1 perfil."); return; }
-  if (!confirm(`Excluir o perfil "${db.active}" e todos os seus dados?`)) return;
-  delete db.profiles[db.active];
-  delete db.profileInfo[db.active];
-  db.active = Object.keys(db.profiles)[0];
-  saveDB(db); renderPerfis(); refreshAll();
-  showToast("Perfil excluído");
-};
-
-document.getElementById("btnLimparPerfil").onclick = () => {
-  const db = loadDB();
-  if (!confirm(`Limpar todos os lançamentos do perfil "${db.active}"?`)) return;
-  if (!confirm("Tem certeza? Esta ação não pode ser desfeita!")) return;
-  db.profiles[db.active] = [];
-  saveDB(db); refreshAll();
-  showToast("Lançamentos apagados");
-};
-
-/* ================================================
-   TABS
-   ================================================ */
-document.querySelectorAll(".tabs button").forEach(b => {
-  b.onclick = () => {
-    document.querySelectorAll(".tabs button").forEach(x => x.classList.remove("active"));
-    b.classList.add("active");
-    document.querySelectorAll("main section").forEach(s => s.classList.add("hidden"));
-    document.getElementById("tab-" + b.dataset.tab).classList.remove("hidden");
-  };
+new Chart(cPizza,{type:"doughnut",
+  data:{labels:catL,datasets:[{data:catV,backgroundColor:PALETTE.slice(0,catL.length),borderWidth:2,borderColor:"#fff",hoverOffset:6}]},
+  options:{responsive:true,cutout:"63%",plugins:{legend:{position:"bottom",labels:{font:{family:"Inter",size:10},color:gc.color,boxWidth:10,padding:7}},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${fmtMoney(ctx.parsed)}`}}}}
+});
+new Chart(cEvolucao,{type:"line",
+  data:{labels:monthly.labels,datasets:[
+    {label:"Entradas",data:monthly.ent,borderColor:"#059669",backgroundColor:"rgba(5,150,105,.07)",fill:true,tension:.38,pointRadius:3,borderWidth:2},
+    {label:"Saídas",  data:monthly.sai,borderColor:"#dc2626",backgroundColor:"rgba(220,38,38,.06)",fill:true,tension:.38,pointRadius:3,borderWidth:2}
+  ]},
+  options:{responsive:true,interaction:{mode:"index",intersect:false},scales:{x:{grid:{color:gc.grid},ticks:{color:gc.color,font:{size:9}}},y:{grid:{color:gc.grid},ticks:{color:gc.color,font:{size:9},callback:v=>"R$"+(v>=1000?(v/1000).toFixed(0)+"k":v)},beginAtZero:true}},plugins:{legend:{position:"top",labels:{font:{size:10},color:gc.color,boxWidth:10}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmtMoney(ctx.parsed.y)}`}}}}
+});
+new Chart(cBar,{type:"bar",
+  data:{labels:["Entradas","Saídas"],datasets:[{data:[totalEnt,totalSai],backgroundColor:["rgba(5,150,105,.8)","rgba(220,38,38,.8)"],borderColor:["#059669","#dc2626"],borderWidth:2,borderRadius:7}]},
+  options:{responsive:true,scales:{x:{grid:{display:false},ticks:{color:gc.color,font:{size:10}}},y:{grid:{color:gc.grid},ticks:{color:gc.color,font:{size:9},callback:v=>"R$"+(v>=1000?(v/1000).toFixed(0)+"k":v)},beginAtZero:true}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${fmtMoney(ctx.parsed.y)}`}}}}
 });
 
-/* ================================================
-   IMPORTAR / EXPORTAR
-   ================================================ */
-function abrirImport() {
-  window.open("import.html?perfil=" + encodeURIComponent(loadDB().active), "_blank");
+/* canvases offline — 500x400 cada */
+new Chart(cvPizza,{type:"doughnut",
+  data:{labels:catL,datasets:[{data:catV,backgroundColor:PALETTE.slice(0,catL.length),borderWidth:2,borderColor:"#fff",hoverOffset:10}]},
+  options:{responsive:false,animation:false,cutout:"60%",plugins:{legend:{position:"bottom",labels:{font:{size:14},padding:16}},tooltip:{enabled:false}}}
+});
+new Chart(cvEvolucao,{type:"line",
+  data:{labels:monthly.labels,datasets:[
+    {label:"Entradas",data:monthly.ent,borderColor:"#059669",backgroundColor:"rgba(5,150,105,.10)",fill:true,tension:.38,pointRadius:4,borderWidth:2.5},
+    {label:"Saídas",  data:monthly.sai,borderColor:"#dc2626",backgroundColor:"rgba(220,38,38,.08)",fill:true,tension:.38,pointRadius:4,borderWidth:2.5}
+  ]},
+  options:{responsive:false,animation:false,interaction:{mode:"index",intersect:false},scales:{x:{grid:{color:"#f1f3f9"},ticks:{font:{size:12},color:"#6b7280"}},y:{grid:{color:"#f1f3f9"},ticks:{font:{size:12},color:"#6b7280",callback:v=>"R$"+(v>=1000?(v/1000).toFixed(0)+"k":v)},beginAtZero:true}},plugins:{legend:{labels:{font:{size:13},padding:14}},tooltip:{enabled:false}}}
+});
+new Chart(cvBar,{type:"bar",
+  data:{labels:["Entradas","Saídas"],datasets:[{data:[totalEnt,totalSai],backgroundColor:["rgba(5,150,105,.8)","rgba(220,38,38,.8)"],borderColor:["#059669","#dc2626"],borderWidth:2,borderRadius:10}]},
+  options:{responsive:false,animation:false,scales:{x:{grid:{display:false},ticks:{font:{size:13},color:"#6b7280"}},y:{grid:{color:"#f1f3f9"},ticks:{font:{size:13},color:"#6b7280",callback:v=>"R$"+(v>=1000?(v/1000).toFixed(0)+"k":v)},beginAtZero:true}},plugins:{legend:{display:false},tooltip:{enabled:false}}}
+});
+
+/* ============================================================
+   EXCEL — alinhamento e estilos via SheetJS
+   ============================================================ */
+function exportExcel() {
+  if (!dados.length){alert("Sem dados para exportar.");return;}
+
+  /* Planilha principal: extrato */
+  const rows = dados.map((l,i)=>({
+    "#":           i+1,
+    "Data":        l.data||"",
+    "Categoria":   l.cat||"",
+    "Tipo":        l.tipo||"",
+    "Valor (R$)":  Number((l.valor||0).toFixed(2)),
+    "Observação":  l.obs||""
+  }));
+
+  /* Linha de totais */
+  rows.push({});
+  rows.push({"#":"","Data":"","Categoria":"TOTAL ENTRADAS","Tipo":"","Valor (R$)": +totalEnt.toFixed(2),"Observação":""});
+  rows.push({"#":"","Data":"","Categoria":"TOTAL SAÍDAS",  "Tipo":"","Valor (R$)": +totalSai.toFixed(2),"Observação":""});
+  rows.push({"#":"","Data":"","Categoria":"RESULTADO",     "Tipo":"","Valor (R$)": +resultado.toFixed(2),"Observação":""});
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+
+  /* Larguras das colunas */
+  ws["!cols"] = [
+    {wch:5},  /* # */
+    {wch:12}, /* Data */
+    {wch:22}, /* Categoria */
+    {wch:10}, /* Tipo */
+    {wch:14}, /* Valor */
+    {wch:30}  /* Observação */
+  ];
+
+  /* Formato numérico BR para coluna Valor (coluna E = índice 4) */
+  const range = XLSX.utils.decode_range(ws["!ref"]);
+  for (let row = 1; row <= range.e.r; row++) {
+    const addr = XLSX.utils.encode_cell({r:row, c:4});
+    if (ws[addr] && typeof ws[addr].v === "number") {
+      ws[addr].z = "#,##0.00";
+    }
+  }
+
+  /* Planilha de resumo */
+  const wsRes = XLSX.utils.aoa_to_sheet([
+    ["FluxoPro — Resumo Financeiro"],
+    [],
+    ["Perfil",      perfil],
+    ["Nome",        info.nome||"—"],
+    ["Documento",   info.doc||"—"],
+    ["Período",     periodo],
+    [],
+    ["",            "Valor",         "Qtd. lançamentos"],
+    ["Entradas",    +totalEnt.toFixed(2),  qtdEnt],
+    ["Saídas",      +totalSai.toFixed(2),  qtdSai],
+    ["Resultado",   +resultado.toFixed(2), dados.length],
+  ]);
+  wsRes["!cols"] = [{wch:18},{wch:16},{wch:18}];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws,    "Extrato");
+  XLSX.utils.book_append_sheet(wb, wsRes, "Resumo");
+  XLSX.writeFile(wb, "fluxopro_"+perfil+"_"+Date.now()+".xlsx");
 }
-function abrirExport() { window.open("export.html", "_blank"); }
 
-importar.onclick  = abrirImport;
-exportAll.onclick = abrirExport;
+/* ============================================================
+   PDF — estrutura alinhada e nome em destaque
+   ============================================================ */
+function exportPDF() {
+  if (!dados.length){alert("Sem dados para exportar.");return;}
+  loading.classList.add("show");
 
-/* ================================================
-   BACKUP
-   ================================================ */
-document.getElementById("btnBackup").onclick = () => {
-  const db   = loadDB();
-  const blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
-  const a    = document.createElement("a");
-  a.href     = URL.createObjectURL(blob);
-  a.download = "fluxopro_backup_" + Date.now() + ".json";
-  a.click();
-  showToast("Backup exportado!");
-};
-
-document.getElementById("btnRestore").onclick = () => {
-  restoreInput.click();
-};
-restoreInput.onchange = e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
+  setTimeout(()=>{
     try {
-      const data = JSON.parse(ev.target.result);
-      if (!data.profiles) throw new Error("Arquivo inválido");
-      if (!confirm("Substituir os dados atuais pelo backup?")) return;
-      localStorage.setItem(KEY, JSON.stringify(data));
-      location.reload();
-    } catch(err) {
-      alert("Erro ao restaurar backup: " + err.message);
+      const {jsPDF} = window.jspdf;
+      const doc = new jsPDF("p","mm","a4");
+      const W=210, H=297, M=14, cW=W-M*2;
+      let y=0;
+
+      /* Cores */
+      const C = {
+        pri:  [79,70,229], priL:[238,242,255], priB:[199,210,254], priD:[55,48,163],
+        ok:   [5,150,105], okL: [240,253,244], okB: [167,243,208],
+        bad:  [220,38,38], badL:[254,242,242], badB:[254,202,202],
+        dark: [26,31,54],  gray:[107,114,128], lg:  [241,243,249],
+        cardBg:[248,250,252], white:[255,255,255]
+      };
+
+      function novaPag(h) {
+        if (y+h > H-18) { doc.addPage(); y=18; }
+      }
+
+      /* --------- BANNER CAPA --------- */
+      /* Gradiente simulado */
+      doc.setFillColor(...C.pri); doc.rect(0,0,W,46,"F");
+      doc.setFillColor(...C.priD); doc.rect(0,33,W,13,"F");
+
+      /* Ícone */
+      doc.setFillColor(255,255,255,0.12);
+      doc.roundedRect(M,8,30,28,5,5,"F");
+      doc.setFontSize(18); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+      doc.text("FP", M+6, 27);
+
+      /* Nome da pessoa — destaque */
+      const nomePessoa = (info.nome || perfil).substring(0,38);
+      doc.setFontSize(17); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+      doc.text(nomePessoa, M+36, 19);
+
+      /* Documento */
+      if (info.doc) {
+        doc.setFontSize(9); doc.setFont(undefined,"normal"); doc.setTextColor(200,210,255);
+        doc.text(info.doc, M+36, 26);
+      }
+
+      /* Subtítulo */
+      doc.setFontSize(8); doc.setTextColor(180,195,255);
+      doc.text("Relatório Financeiro — FluxoPro Engine v12", M+36, 36);
+      doc.text("Período: "+periodo+"  |  "+dados.length+" lançamentos", M+36, 42);
+
+      y = 56;
+
+      /* --------- PERFIL --------- */
+      doc.setFillColor(...C.cardBg);
+      doc.roundedRect(M,y,cW,19,3,3,"F");
+      doc.setDrawColor(...C.lg); doc.setLineWidth(.3);
+      doc.roundedRect(M,y,cW,19,3,3,"S");
+      doc.setFillColor(...C.pri); doc.roundedRect(M,y,4,19,2,0,"F");
+
+      const cW3 = cW/3;
+      doc.setFontSize(6.5); doc.setFont(undefined,"bold"); doc.setTextColor(...C.gray);
+      doc.text("PERFIL",             M+7,       y+6.5);
+      doc.text("NOME / RAZÃO SOCIAL",M+7+cW3,   y+6.5);
+      doc.text("CPF / CNPJ",         M+7+cW3*2, y+6.5);
+      doc.setFontSize(8.5); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark);
+      doc.text(perfil.substring(0,20),                    M+7,       y+14);
+      doc.text((info.nome||"Não informado").substring(0,26), M+7+cW3,   y+14);
+      doc.text((info.doc||"Não informado").substring(0,20),  M+7+cW3*2, y+14);
+      y += 25;
+
+      /* --------- KPIs --------- */
+      const kW = (cW-8)/3;
+      function kpiBox(xp,yp,titulo,valor,sub,bg,border,corV) {
+        doc.setFillColor(...bg); doc.roundedRect(xp,yp,kW,26,3,3,"F");
+        doc.setDrawColor(...border); doc.roundedRect(xp,yp,kW,26,3,3,"S");
+        doc.setFillColor(...corV); doc.roundedRect(xp,yp,kW,2,1,0,"F");
+        doc.setFontSize(6); doc.setFont(undefined,"bold"); doc.setTextColor(...C.gray);
+        doc.text(titulo, xp+5, yp+9);
+        doc.setFontSize(11); doc.setFont(undefined,"bold"); doc.setTextColor(...corV);
+        doc.text(fmtMoney(valor), xp+5, yp+18);
+        doc.setFontSize(6.5); doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
+        doc.text(sub, xp+5, yp+23.5);
+      }
+      kpiBox(M,           y,"ENTRADAS — GANHOS",  totalEnt, qtdEnt+" lançamento"+(qtdEnt!==1?"s":""), C.okL, C.okB,  C.ok);
+      kpiBox(M+kW+4,      y,"SAÍDAS — GASTOS",    totalSai, qtdSai+" lançamento"+(qtdSai!==1?"s":""), C.badL,C.badB, C.bad);
+      kpiBox(M+(kW+4)*2,  y,"RESULTADO LÍQUIDO",  resultado,
+        (resultado>=0?"+":"")+pct(Math.abs(resultado),totalEnt)+" das entradas",
+        C.priL, C.priB, resultado>=0?C.pri:C.bad);
+      y += 32;
+
+      /* --------- GRÁFICOS --------- */
+      novaPag(72);
+      doc.setFillColor(...C.pri); doc.rect(M,y,3,13,"F");
+      doc.setFontSize(9); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark);
+      doc.text("Resumo Visual", M+7, y+8.5);
+      y += 16;
+
+      doc.setFontSize(6.5); doc.setFont(undefined,"bold"); doc.setTextColor(...C.gray);
+      doc.text("GASTOS POR CATEGORIA", M,           y);
+      doc.text("EVOLUÇÃO MENSAL",       M+kW+4,     y);
+      doc.text("ENTRADAS x SAÍDAS",     M+(kW+4)*2, y);
+      y += 3;
+
+      const gH = 56;
+      doc.addImage(cvPizza.toDataURL("image/png",1),    "PNG", M,           y, kW, gH,undefined,"FAST");
+      doc.addImage(cvEvolucao.toDataURL("image/png",1), "PNG", M+kW+4,     y, kW, gH,undefined,"FAST");
+      doc.addImage(cvBar.toDataURL("image/png",1),      "PNG", M+(kW+4)*2, y, kW, gH,undefined,"FAST");
+      y += gH+10;
+
+      /* --------- TABELA --------- */
+      doc.addPage(); y=18;
+      doc.setFillColor(...C.pri); doc.rect(M,y,3,13,"F");
+      doc.setFontSize(9); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark);
+      doc.text("Extrato Completo", M+7, y+8.5);
+      y += 16;
+
+      /* cabeçalho */
+      doc.setFillColor(...C.pri); doc.rect(M,y,cW,8,"F");
+      doc.setFontSize(6.5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+      const TCols=[{x:M+2,t:"#",w:8},{x:M+10,t:"DATA",w:22},{x:M+32,t:"CATEGORIA",w:40},{x:M+72,t:"TIPO",w:18},{x:M+90,t:"VALOR",w:26},{x:M+116,t:"OBS"}];
+      TCols.forEach(c=>doc.text(c.t, c.x, y+5.5));
+      y+=10;
+
+      dados.forEach((l,idx)=>{
+        novaPag(7);
+        if (idx%2===0){doc.setFillColor(...C.cardBg); doc.rect(M,y-3,cW,6.5,"F");}
+        const isE=ehEntrada(l.tipo);
+        doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
+        doc.text(String(idx+1),                     TCols[0].x, y);
+        doc.text(fmtDate(l.data||""),               TCols[1].x, y);
+        doc.text((l.cat||"—").substring(0,18),      TCols[2].x, y);
+        doc.setFont(undefined,"bold"); doc.setTextColor(...(isE?C.ok:C.bad));
+        doc.text(l.tipo||"—",                       TCols[3].x, y);
+        doc.text(fmtMoney(l.valor),                 TCols[4].x, y);
+        doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
+        doc.text((l.obs||"—").substring(0,22),      TCols[5].x, y);
+        y+=6.5;
+      });
+      y+=5;
+
+      /* --------- RELATÓRIO DETALHADO --------- */
+      novaPag(90);
+      doc.setFillColor(...C.pri); doc.rect(M,y,3,13,"F");
+      doc.setFontSize(9); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark);
+      doc.text("Relatório Detalhado", M+7, y+8.5);
+      y+=16;
+
+      function relBox(xp,yp,titulo,corT,bg,border,items,total) {
+        const boxH = 13+items.length*7.5+12;
+        doc.setFillColor(...bg); doc.roundedRect(xp,yp,kW,boxH,3,3,"F");
+        doc.setDrawColor(...border); doc.setLineWidth(.3);
+        doc.roundedRect(xp,yp,kW,boxH,3,3,"S");
+        doc.setFillColor(...corT); doc.roundedRect(xp,yp,kW,9,3,0,"F");
+        doc.setFontSize(7); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+        doc.text(titulo, xp+5, yp+6.5);
+        let ry=yp+14;
+        items.forEach(([k,v])=>{
+          doc.setFontSize(6.5); doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
+          doc.text(k.substring(0,20), xp+4, ry);
+          doc.setFont(undefined,"bold"); doc.setTextColor(...corT);
+          const vTxt=fmtMoney(Math.abs(v));
+          doc.text(vTxt, xp+kW-3-doc.getTextWidth(vTxt), ry);
+          ry+=7;
+        });
+        doc.setDrawColor(...border); doc.setLineWidth(.4);
+        doc.line(xp+4,ry,xp+kW-4,ry); ry+=4;
+        doc.setFontSize(8); doc.setFont(undefined,"bold"); doc.setTextColor(...corT);
+        const tTxt=fmtMoney(Math.abs(total));
+        doc.text("Total", xp+4, ry);
+        doc.text(tTxt, xp+kW-3-doc.getTextWidth(tTxt), ry);
+        return boxH;
+      }
+
+      const maxH1 = relBox(M,           y,"ENTRADAS (GANHOS)", C.ok, C.okL, C.okB,  topEnt, totalEnt);
+      const maxH2 = relBox(M+kW+4,      y,"SAÍDAS (GASTOS)",   C.bad,C.badL,C.badB, topSai, totalSai);
+      relBox(M+(kW+4)*2,  y,"RESULTADO LÍQUIDO",
+        resultado>=0?C.pri:C.bad, C.priL, C.priB,
+        [["Total entradas",totalEnt],["(–) Saídas",-totalSai],["Margem",resultado]],
+        resultado);
+      y += Math.max(maxH1, maxH2, 60)+10;
+
+      /* --------- NARRATIVA --------- */
+      novaPag(55);
+      doc.setFillColor(...C.pri); doc.rect(M,y,3,13,"F");
+      doc.setFontSize(9); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark);
+      doc.text("Análise Interpretativa", M+7, y+8.5);
+      y+=16;
+
+      const nTxts=[
+        `Período: ${dados.length} lançamentos (${qtdEnt} entradas / ${qtdSai} saídas). De ${fmtDate(datas[0])} a ${fmtDate(datas[datas.length-1])}.`,
+        `Entradas: ${fmtMoney(totalEnt)} — principal: ${maiorE}. Saídas: ${fmtMoney(totalSai)} — maior gasto: ${maiorG} (${fmtMoney(mapacat[maiorG]||0)} / ${pct(mapacat[maiorG]||0,totalSai)}).`,
+        `Resultado líquido: ${fmtMoney(resultado)} — margem ${pct(resultado,totalEnt)} sobre entradas. Saúde financeira: ${resultado>0?"POSITIVA":resultado<0?"NEGATIVA":"NEUTRA"}.${resultado<0?" Recomenda-se revisão dos gastos.":""}`
+      ];
+      doc.setFontSize(8.5); doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
+      nTxts.forEach(t=>{
+        const lines=doc.splitTextToSize(t,cW-5);
+        novaPag(lines.length*5+5);
+        doc.text(lines, M+4, y);
+        y+=lines.length*5+5;
+      });
+
+      /* --------- RODAPÉ --------- */
+      const nPag=doc.internal.getNumberOfPages();
+      for (let p=1;p<=nPag;p++){
+        doc.setPage(p);
+        doc.setFillColor(...C.cardBg); doc.rect(0,H-13,W,13,"F");
+        doc.setFillColor(...C.pri); doc.rect(0,H-13,W,1.5,"F");
+        doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
+        doc.text("FluxoPro Engine v12  |  "+new Date().toLocaleDateString("pt-BR"), M, H-4.5);
+        doc.text((info.nome||perfil).substring(0,30)+"  |  Página "+p+" de "+nPag, W-M, H-4.5,{align:"right"});
+      }
+
+      doc.save("fluxopro_"+perfil+"_"+Date.now()+".pdf");
+      loading.classList.remove("show");
+
+    } catch(e){
+      console.error(e);
+      loading.classList.remove("show");
+      alert("Erro ao gerar PDF: "+e.message);
     }
-  };
-  reader.readAsText(file);
-  restoreInput.value = "";
-};
-
-/* ================================================
-   RESET
-   ================================================ */
-resetAll.onclick = () => {
-  if (confirm("Apagar TODOS os dados? Esta ação não pode ser desfeita!")) {
-    if (confirm("Tem certeza absoluta? Todos os perfis serão perdidos!")) {
-      localStorage.removeItem(KEY);
-      location.reload();
-    }
-  }
-};
-
-/* ================================================
-   SISTEMA DE TEMAS
-   ================================================ */
-function applyCustomColor(hex) {
-  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-  const l = c => Math.round(c + (255 - c) * .85);
-  const d = c => Math.round(c * .7);
-  const toHex = c => c.toString(16).padStart(2,"0");
-  document.documentElement.style.setProperty("--primary",   hex);
-  document.documentElement.style.setProperty("--primary-l", "#" + [r,g,b].map(l).map(toHex).join(""));
-  document.documentElement.style.setProperty("--primary-d", "#" + [r,g,b].map(d).map(toHex).join(""));
+  }, 500);
 }
-
-function updateThemeLabel(theme) {
-  const labels = { "":"Padrão","dark":"Dark","emerald":"Emerald","gold":"Gold","indigo":"Indigo","rose":"Rose","custom":"Personalizada" };
-  const el = document.getElementById("themeLabel");
-  if (el) el.innerText = "Tema atual: " + (labels[theme] || theme);
-}
-
-document.querySelectorAll(".theme-btn").forEach(btn => {
-  btn.onclick = () => {
-    const theme = btn.dataset.theme;
-    const db = loadDB();
-    db.theme = theme; saveDB(db);
-
-    document.querySelectorAll(".theme-btn").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    document.documentElement.style.removeProperty("--primary");
-    document.documentElement.style.removeProperty("--primary-l");
-    document.documentElement.style.removeProperty("--primary-d");
-
-    themeCSS.href = (theme && theme !== "custom") ? "themes/" + theme + ".css" : "";
-    updateThemeLabel(theme);
-    showToast("Tema: " + (theme || "Padrão"));
-    setTimeout(renderDashboard, 60);
-  };
-});
-
-colorPicker.oninput = e => {
-  const hex = e.target.value;
-  const db  = loadDB();
-  db.customColor = hex; db.theme = "custom"; saveDB(db);
-  themeCSS.href = "";
-  document.querySelectorAll(".theme-btn").forEach(b => b.classList.remove("active"));
-  document.querySelector(".theme-custom").classList.add("active");
-  applyCustomColor(hex);
-  updateThemeLabel("custom");
-  setTimeout(renderDashboard, 60);
-};
-
-function loadTheme() {
-  const db    = loadDB();
-  const theme = db.theme || "";
-  if (theme && theme !== "custom") {
-    themeCSS.href = "themes/" + theme + ".css";
-    document.querySelector(`.theme-btn[data-theme="${theme}"]`)?.classList.add("active");
-    document.querySelector('.theme-btn[data-theme=""]')?.classList.remove("active");
-  } else if (theme === "custom" && db.customColor) {
-    colorPicker.value = db.customColor;
-    document.querySelector(".theme-custom")?.classList.add("active");
-    document.querySelector('.theme-btn[data-theme=""]')?.classList.remove("active");
-    applyCustomColor(db.customColor);
-  }
-  updateThemeLabel(theme);
-}
-
-/* ================================================
-   INICIALIZAÇÃO
-   ================================================ */
-(function init() {
-  const db = loadDB();
-  saveDB(db);
-  loadTheme();
-  renderPerfis();
-  refreshAll();
-})();
 </script>
 </body>
 </html>
