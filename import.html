@@ -2,11 +2,10 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>FluxoPro – Importação</title>
+<title>FluxoPro - Importacao</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- ✅ PDF.js para leitura de PDFs -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 body{font-family:Inter;background:#f5f7fb;margin:0;color:#1f2937}
@@ -19,7 +18,7 @@ button{padding:10px 14px;border:0;border-radius:10px;font-weight:700;cursor:poin
 button:hover{opacity:.8;transform:translateY(-1px)}
 .btn-main{background:#4f46e5;color:#fff}
 .btn-cancel{background:#ef4444;color:#fff}
-.status{padding:10px;border-radius:10px;margin:10px 0;font-weight:700}
+.status{padding:12px 16px;border-radius:10px;margin:10px 0;font-weight:700}
 .status.success{background:#ecfdf5;color:#10b981}
 .status.error{background:#fef2f2;color:#ef4444}
 .status.warning{background:#fef9c3;color:#ca8a04}
@@ -29,248 +28,158 @@ button:hover{opacity:.8;transform:translateY(-1px)}
 .badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700}
 .badge-entrada{background:#ecfdf5;color:#10b981}
 .badge-saida{background:#fef2f2;color:#ef4444}
-.empty{text-align:center;padding:40px;color:#999}
-
-/* ✅ FILE PICKER CUSTOMIZADO */
-.file-zone{
-  border:2px dashed #4f46e5;
-  border-radius:14px;
-  padding:30px 20px;
-  text-align:center;
-  cursor:pointer;
-  transition:all .2s;
-  position:relative;
-  background:#fafafe;
-}
+.file-zone{border:2px dashed #4f46e5;border-radius:14px;padding:30px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:#fafafe}
 .file-zone:hover{background:#eef2ff;border-color:#3730a3}
-.file-zone input[type="file"]{
-  position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;
-}
+.file-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 .file-zone .icon{font-size:32px;margin-bottom:8px}
 .file-zone p{margin:4px 0;color:#6b7280;font-size:14px}
 .file-zone strong{color:#4f46e5}
-
-/* ✅ TIPO DE ARQUIVO */
 .file-types{display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap}
-.file-type-badge{
-  display:flex;align-items:center;gap:6px;
-  padding:6px 14px;border-radius:8px;font-size:13px;font-weight:700;
-}
+.file-type-badge{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;font-size:13px;font-weight:700}
 .ft-excel{background:#ecfdf5;color:#10b981}
 .ft-pdf{background:#fef2f2;color:#ef4444}
-
-/* ✅ AI PROCESSING */
-.ai-processing{
-  display:none;
-  align-items:center;
-  gap:14px;
-  background:linear-gradient(135deg,#eef2ff,#f0fdf4);
-  border:2px solid #6366f1;
-  border-radius:14px;
-  padding:16px 20px;
-  margin:12px 0;
-}
-.ai-processing.show{display:flex}
-.ai-spinner{
-  width:28px;height:28px;
-  border:3px solid #c7d2fe;
-  border-top:3px solid #4f46e5;
-  border-radius:50%;
-  animation:spin 1s linear infinite;
-  flex-shrink:0;
-}
+.processing{display:none;align-items:center;gap:14px;background:#eef2ff;border:2px solid #6366f1;border-radius:14px;padding:16px 20px;margin:12px 0}
+.processing.show{display:flex}
+.spinner{width:28px;height:28px;border:3px solid #c7d2fe;border-top:3px solid #4f46e5;border-radius:50%;animation:spin 1s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
-.ai-text strong{display:block;color:#3730a3;font-size:14px}
-.ai-text small{color:#6366f1;font-size:12px}
-
-/* ✅ PROGRESS STEPS */
 .steps{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}
-.step{
-  display:flex;align-items:center;gap:6px;
-  padding:4px 12px;border-radius:20px;
-  font-size:12px;font-weight:700;
-  background:#f3f4f6;color:#9ca3af;
-  transition:all .3s;
-}
+.step{display:flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;background:#f3f4f6;color:#9ca3af;transition:all .3s}
 .step.done{background:#ecfdf5;color:#10b981}
-.step.active{background:#eef2ff;color:#4f46e5;animation:pulse .8s ease infinite alternate}
-@keyframes pulse{from{opacity:.7}to{opacity:1}}
-
-/* ✅ PDF RAW TEXT TOGGLE */
-.raw-toggle{
-  display:inline-flex;align-items:center;gap:6px;
-  font-size:12px;color:#6366f1;cursor:pointer;
-  padding:4px 10px;border-radius:6px;
-  background:#eef2ff;border:0;font-weight:600;
-  margin-bottom:6px;
-}
-.raw-box{
-  display:none;
-  max-height:180px;overflow-y:auto;
-  background:#f8fafc;border:1px solid #e0e7ff;
-  border-radius:8px;padding:12px;
-  font-size:11px;font-family:monospace;
-  color:#475569;white-space:pre-wrap;
-  word-break:break-all;
-  margin-bottom:10px;
-}
+.step.active{background:#eef2ff;color:#4f46e5}
+.raw-toggle{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#6366f1;cursor:pointer;padding:4px 10px;border-radius:6px;background:#eef2ff;border:0;font-weight:600;margin-bottom:6px}
+.raw-box{display:none;max-height:180px;overflow-y:auto;background:#f8fafc;border:1px solid #e0e7ff;border-radius:8px;padding:12px;font-size:11px;font-family:monospace;color:#475569;white-space:pre-wrap;word-break:break-all;margin-bottom:10px}
 </style>
 </head>
 <body>
-
 <div class="container">
 
   <div class="card">
-    <h2>📥 Importação Assistida</h2>
-
+    <h2>&#128229; Importacao Assistida</h2>
     <div class="info">
-      <strong>📌 Perfil de destino:</strong> <span id="perfilNome"></span><br>
-      <small>Os dados serão adicionados a este perfil sem remover lançamentos existentes</small>
+      <strong>&#128204; Perfil de destino:</strong> <span id="perfilNome"></span><br>
+      <small>Os dados serao adicionados a este perfil sem remover lancamentos existentes</small>
     </div>
 
-    <!-- ✅ ZONA DE UPLOAD -->
-    <div class="file-zone" id="fileZone">
+    <div class="file-zone">
       <input type="file" id="file" accept=".xlsx,.xls,.pdf">
-      <div class="icon">📂</div>
+      <div class="icon">&#128194;</div>
       <strong>Clique ou arraste o arquivo aqui</strong>
-      <p>Extrato bancário em PDF ou planilha Excel</p>
+      <p>Extrato bancario em PDF ou planilha Excel</p>
       <div class="file-types">
-        <span class="file-type-badge ft-excel">✅ Excel (.xlsx/.xls)</span>
-        <span class="file-type-badge ft-pdf">🤖 PDF (extrato bancário)</span>
+        <span class="file-type-badge ft-excel">&#9989; Excel (.xlsx/.xls)</span>
+        <span class="file-type-badge ft-pdf">&#128196; PDF (extrato / relatorio)</span>
       </div>
     </div>
 
-    <!-- ✅ FORMATOS ESPERADOS -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
       <div class="info" style="margin:0">
-        <strong>📊 Excel esperado:</strong><br>
+        <strong>&#128202; Excel esperado:</strong><br>
         <small>
-          Colunas: Data | Categoria | Tipo | Valor | Observação<br>
-          • Tipo: "Entrada" ou "Saída"<br>
-          • Valor numérico (ex: 1500 ou 1500.50)<br>
-          • Data: AAAA-MM-DD ou DD/MM/AAAA
+          Colunas: Data | Categoria | Tipo | Valor | Observacao<br>
+          Tipo: "Entrada" ou "Saida"<br>
+          Valor numerico (ex: 1500 ou 1500.50)<br>
+          Data: AAAA-MM-DD ou DD/MM/AAAA
         </small>
       </div>
       <div class="info" style="margin:0;background:#fef3c7;border-left-color:#f59e0b">
-        <strong>🤖 PDF — IA interpreta automaticamente:</strong><br>
+        <strong>&#128196; PDF - leitura automatica:</strong><br>
         <small>
-          Qualquer extrato bancário exportado como PDF<br>
-          • Nubank, Itaú, Bradesco, Banco do Brasil...<br>
-          • A IA extrai datas, valores e categorias<br>
-          • Você revisa antes de confirmar
+          Relatorios exportados pelo FluxoPro<br>
+          Extratos com linhas: data, tipo, valor<br>
+          100% local, sem internet necessaria<br>
+          Voce revisa antes de confirmar
         </small>
       </div>
     </div>
 
-    <!-- ✅ STATUS -->
     <div id="statusBox"></div>
 
-    <!-- ✅ AI PROCESSING -->
-    <div class="ai-processing" id="aiProcessing">
-      <div class="ai-spinner"></div>
-      <div class="ai-text">
-        <strong>🤖 IA processando extrato PDF...</strong>
-        <small id="aiStep">Lendo e interpretando os lançamentos do arquivo</small>
+    <div class="processing" id="processing">
+      <div class="spinner"></div>
+      <div>
+        <strong style="display:block;color:#3730a3;font-size:14px">&#128196; Processando PDF...</strong>
+        <small id="procStep" style="color:#6366f1;font-size:12px">Lendo paginas do arquivo</small>
       </div>
     </div>
 
-    <!-- ✅ PROGRESS STEPS (visível durante PDF) -->
     <div class="steps" id="stepsBox" style="display:none">
-      <div class="step" id="step1">📄 Lendo PDF</div>
-      <div class="step" id="step2">🧠 Enviando para IA</div>
-      <div class="step" id="step3">✂️ Interpretando dados</div>
-      <div class="step" id="step4">🗂️ Montando prévia</div>
+      <div class="step" id="step1">&#128196; Lendo PDF</div>
+      <div class="step" id="step2">&#128269; Extraindo texto</div>
+      <div class="step" id="step3">&#9986;&#65039; Interpretando linhas</div>
+      <div class="step" id="step4">&#128202; Montando previa</div>
     </div>
-
   </div>
 
-  <!-- ✅ PRÉVIA -->
   <div class="card" id="previewCard" style="display:none">
-
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-      <h3 style="margin:0">📋 Prévia dos dados</h3>
+      <h3 style="margin:0">&#128203; Previa dos dados</h3>
       <div id="sourceTag"></div>
     </div>
-
     <p style="margin:8px 0">
-      <strong>Total válidos:</strong> <span id="countValid">0</span> &nbsp;|&nbsp;
+      <strong>Total validos:</strong> <span id="countValid">0</span> &nbsp;|&nbsp;
       <strong>Ignorados:</strong> <span id="countIgnored">0</span>
     </p>
-
-    <!-- ✅ TEXTO BRUTO DO PDF (toggle) -->
     <div id="rawSection" style="display:none">
-      <button class="raw-toggle" onclick="toggleRaw()">👁 Ver texto extraído do PDF</button>
+      <button class="raw-toggle" onclick="toggleRaw()">&#128065; Ver texto extraido do PDF</button>
       <pre class="raw-box" id="rawBox"></pre>
     </div>
-
     <div style="overflow-x:auto">
       <table>
         <thead>
-          <tr>
-            <th>#</th>
-            <th>Data</th>
-            <th>Categoria</th>
-            <th>Tipo</th>
-            <th>Valor</th>
-            <th>Observação</th>
-            <th>Status</th>
-          </tr>
+          <tr><th>#</th><th>Data</th><th>Categoria</th><th>Tipo</th><th>Valor</th><th>Observacao</th><th>Status</th></tr>
         </thead>
         <tbody id="tb"></tbody>
       </table>
     </div>
-
     <div class="actions" style="margin-top:20px">
-      <button class="btn-main" onclick="confirmar()">✅ Confirmar importação</button>
-      <button class="btn-cancel" onclick="cancelar()">❌ Cancelar</button>
+      <button class="btn-main" onclick="confirmar()">&#9989; Confirmar importacao</button>
+      <button class="btn-cancel" onclick="cancelar()">&#10060; Cancelar</button>
     </div>
   </div>
 
 </div>
-
 <script>
 // ============================================================
-// ✅ CONFIGURAÇÕES
+// CONFIG
 // ============================================================
 const KEY = "fluxopro_v12";
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-// ============================================================
-// ✅ INICIALIZAÇÃO — LER PERFIL
-// ============================================================
 const params = new URLSearchParams(window.location.search);
 let perfil = params.get("perfil");
-let buffer = [];
-let ignored = [];
-let db;
+let buffer = [], ignored = [], db;
 let rawPdfText = "";
 
+// ============================================================
+// INIT
+// ============================================================
 try {
   db = JSON.parse(localStorage.getItem(KEY));
-  if (!db || !db.profiles) throw new Error("Base de dados não encontrada. Abra o FluxoPro primeiro.");
+  if (!db || !db.profiles) throw new Error("Base de dados nao encontrada. Abra o FluxoPro primeiro.");
   if (!perfil) perfil = db.active;
-  if (!perfil || !db.profiles[perfil]) throw new Error(`Perfil "${perfil}" não encontrado.`);
+  if (!perfil || !db.profiles[perfil]) throw new Error("Perfil nao encontrado: " + perfil);
   document.getElementById("perfilNome").innerText = perfil;
 } catch (err) {
-  document.querySelector(".container").innerHTML = `
-    <div class="card">
-      <h2>⚠️ Erro</h2>
-      <div class="status error">${err.message}</div>
-      <button onclick="window.close()">Fechar janela</button>
-    </div>`;
+  document.querySelector(".container").innerHTML = "<div class=\"card\"><h2>Erro</h2><div class=\"status error\">" + err.message + "</div><button onclick=\"window.close()\">Fechar</button></div>";
   throw err;
 }
 
 // ============================================================
-// ✅ UTILITÁRIOS
+// UTILITARIOS
 // ============================================================
 function normalizeValue(v) {
   if (v === null || v === undefined || v === "") return null;
   if (typeof v === "number") return v;
-  let s = String(v).replace(/[^\d,.-]/g, "").replace(",", ".");
-  let n = parseFloat(s);
-  return isNaN(n) || n === 0 ? null : n;
+  let s = String(v).replace(/R\$\s*/gi,"").replace(/\s/g,"").trim();
+  // Formato pt-BR: 1.234,56
+  if (/^\d{1,3}(\.\d{3})*(,\d+)?$/.test(s)) {
+    s = s.replace(/\./g,"").replace(",",".");
+  } else {
+    s = s.replace(/[^\d.,]/g,"").replace(",",".");
+  }
+  const n = parseFloat(s);
+  return isNaN(n) || n <= 0 ? null : n;
 }
 
 function validateDate(d) {
@@ -279,342 +188,263 @@ function validateDate(d) {
   if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
     date = d;
   } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) {
-    const [dia, mes, ano] = d.split("/");
-    date = `${ano}-${mes}-${dia}`;
-  } else {
-    return null;
-  }
-  const [y, m, day] = date.split("-").map(Number);
-  const t = new Date(y, m - 1, day);
-  return (t.getFullYear() === y && t.getMonth() === m - 1 && t.getDate() === day) ? date : null;
+    const [dia,mes,ano] = d.split("/");
+    date = ano+"-"+mes+"-"+dia;
+  } else if (/^\d{2}\/\d{2}\/\d{2}$/.test(d)) {
+    const [dia,mes,ano] = d.split("/");
+    date = "20"+ano+"-"+mes+"-"+dia;
+  } else return null;
+  const [y,m,day] = date.split("-").map(Number);
+  const t = new Date(y, m-1, day);
+  return (t.getFullYear()===y && t.getMonth()===m-1 && t.getDate()===day) ? date : null;
 }
 
 function validateTipo(t) {
-  const tipo = String(t || "").trim();
-  if (tipo === "Entrada" || tipo.toLowerCase() === "entrada") return "Entrada";
-  if (["Saída","Saida","saída","saida","SAÍDA","SAIDA"].includes(tipo)) return "Saída";
+  if (!t) return null;
+  const s = String(t).trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  if (s==="entrada"||s==="credito"||s==="cred"||s==="cr"||s==="c") return "Entrada";
+  if (s==="saida"||s==="debito"||s==="deb"||s==="db"||s==="d") return "Saida";
   return null;
 }
 
 function showStatus(msg, type) {
-  document.getElementById("statusBox").innerHTML =
-    `<div class="status ${type}">${msg}</div>`;
-}
-
-function toggleRaw() {
-  const box = document.getElementById("rawBox");
-  box.style.display = box.style.display === "block" ? "none" : "block";
+  document.getElementById("statusBox").innerHTML = "<div class=\"status "+type+"\">"+msg+"</div>";
 }
 
 function setStep(n) {
   document.getElementById("stepsBox").style.display = "flex";
-  for (let i = 1; i <= 4; i++) {
-    const el = document.getElementById("step" + i);
-    el.className = "step" + (i < n ? " done" : i === n ? " active" : "");
+  for (let i=1;i<=4;i++) {
+    const el = document.getElementById("step"+i);
+    el.className = "step"+(i<n?" done":i===n?" active":"");
   }
 }
 
-// ============================================================
-// ✅ DISPATCHER — EXCEL ou PDF
-// ============================================================
-document.getElementById("file").addEventListener("change", function () {
-  buffer = [];
-  ignored = [];
-  rawPdfText = "";
-  document.getElementById("previewCard").style.display = "none";
-  document.getElementById("rawSection").style.display = "none";
-  document.getElementById("statusBox").innerHTML = "";
+function toggleRaw() {
+  const b = document.getElementById("rawBox");
+  b.style.display = b.style.display==="block"?"none":"block";
+}
 
+// ============================================================
+// DISPATCHER
+// ============================================================
+document.getElementById("file").addEventListener("change", function() {
+  buffer=[]; ignored=[]; rawPdfText="";
+  document.getElementById("previewCard").style.display="none";
+  document.getElementById("rawSection").style.display="none";
+  document.getElementById("statusBox").innerHTML="";
+  document.getElementById("stepsBox").style.display="none";
   const f = this.files[0];
   if (!f) return;
-
   const ext = f.name.split(".").pop().toLowerCase();
-
-  if (ext === "pdf") {
-    processPDF(f);
-  } else if (ext === "xlsx" || ext === "xls") {
-    processExcel(f);
-  } else {
-    showStatus("❌ Formato não suportado. Use .xlsx, .xls ou .pdf", "error");
-  }
+  if (ext==="pdf") processPDF(f);
+  else if (ext==="xlsx"||ext==="xls") processExcel(f);
+  else showStatus("Formato nao suportado. Use .xlsx, .xls ou .pdf","error");
 });
 
 // ============================================================
-// ✅ PROCESSAR EXCEL (fluxo original mantido)
+// EXCEL (original preservado)
 // ============================================================
 function processExcel(file) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      const wb = XLSX.read(e.target.result, { type: "binary" });
+      const wb = XLSX.read(e.target.result,{type:"binary"});
       const sheet = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-
-      if (!data.length) {
-        showStatus("⚠️ Arquivo vazio ou sem dados válidos", "warning");
-        return;
-      }
-
-      data.forEach((linha, index) => {
-        const data = validateDate(linha.Data);
+      const data = XLSX.utils.sheet_to_json(sheet,{defval:""});
+      if (!data.length){showStatus("Arquivo vazio ou sem dados validos","warning");return;}
+      data.forEach((linha,index)=>{
+        const dt   = validateDate(linha.Data);
         const tipo = validateTipo(linha.Tipo);
-        const valor = normalizeValue(linha.Valor);
-        const cat = String(linha.Categoria || "").trim();
-        const obs = String(linha.Observacao || linha["Observação"] || "").trim();
-
-        if (!tipo) {
-          ignored.push({ linha: index + 2, motivo: "Tipo inválido (use 'Entrada' ou 'Saída')" });
-          return;
-        }
-        if (valor === null) {
-          ignored.push({ linha: index + 2, motivo: "Valor inválido ou zero" });
-          return;
-        }
-        if (!data) {
-          ignored.push({ linha: index + 2, motivo: "Data inválida (use AAAA-MM-DD ou DD/MM/AAAA)" });
-          return;
-        }
-
-        buffer.push({ data, cat: cat || "Sem categoria", tipo, valor, obs });
+        const val  = normalizeValue(linha.Valor);
+        const cat  = String(linha.Categoria||"").trim();
+        const obs  = String(linha.Observacao||linha["Observação"]||"").trim();
+        if (!tipo){ignored.push({motivo:"Linha "+(index+2)+": tipo invalido"});return;}
+        if (!val) {ignored.push({motivo:"Linha "+(index+2)+": valor invalido"});return;}
+        if (!dt)  {ignored.push({motivo:"Linha "+(index+2)+": data invalida"});return;}
+        buffer.push({data:dt, cat:cat||"Sem categoria", tipo, valor:val, obs});
       });
-
-      document.getElementById("sourceTag").innerHTML =
-        `<span class="badge" style="background:#ecfdf5;color:#10b981">📊 Excel</span>`;
+      document.getElementById("sourceTag").innerHTML="<span class=\"badge\" style=\"background:#ecfdf5;color:#10b981\">Excel</span>";
       renderPreview();
-    } catch (err) {
-      showStatus("❌ Erro ao ler arquivo: " + err.message, "error");
-    }
+    } catch(err){showStatus("Erro ao ler arquivo: "+err.message,"error");}
   };
   reader.readAsBinaryString(file);
 }
 
 // ============================================================
-// ✅ PROCESSAR PDF — etapa 1: extrair texto com PDF.js
+// PDF - extracao via PDF.js (100% local, sem API)
 // ============================================================
 async function processPDF(file) {
-  document.getElementById("aiProcessing").classList.add("show");
-  document.getElementById("stepsBox").style.display = "flex";
+  document.getElementById("processing").classList.add("show");
   setStep(1);
-  document.getElementById("aiStep").innerText = "Lendo páginas do PDF...";
-
   try {
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
+    const pdf = await pdfjsLib.getDocument({data:arrayBuffer}).promise;
+    setStep(2);
+    document.getElementById("procStep").innerText = "Extraindo texto de "+pdf.numPages+" pagina(s)...";
     let fullText = "";
-    for (let p = 1; p <= pdf.numPages; p++) {
+    for (let p=1;p<=pdf.numPages;p++) {
       const page = await pdf.getPage(p);
       const content = await page.getTextContent();
-      const pageText = content.items.map(i => i.str).join(" ");
-      fullText += pageText + "\n";
+      // Agrupar itens por posicao Y para reconstruir linhas corretamente
+      const lineMap = {};
+      content.items.forEach(item=>{
+        const y = Math.round(item.transform[5]);
+        if (!lineMap[y]) lineMap[y]=[];
+        lineMap[y].push({x:item.transform[4], str:item.str});
+      });
+      // Ordenar: Y decrescente (topo da pagina primeiro), X crescente dentro da linha
+      const ys = Object.keys(lineMap).map(Number).sort((a,b)=>b-a);
+      ys.forEach(y=>{
+        const linha = lineMap[y].sort((a,b)=>a.x-b.x).map(i=>i.str).join(" ").trim();
+        if (linha) fullText += linha + "\n";
+      });
+      fullText += "\n";
     }
-
     rawPdfText = fullText.trim();
+    if (!rawPdfText) throw new Error("Nao foi possivel extrair texto do PDF. O arquivo pode ser uma imagem escaneada.");
 
-    if (!rawPdfText) {
-      document.getElementById("aiProcessing").classList.remove("show");
-      document.getElementById("stepsBox").style.display = "none";
-      showStatus("⚠️ Não foi possível extrair texto do PDF. O arquivo pode ser uma imagem escaneada.", "warning");
-      return;
-    }
-
-    // Etapa 2: enviar para IA
-    await parsePDFWithAI(rawPdfText);
-
-  } catch (err) {
-    document.getElementById("aiProcessing").classList.remove("show");
-    document.getElementById("stepsBox").style.display = "none";
-    showStatus("❌ Erro ao ler PDF: " + err.message, "error");
-    console.error(err);
-  }
-}
-
-// ============================================================
-// ✅ PROCESSAR PDF — etapa 2: Claude API interpreta o texto
-// ============================================================
-async function parsePDFWithAI(text) {
-  setStep(2);
-  document.getElementById("aiStep").innerText = "Enviando para a IA interpretar...";
-
-  // Limitar texto para não exceder o contexto (primeiros 12000 chars = ~3000 tokens)
-  const truncated = text.length > 12000 ? text.substring(0, 12000) + "\n...(truncado)" : text;
-
-  const prompt = `Você é um assistente financeiro especializado em extrair lançamentos de extratos bancários brasileiros.
-
-Analise o texto abaixo (extraído de um extrato bancário em PDF) e extraia TODOS os lançamentos financeiros encontrados.
-
-Para cada lançamento, retorne um objeto JSON com:
-- "data": string no formato "AAAA-MM-DD" (ex: "2024-03-15"). Se não houver ano, use o ano mais recente encontrado no texto ou ${new Date().getFullYear()}.
-- "cat": string com a categoria do lançamento (ex: "Alimentação", "Transferência", "Pagamento de conta", "Salário", "PIX", etc.). Infira pela descrição.
-- "tipo": "Entrada" se for crédito/depósito/recebimento, ou "Saída" se for débito/pagamento/compra.
-- "valor": número positivo sem símbolos (ex: 1500.00).
-- "obs": string com a descrição original do lançamento (máximo 60 caracteres).
-
-Retorne APENAS um JSON válido no formato:
-{"lancamentos": [...]}
-
-Não inclua texto antes ou depois do JSON.
-Não inclua lançamentos com valor zero ou sem data.
-Se não encontrar nenhum lançamento, retorne: {"lancamentos": []}
-
-TEXTO DO EXTRATO:
-${truncated}`;
-
-  try {
     setStep(3);
-    document.getElementById("aiStep").innerText = "IA interpretando lançamentos...";
+    document.getElementById("procStep").innerText = "Interpretando lancamentos...";
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 4000,
-        messages: [{ role: "user", content: prompt }]
-      })
-    });
+    // Tentar parser FluxoPro primeiro (formato proprio)
+    let resultado = parseFluxoProPDF(rawPdfText);
+    // Se nao encontrou, tentar parser generico
+    if (resultado.validos.length===0) resultado = parseGenericoPDF(rawPdfText);
 
-    const result = await response.json();
-
-    if (!result.content || !result.content[0]) {
-      throw new Error("Resposta inválida da IA");
-    }
-
-    const rawJson = result.content
-      .filter(b => b.type === "text")
-      .map(b => b.text)
-      .join("")
-      .replace(/```json|```/g, "")
-      .trim();
+    buffer  = resultado.validos;
+    ignored = resultado.ignorados;
 
     setStep(4);
-    document.getElementById("aiStep").innerText = "Montando prévia...";
-
-    let parsed;
-    try {
-      parsed = JSON.parse(rawJson);
-    } catch {
-      throw new Error("A IA retornou um formato inesperado. Tente novamente.");
-    }
-
-    const lancamentos = parsed.lancamentos || [];
-
-    // ✅ Validar cada lançamento retornado pela IA
-    lancamentos.forEach((l, i) => {
-      const data = validateDate(l.data);
-      const tipo = validateTipo(l.tipo);
-      const valor = normalizeValue(l.valor);
-
-      if (!tipo) {
-        ignored.push({ linha: i + 1, motivo: `Tipo inválido retornado pela IA: "${l.tipo}"` });
-        return;
-      }
-      if (valor === null || valor <= 0) {
-        ignored.push({ linha: i + 1, motivo: "Valor inválido ou zero" });
-        return;
-      }
-      if (!data) {
-        ignored.push({ linha: i + 1, motivo: `Data inválida: "${l.data}"` });
-        return;
-      }
-
-      buffer.push({
-        data,
-        cat: String(l.cat || "Sem categoria").substring(0, 50),
-        tipo,
-        valor,
-        obs: String(l.obs || "").substring(0, 80)
-      });
-    });
-
-    document.getElementById("aiProcessing").classList.remove("show");
-
-    // ✅ Mostrar área de texto bruto
-    document.getElementById("rawSection").style.display = "block";
+    document.getElementById("processing").classList.remove("show");
+    document.getElementById("rawSection").style.display="block";
     document.getElementById("rawBox").textContent = rawPdfText;
-
     document.getElementById("sourceTag").innerHTML =
-      `<span class="badge" style="background:#fef3c7;color:#b45309">🤖 PDF interpretado por IA</span>`;
-
+      "<span class=\"badge\" style=\"background:#fef3c7;color:#b45309\">PDF - "+resultado.modo+"</span>";
     renderPreview();
-
-  } catch (err) {
-    document.getElementById("aiProcessing").classList.remove("show");
-    document.getElementById("stepsBox").style.display = "none";
-    showStatus("❌ Erro na IA: " + err.message, "error");
+  } catch(err) {
+    document.getElementById("processing").classList.remove("show");
+    document.getElementById("stepsBox").style.display="none";
+    showStatus("Erro: "+err.message,"error");
     console.error(err);
   }
 }
 
 // ============================================================
-// ✅ RENDERIZAR PRÉVIA (Excel e PDF compartilham)
+// PARSER 1 - FluxoPro export
+// Formato da linha: "2025-10-01 INVESTIMENTO Saida R$ 342,14 -"
+// ============================================================
+function parseFluxoProPDF(text) {
+  const validos=[], ignorados=[];
+  // Regex robusta: data ISO + categoria (qualquer coisa) + tipo + R$ valor
+  const re = /(\d{4}-\d{2}-\d{2})\s+(.+?)\s+(Entrada|Sa[ií]da)\s+R\$\s*([\d.,]+)/gi;
+  let m;
+  while ((m=re.exec(text))!==null) {
+    const dt   = validateDate(m[1]);
+    const cat  = m[2].trim().replace(/\s+/g," ").substring(0,50);
+    const tipo = validateTipo(m[3]);
+    const val  = normalizeValue(m[4]);
+    if (dt && tipo && val) {
+      validos.push({data:dt, cat:cat||"Sem categoria", tipo, valor:val, obs:""});
+    } else {
+      ignorados.push({motivo:"Linha ignorada: "+m[0].substring(0,60)});
+    }
+  }
+  return {validos, ignorados, modo:"FluxoPro Export"};
+}
+
+// ============================================================
+// PARSER 2 - Extrato generico (Nubank, Itau, Bradesco, etc)
+// ============================================================
+function parseGenericoPDF(text) {
+  const validos=[], ignorados=[];
+  const linhas = text.split("\n").map(l=>l.trim()).filter(l=>l.length>5);
+  // Padrao com tipo explicito: DD/MM/AAAA desc tipo valor
+  const reExtr = /(\d{2}\/\d{2}\/(?:\d{4}|\d{2}))\s+(.+?)\s+(cred(?:ito)?|d[eé]b(?:ito)?|entrada|sa[íi]da|[CD])\s*R?\$?\s*([\d.,]+)/i;
+  // Padrao simples: DD/MM/AAAA desc R$ valor
+  const reSim  = /(\d{2}\/\d{2}\/(?:\d{4}|\d{2}))\s+(.+?)\s+R?\$\s*([\d.,]+)/i;
+  linhas.forEach(linha=>{
+    let m = linha.match(reExtr);
+    if (m) {
+      const dt   = validateDate(m[1]);
+      const obs  = m[2].trim().substring(0,80);
+      const tipo = validateTipo(m[3]);
+      const val  = normalizeValue(m[4]);
+      if (dt&&tipo&&val) {validos.push({data:dt,cat:inferirCategoria(obs),tipo,valor:val,obs});return;}
+    }
+    m = linha.match(reSim);
+    if (m) {
+      const dt  = validateDate(m[1]);
+      const obs = m[2].trim().substring(0,80);
+      const val = normalizeValue(m[3]);
+      if (dt&&val) {validos.push({data:dt,cat:inferirCategoria(obs),tipo:inferirTipo(obs),valor:val,obs});return;}
+    }
+  });
+  if (!validos.length) ignorados.push({motivo:"Nenhum padrao reconhecido. Veja o texto extraido do PDF abaixo."});
+  return {validos, ignorados, modo:"Extrato Generico"};
+}
+
+function inferirCategoria(desc) {
+  const d = desc.toLowerCase();
+  if (/pix|transfer|ted|doc/.test(d))           return "Transferencia";
+  if (/salario|folha|pgto func/.test(d))         return "Salario";
+  if (/supermercado|mercado|padaria|aliment/.test(d)) return "Alimentacao";
+  if (/combustivel|posto|gasolina|etanol/.test(d))   return "Combustivel";
+  if (/energia|luz|agua|gas|telefone|internet/.test(d)) return "Contas";
+  if (/cartao|fatura/.test(d))                   return "Cartao";
+  if (/aluguel|iptu|condom/.test(d))             return "Moradia";
+  if (/farmacia|hospital|saude|medico/.test(d))  return "Saude";
+  if (/vendas|venda/.test(d))                    return "Vendas";
+  if (/investimento|invest/.test(d))             return "Investimento";
+  return "Outros";
+}
+
+function inferirTipo(desc) {
+  const d = desc.toLowerCase();
+  if (/receb|credit|deposito|salario|pix receb/.test(d)) return "Entrada";
+  return "Saida";
+}
+
+// ============================================================
+// RENDERIZAR PREVIA
 // ============================================================
 function renderPreview() {
-  document.getElementById("stepsBox").style.display = "none";
-  document.getElementById("countValid").innerText = buffer.length;
+  document.getElementById("stepsBox").style.display="none";
+  document.getElementById("countValid").innerText   = buffer.length;
   document.getElementById("countIgnored").innerText = ignored.length;
-
   if (!buffer.length) {
-    showStatus("⚠️ Nenhum lançamento válido encontrado no arquivo", "error");
-    document.getElementById("previewCard").style.display = "none";
+    showStatus("Nenhum lancamento valido encontrado. Clique em Ver texto extraido do PDF para verificar o formato.","error");
+    document.getElementById("previewCard").style.display="none";
     return;
   }
-
-  showStatus(`✅ ${buffer.length} lançamentos válidos encontrados! Revise abaixo e confirme.`, "success");
-  document.getElementById("previewCard").style.display = "block";
-
-  const preview = buffer.slice(0, 50);
-
+  showStatus(buffer.length+" lancamentos encontrados! Revise abaixo e confirme.","success");
+  document.getElementById("previewCard").style.display="block";
   document.getElementById("tb").innerHTML =
-    preview.map((l, i) => `
-    <tr>
-      <td>${i + 1}</td>
-      <td>${l.data}</td>
-      <td>${l.cat}</td>
-      <td><span class="badge badge-${l.tipo === "Entrada" ? "entrada" : "saida"}">${l.tipo}</span></td>
-      <td><b>R$ ${Number(l.valor).toFixed(2).replace(".", ",")}</b></td>
-      <td>${l.obs || "-"}</td>
-      <td style="color:#10b981">✅ OK</td>
-    </tr>`).join("") +
-
-    ignored.slice(0, 20).map(ign => `
-    <tr style="background:#fef2f2">
-      <td>-</td>
-      <td colspan="5" style="color:#ef4444">${ign.motivo}</td>
-      <td style="color:#ef4444">❌ Ignorado</td>
-    </tr>`).join("") +
-
-    (buffer.length > 50
-      ? `<tr><td colspan="7" style="text-align:center;color:#999">... e mais ${buffer.length - 50} lançamentos</td></tr>`
-      : "");
+    buffer.slice(0,50).map((l,i)=>
+      "<tr><td>"+(i+1)+"</td><td>"+l.data+"</td><td>"+l.cat+"</td><td><span class=\"badge badge-"+(l.tipo==="Entrada"?"entrada":"saida")+"\">" +l.tipo+"</span></td><td><b>R$ "+Number(l.valor).toFixed(2).replace(".",",")+"</b></td><td>"+(l.obs||"-")+"</td><td style=\"color:#10b981\">OK</td></tr>"
+    ).join("") +
+    ignored.slice(0,10).map(ign=>
+      "<tr style=\"background:#fef2f2\"><td>-</td><td colspan=\"5\" style=\"color:#ef4444;font-size:13px\">"+ign.motivo+"</td><td style=\"color:#ef4444\">Ignorado</td></tr>"
+    ).join("") +
+    (buffer.length>50?"<tr><td colspan=\"7\" style=\"text-align:center;color:#999;padding:10px\">... e mais "+(buffer.length-50)+" lancamentos</td></tr>":"");
 }
 
 // ============================================================
-// ✅ CONFIRMAR IMPORTAÇÃO
+// CONFIRMAR / CANCELAR
 // ============================================================
 function confirmar() {
-  if (!buffer.length) { alert("❌ Nenhum lançamento válido para importar"); return; }
-  if (!confirm(`✅ Importar ${buffer.length} lançamentos para o perfil "${perfil}"?`)) return;
-
+  if (!buffer.length){alert("Nenhum lancamento valido");return;}
+  if (!confirm("Importar "+buffer.length+" lancamentos para o perfil \""+perfil+"\"?")) return;
   try {
-    buffer.forEach(l => {
-      db.profiles[perfil].push({ id: crypto.randomUUID(), ...l });
-    });
+    buffer.forEach(l=>{ db.profiles[perfil].push({id:crypto.randomUUID(),...l}); });
     localStorage.setItem(KEY, JSON.stringify(db));
-    alert(`✅ Importação concluída!\n\n${buffer.length} lançamentos adicionados ao perfil "${perfil}"`);
+    alert("Importacao concluida!\n\n"+buffer.length+" lancamentos adicionados ao perfil \""+perfil+"\"");
     window.close();
-  } catch (err) {
-    alert("❌ Erro ao salvar: " + err.message);
-  }
+  } catch(err){alert("Erro ao salvar: "+err.message);}
 }
 
-// ============================================================
-// ✅ CANCELAR
-// ============================================================
 function cancelar() {
-  if (confirm("❌ Cancelar importação?")) window.close();
+  if (confirm("Cancelar importacao?")) window.close();
 }
 </script>
-
 </body>
 </html>
