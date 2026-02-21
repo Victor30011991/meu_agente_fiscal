@@ -1606,7 +1606,11 @@ form.onsubmit = e => {
     valor: v,
     obs:   obs.value.trim()
   });
+  /* Ordenar array por data antes de salvar — garante sequência cronológica */
+  db.profiles[db.active].sort((a, b) => (a.data || "").localeCompare(b.data || ""));
   saveDB(db);
+  /* Resetar sort visual para data asc */
+  sortState = { col: "data", dir: "asc" };
   fecharModal();
   form.reset();
   refreshAll();
@@ -1669,6 +1673,8 @@ tbody.addEventListener("blur", e => {
         raw = `${y}-${m}-${d}`;
       }
       item.data = raw;
+      /* Re-ordenar por data após edição */
+      db.profiles[db.active].sort((a, b) => (a.data || "").localeCompare(b.data || ""));
     } else {
       item[td.dataset.f] = td.innerText.trim();
     }
