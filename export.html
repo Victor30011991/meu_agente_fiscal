@@ -139,11 +139,7 @@ tbody tr:hover { background: #f1f5ff; }
 </div>
 
 <!-- Canvases ocultos de alta resolução para exportação PDF (560×340px) -->
-<div style="position:absolute;left:-9999px;opacity:.01;pointer-events:none">
-  <canvas id="cvPizza"    width="500" height="300"></canvas>
-  <canvas id="cvEvolucao" width="560" height="300"></canvas>
-  <canvas id="cvBar"      width="380" height="300"></canvas>
-</div>
+<div style="display:none"><!-- sem canvas ocultos: o PDF usa os canvas visíveis da página --></div>
 
 <div class="page">
 
@@ -202,6 +198,18 @@ tbody tr:hover { background: #f1f5ff; }
     </div>
   </div>
 
+  <!-- Análise por categoria — logo após os gráficos -->
+  <div class="card">
+    <div class="card-head"><span class="dot" style="background:#059669"></span><h2>Relatório Detalhado por Categoria</h2></div>
+    <div class="analise-grid" id="analiseGrid"></div>
+  </div>
+
+  <!-- Narrativa automática -->
+  <div class="card">
+    <div class="card-head"><span class="dot" style="background:#1a1f36"></span><h2>Análise Interpretativa</h2></div>
+    <div class="narrativa" id="narrativa"></div>
+  </div>
+
   <!-- Extrato com filtros inline -->
   <div class="card">
     <div class="card-head">
@@ -211,7 +219,6 @@ tbody tr:hover { background: #f1f5ff; }
       </div>
       <span id="filtroInfo" style="font-size:10px;color:#6b7280"></span>
     </div>
-    <!-- Filtros para o extrato na página de relatório -->
     <div class="filter-row">
       <input type="text"  id="fBusca" placeholder="Buscar por categoria, obs, CPF...">
       <select id="fTipo">
@@ -239,18 +246,6 @@ tbody tr:hover { background: #f1f5ff; }
       </table>
     </div>
     <div id="tabelaFooter" style="padding:8px 18px;background:#f8fafc;border-top:1px solid #f1f3f9;font-size:11px;font-weight:600;color:#6b7280;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px"></div>
-  </div>
-
-  <!-- Análise por categoria -->
-  <div class="card">
-    <div class="card-head"><span class="dot" style="background:#059669"></span><h2>Relatório Detalhado por Categoria</h2></div>
-    <div class="analise-grid" id="analiseGrid"></div>
-  </div>
-
-  <!-- Narrativa automática -->
-  <div class="card">
-    <div class="card-head"><span class="dot" style="background:#1a1f36"></span><h2>Análise Interpretativa</h2></div>
-    <div class="narrativa" id="narrativa"></div>
   </div>
 
 </div><!-- /page -->
@@ -441,23 +436,57 @@ document.getElementById("analiseGrid").innerHTML = `
   </div>`;
 
 /* ============================================================
-   NARRATIVA
+   NARRATIVA — análise interpretativa enriquecida
    ============================================================ */
-const maiorG = topSai[0] ? topSai[0][0] : "—";
-const maiorE = topEnt[0] ? topEnt[0][0] : "—";
-const corS   = resultado > 0 ? "#059669" : resultado < 0 ? "#dc2626" : "#d97706";
+const maiorG   = topSai[0] ? topSai[0][0] : "—";
+const maiorE   = topEnt[0] ? topEnt[0][0] : "—";
+const seg2G    = topSai[1] ? topSai[1][0] : null;
+const corS     = resultado > 0 ? "#059669" : resultado < 0 ? "#dc2626" : "#d97706";
+const ticketMedioE = qtdEnt > 0 ? totalEnt / qtdEnt : 0;
+const ticketMedioS = qtdSai > 0 ? totalSai / qtdSai : 0;
+const concentracaoG = mapacat[maiorG] ? (mapacat[maiorG] / totalSai * 100).toFixed(1) : 0;
+const mesesUnicos  = [...new Set(dadosRaw.map(l => (l.data || "").substring(0,7)).filter(Boolean))].sort();
+const nMeses       = mesesUnicos.length;
+const mediaMensalEnt = nMeses > 0 ? totalEnt / nMeses : 0;
+const mediaMensalSai = nMeses > 0 ? totalSai / nMeses : 0;
+
+// Melhor e pior mês
+const porMes = {};
+dadosRaw.forEach(l => {
+  const m = (l.data || "").substring(0,7); if (!m) return;
+  if (!porMes[m]) porMes[m] = { ent: 0, sai: 0 };
+  ehEntrada(l.tipo) ? (porMes[m].ent += Number(l.valor||0)) : (porMes[m].sai += Number(l.valor||0));
+});
+const resultadosPorMes = Object.entries(porMes).map(([k,v]) => ({ mes: k, res: v.ent - v.sai }));
+const melhorMes = resultadosPorMes.sort((a,b) => b.res - a.res)[0];
+const piorMes   = resultadosPorMes.sort((a,b) => a.res - b.res)[0];
+function fmtMes(ym) { if (!ym) return "—"; const [y,m] = ym.split("-"); return new Date(+y,+m-1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"}); }
+
 document.getElementById("narrativa").innerHTML = `
   <p>O período analisado compreende <strong>${dadosRaw.length} lançamentos</strong> (${qtdEnt} entradas e ${qtdSai} saídas),
-     de <strong>${fmtDate(datas[0])}</strong> a <strong>${fmtDate(datas[datas.length - 1])}</strong>.</p>
-  <p>As entradas totalizaram <strong style="color:#059669">${fmtMoney(totalEnt)}</strong>,
-     sendo a principal categoria de receita <strong>${maiorE}</strong>.
-     As saídas totalizaram <strong style="color:#dc2626">${fmtMoney(totalSai)}</strong>,
-     com maior concentração em <strong>${maiorG}</strong>
-     (${fmtMoney(mapacat[maiorG] || 0)} — ${pct(mapacat[maiorG] || 0, totalSai)} das saídas).</p>
-  ${totalInv > 0 ? `<p>O total investido no período foi de <strong style="color:#d97706">${fmtMoney(totalInv)}</strong>, distribuído em ${qtdInv} lançamento${qtdInv !== 1 ? "s" : ""} com investimento registrado.</p>` : ""}
-  <p>O resultado líquido é de <strong style="color:${corS}">${fmtMoney(resultado)}</strong>,
-     representando <strong>${pct(resultado, totalEnt)}</strong> sobre as entradas.
-     Saúde financeira: <strong style="color:${corS}">${resultado > 0 ? "POSITIVA" : resultado < 0 ? "NEGATIVA" : "NEUTRA"}</strong>${resultado < 0 ? " — recomenda-se revisão dos gastos." : "."}</p>`;
+     de <strong>${fmtDate(datas[0])}</strong> a <strong>${fmtDate(datas[datas.length-1])}</strong>,
+     distribuídos ao longo de <strong>${nMeses} ${nMeses === 1 ? "mês" : "meses"}</strong>.</p>
+
+  <p><strong style="color:#059669">Entradas:</strong> totalizaram <strong style="color:#059669">${fmtMoney(totalEnt)}</strong>
+     com média mensal de <strong>${fmtMoney(mediaMensalEnt)}</strong> e ticket médio por lançamento de <strong>${fmtMoney(ticketMedioE)}</strong>.
+     A principal fonte de receita foi <strong>${maiorE}</strong>
+     (${fmtMoney(catEntradas[maiorE]||0)} — ${pct(catEntradas[maiorE]||0, totalEnt)} do total).</p>
+
+  <p><strong style="color:#dc2626">Saídas:</strong> totalizaram <strong style="color:#dc2626">${fmtMoney(totalSai)}</strong>
+     com média mensal de <strong>${fmtMoney(mediaMensalSai)}</strong> e ticket médio de <strong>${fmtMoney(ticketMedioS)}</strong>.
+     A categoria de maior gasto foi <strong>${maiorG}</strong>
+     (${fmtMoney(mapacat[maiorG]||0)} — <strong>${concentracaoG}%</strong> das saídas totais)${seg2G ? `, seguida por <strong>${seg2G}</strong> (${fmtMoney(mapacat[seg2G]||0)} — ${pct(mapacat[seg2G]||0, totalSai)})` : ""}.
+  </p>
+
+  ${nMeses > 1 ? `<p><strong>Evolução mensal:</strong> o melhor resultado foi em <strong>${fmtMes(melhorMes?.mes)}</strong>
+     (${fmtMoney(melhorMes?.res || 0)}), enquanto o mês de maior pressão financeira foi <strong>${fmtMes(piorMes?.mes)}</strong>
+     (${fmtMoney(piorMes?.res || 0)}).</p>` : ""}
+
+  <p><strong>Resultado líquido:</strong> <strong style="color:${corS}">${fmtMoney(resultado)}</strong>,
+     representando <strong>${pct(resultado, totalEnt)}</strong> de margem sobre as entradas.
+     Saúde financeira: <strong style="color:${corS}">${resultado > 0 ? "✅ POSITIVA" : resultado < 0 ? "⚠️ NEGATIVA" : "➡️ NEUTRA"}</strong>.
+     ${resultado < 0 ? `O déficit de ${fmtMoney(Math.abs(resultado))} indica que as saídas superaram as entradas — recomenda-se revisar as categorias de maior gasto.` :
+       resultado > 0 ? `A sobra de ${fmtMoney(resultado)} demonstra equilíbrio financeiro no período.` : "Entradas e saídas se equilibraram exatamente no período."}</p>`;
 
 /* ============================================================
    HELPER MONTHLY — agrupa dados por mês
@@ -541,60 +570,6 @@ new Chart(document.getElementById("cBar"), {
   }
 });
 
-/* ── Canvases offline (alta resolução 560×340 para o PDF) ── */
-new Chart(document.getElementById("cvPizza"), {
-  type: "doughnut",
-  data: { labels: catL, datasets: [{ data: catV, backgroundColor: PALETTE.slice(0, catL.length), borderWidth: 2, borderColor: "#fff", hoverOffset: 10 }] },
-  options: { responsive: false, animation: false, cutout: "60%",
-    layout: { padding: { top: 10, bottom: 10, left: 10, right: 10 } },
-    plugins: {
-      legend: { position: "right", labels: { font: { size: 13 }, padding: 14, usePointStyle: true, boxWidth: 12,
-        generateLabels: chart => (chart.data.labels || []).map((lbl, i) => ({
-          text: String(lbl).length > 14 ? String(lbl).substring(0, 14) + "…" : String(lbl),
-          fillStyle: chart.data.datasets[0].backgroundColor[i],
-          strokeStyle: "#fff", lineWidth: 1, index: i
-        }))
-      }},
-      tooltip: { enabled: false }
-    }
-  }
-});
-new Chart(document.getElementById("cvEvolucao"), {
-  type: "line",
-  data: { labels: monthly.labels, datasets: [
-    { label: "Entradas", data: monthly.ent, borderColor: "#059669", backgroundColor: "rgba(5,150,105,.10)", fill: true, tension: .38, pointRadius: 4, borderWidth: 2.5 },
-    { label: "Saídas",   data: monthly.sai, borderColor: "#dc2626", backgroundColor: "rgba(220,38,38,.08)",  fill: true, tension: .38, pointRadius: 4, borderWidth: 2.5 }
-  ]},
-  options: { responsive: false, animation: false,
-    layout: { padding: { top: 8, right: 12, bottom: 4, left: 4 } },
-    scales: {
-      x: { grid: { color: "#eef0f5" }, ticks: { font: { size: 12 }, color: "#6b7280", maxTicksLimit: 6 } },
-      y: { grid: { color: "#eef0f5" }, ticks: { font: { size: 12 }, color: "#6b7280", maxTicksLimit: 5,
-          callback: v => "R$" + (Math.abs(v) >= 1000 ? (v/1000).toFixed(1).replace(/\.0$/, "") + "k" : v) }, beginAtZero: true }
-    },
-    plugins: {
-      legend: { position: "top", align: "end", labels: { font: { size: 13 }, padding: 14, usePointStyle: true, boxWidth: 10 } },
-      tooltip: { enabled: false }
-    }
-  }
-});
-new Chart(document.getElementById("cvBar"), {
-  type: "bar",
-  data: { labels: ["Entradas", "Saídas"], datasets: [{
-    data: [totalEnt, totalSai],
-    backgroundColor: ["rgba(5,150,105,.82)", "rgba(220,38,38,.82)"],
-    borderColor: ["#059669", "#dc2626"], borderWidth: 2, borderRadius: 12
-  }]},
-  options: { responsive: false, animation: false,
-    layout: { padding: { top: 8, right: 20, bottom: 4, left: 4 } },
-    scales: {
-      x: { grid: { display: false }, ticks: { font: { size: 13 }, color: "#6b7280" } },
-      y: { grid: { color: "#eef0f5" }, ticks: { font: { size: 12 }, color: "#6b7280", maxTicksLimit: 5,
-          callback: v => "R$" + (Math.abs(v) >= 1000 ? (v/1000).toFixed(1).replace(/\.0$/, "") + "k" : v) }, beginAtZero: true }
-    },
-    plugins: { legend: { display: false }, tooltip: { enabled: false } }
-  }
-});
 
 /* ============================================================
    EXPORTAR EXCEL — inclui colunas Investimento e CPF/CNPJ
@@ -758,16 +733,16 @@ function exportPDF() {
       y += 13;
 
       const gW = (cW - 8) / 3, gH = 52;
-      const gTitles   = ["GASTOS POR CATEGORIA", "EVOLUÇÃO MENSAL", "ENTRADAS × SAÍDAS"];
-      const gCanvasIds = ["cvPizza", "cvEvolucao", "cvBar"];
+      const gTitles    = ["GASTOS POR CATEGORIA", "EVOLUÇÃO MENSAL", "ENTRADAS × SAÍDAS"];
+      const gCanvasIds = ["cPizza", "cEvolucao", "cBar"]; // canvas visíveis da página
 
       gTitles.forEach((t, idx) => {
         const xg = M + idx * (gW + 4);
         const cv = document.getElementById(gCanvasIds[idx]);
-        // Calcula altura proporcional ao canvas real para não distorcer
+        // Proporção real do canvas para não distorcer
         const ratio = cv.height / cv.width;
-        const imgH  = Math.min(gH, gW * ratio);
-        const imgY  = y + 7 + (gH - imgH) / 2; // Centraliza verticalmente
+        const imgH  = Math.min(gH, +(gW * ratio).toFixed(1));
+        const imgY  = y + 7 + (gH - imgH) / 2;
 
         doc.setFillColor(250, 251, 253); doc.roundedRect(xg, y, gW, gH + 8, 3, 3, "F");
         doc.setDrawColor(...C.lg); doc.setLineWidth(.2); doc.roundedRect(xg, y, gW, gH + 8, 3, 3, "S");
@@ -778,33 +753,40 @@ function exportPDF() {
       y += gH + 18;
 
       // ── ANÁLISE INTERPRETATIVA ───────────────────────────────
-      novaPag(60);
+      novaPag(70);
       doc.setFillColor(...C.priD); doc.rect(M, y, 3, 10, "F");
       doc.setFontSize(9); doc.setFont(undefined, "bold"); doc.setTextColor(...C.dark);
       doc.text("Análise Interpretativa", M + 7, y + 7);
       y += 14;
 
-      // Fundo suave para a seção
-      const nTxts = [
-        `O período analisado compreende ${dadosRaw.length} lançamentos (${qtdEnt} entradas e ${qtdSai} saídas), de ${fmtDate(datas[0])} a ${fmtDate(datas[datas.length - 1])}.`,
-        `As entradas totalizaram ${fmtMoney(totalEnt)}, sendo a principal categoria de receita "${maiorE}". As saídas totalizaram ${fmtMoney(totalSai)}, com maior concentração em "${maiorG}" (${fmtMoney(mapacat[maiorG] || 0)} — ${pct(mapacat[maiorG] || 0, totalSai)} das saídas).`,
-        `O resultado líquido é de ${fmtMoney(resultado)}, representando ${pct(resultado, totalEnt)} sobre as entradas. Saúde financeira: ${resultado > 0 ? "POSITIVA" : resultado < 0 ? "NEGATIVA" : "NEUTRA"}.${resultado < 0 ? " Recomenda-se revisão dos gastos." : ""}`
+      const tickMedE = qtdEnt > 0 ? totalEnt / qtdEnt : 0;
+      const tickMedS = qtdSai > 0 ? totalSai / qtdSai : 0;
+      const concG    = mapacat[maiorG] ? (mapacat[maiorG] / totalSai * 100).toFixed(1) : 0;
+      const mesesU   = [...new Set(dadosRaw.map(l => (l.data||"").substring(0,7)).filter(Boolean))].sort();
+      const nM       = mesesU.length;
+      const mmEnt    = nM > 0 ? totalEnt / nM : 0;
+      const mmSai    = nM > 0 ? totalSai / nM : 0;
+
+      const pdfTxts = [
+        `Período: ${dadosRaw.length} lançamentos (${qtdEnt} entradas / ${qtdSai} saídas) de ${fmtDate(datas[0])} a ${fmtDate(datas[datas.length-1])}, em ${nM} ${nM===1?"mês":"meses"}.`,
+        `Entradas: ${fmtMoney(totalEnt)} — média mensal ${fmtMoney(mmEnt)}, ticket médio ${fmtMoney(tickMedE)}. Principal receita: "${maiorE}" (${fmtMoney(catEntradas[maiorE]||0)} — ${pct(catEntradas[maiorE]||0, totalEnt)}).`,
+        `Saídas: ${fmtMoney(totalSai)} — média mensal ${fmtMoney(mmSai)}, ticket médio ${fmtMoney(tickMedS)}. Maior gasto: "${maiorG}" (${fmtMoney(mapacat[maiorG]||0)} — ${concG}% das saídas)${topSai[1]?`, seguido por "${topSai[1][0]}" (${fmtMoney(topSai[1][1]||0)})`:"" }.`,
+        `Resultado líquido: ${fmtMoney(resultado)} — margem ${pct(resultado, totalEnt)} sobre entradas. Saúde financeira: ${resultado>0?"POSITIVA":resultado<0?"NEGATIVA":"NEUTRA"}.${resultado<0?" Déficit de "+fmtMoney(Math.abs(resultado))+". Recomenda-se revisão dos gastos.":resultado>0?" Sobra de "+fmtMoney(resultado)+" demonstra equilíbrio no período.":""}`
       ];
 
-      // Calcula altura total do bloco
-      let totalH = 6;
-      const splitTxts = nTxts.map(t => { const s = doc.splitTextToSize(t, cW - 12); totalH += s.length * 5.5 + 7; return s; });
+      let totalHN = 8;
+      const splitN = pdfTxts.map(t => { const s = doc.splitTextToSize(t, cW - 14); totalHN += s.length * 5.5 + 6; return s; });
       doc.setFillColor(...C.priL); doc.setDrawColor(...C.priB); doc.setLineWidth(.3);
-      doc.roundedRect(M, y, cW, totalH, 3, 3, "FD");
-      y += 6;
+      doc.roundedRect(M, y, cW, totalHN, 3, 3, "FD");
+      y += 7;
 
-      splitTxts.forEach((lines, i) => {
-        novaPag(lines.length * 5.5 + 10);
+      splitN.forEach(lines => {
+        novaPag(lines.length * 5.5 + 8);
         doc.setFontSize(8); doc.setFont(undefined, "normal"); doc.setTextColor(...C.dark);
-        doc.text(lines, M + 6, y);
-        y += lines.length * 5.5 + 7;
+        doc.text(lines, M + 7, y);
+        y += lines.length * 5.5 + 6;
       });
-      y += 6;
+      y += 7;
 
       // ── RELATÓRIO DETALHADO ───────────────────────────────────
       const boxW = (cW - 8) / 3;
