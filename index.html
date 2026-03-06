@@ -307,11 +307,14 @@ header {
   margin-bottom: 3px;
 }
 .kpi-value {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: -0.4px;
+  letter-spacing: -0.3px;
   color: var(--text);
   font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .kpi-bar { height: 3px; border-radius: 2px; margin-top: 6px; background: var(--bg2); overflow: hidden; }
 .kpi-bar-fill { height: 100%; border-radius: 2px; transition: width .5s; }
@@ -590,7 +593,6 @@ td[contenteditable]:focus {
 .td-data { font-weight: 600; font-size: 11px; color: var(--text2); font-family: var(--font-mono); }
 .td-cat  { font-weight: 600; max-width: 130px; }
 .td-doc  { font-size: 11px; color: var(--text2); font-family: var(--font-mono); max-width: 130px; }
-.td-inv  { font-weight: 700; font-size: 11px; color: var(--warn); text-align: right; font-family: var(--font-mono); }
 .td-val  { font-weight: 700; text-align: right; white-space: nowrap; font-family: var(--font-mono); }
 
 /* =================================================================
@@ -957,19 +959,13 @@ td[contenteditable]:focus {
 
         <!-- Barra de filtros -->
         <div class="filter-bar" style="padding-top:12px">
-          <input type="text"  class="filter-search" id="fBusca"  placeholder="Buscar categoria, obs, CPF/CNPJ...">
+          <input type="text"  class="filter-search" id="fBusca"  placeholder="Buscar categoria, CPF/CNPJ, observação...">
           <select id="fTipo">
             <option value="">Todos os tipos</option>
             <option value="Entrada">Entradas</option>
             <option value="Saida">Saídas</option>
           </select>
           <input type="month" id="fMes" title="Filtrar por mês">
-          <!-- Filtro de investimento: apenas registros com valor de investimento preenchido -->
-          <select id="fInv">
-            <option value="">Todos</option>
-            <option value="sim">Com investimento</option>
-            <option value="nao">Sem investimento</option>
-          </select>
           <button class="btn-sec" id="clearFilter" style="padding:6px 10px;font-size:11px">✕ Limpar filtros</button>
         </div>
 
@@ -977,14 +973,11 @@ td[contenteditable]:focus {
           <table>
             <thead>
               <tr>
-                <th style="width:100px">Data</th>
-                <th>Categoria</th>
-                <th style="width:100px">Tipo</th>
-                <th style="width:120px;text-align:right">Valor</th>
-                <!-- Nova coluna: Investimento por lançamento -->
-                <th style="width:110px;text-align:right">Investimento</th>
-                <!-- Nova coluna: CPF/CNPJ do lançamento -->
+                <th style="width:105px">Data</th>
                 <th style="width:130px">CPF / CNPJ</th>
+                <th style="width:95px">Tipo</th>
+                <th>Categoria</th>
+                <th style="width:120px;text-align:right">Valor</th>
                 <th>Observação</th>
                 <th style="width:40px"></th>
               </tr>
@@ -1071,7 +1064,7 @@ td[contenteditable]:focus {
 const KEY = "fluxopro_v13";
 
 /** Estado dos filtros ativos */
-let filterState = { busca: "", tipo: "", mes: "", inv: "" };
+let filterState = { busca: "", tipo: "", mes: "" };
 
 /** Instâncias dos gráficos Chart.js (guardamos para destruir antes de recriar) */
 let charts = {};
@@ -1093,7 +1086,6 @@ const sumRes       = document.getElementById("sumRes");
 const fBusca       = document.getElementById("fBusca");
 const fTipo        = document.getElementById("fTipo");
 const fMes         = document.getElementById("fMes");
-const fInv         = document.getElementById("fInv");
 const clearFilter  = document.getElementById("clearFilter");
 const importar     = document.getElementById("importar");
 const refreshBtn   = document.getElementById("refreshBtn");
@@ -1195,9 +1187,6 @@ function applyFilters(dados) {
     }
     // Filtro de mês: campo data começa com YYYY-MM
     if (filterState.mes && i.data && !i.data.startsWith(filterState.mes)) return false;
-    // Filtro de investimento: verifica se campo inv tem valor
-    if (filterState.inv === "sim" && !i.inv) return false;
-    if (filterState.inv === "nao" && i.inv)  return false;
     return true;
   });
 }
@@ -1243,13 +1232,12 @@ function renderTable() {
   const todos    = list();
   const filtrado = applyFilters(todos);
 
-  // Atualiza indicador de filtro ativo
-  const temFiltro = filterState.busca || filterState.tipo || filterState.mes || filterState.inv;
+  const temFiltro = filterState.busca || filterState.tipo || filterState.mes;
   document.getElementById("filtroAtivo").innerText = temFiltro ? "🔍 Filtro ativo" : "";
 
   if (!filtrado.length) {
     tbody.innerHTML = `
-      <tr><td colspan="8">
+      <tr><td colspan="7">
         <div class="empty-state">
           <div class="empty-icon">📁</div>
           <h3>${todos.length ? "Nenhum resultado para o filtro aplicado" : "Nenhum lançamento cadastrado"}</h3>
@@ -1269,35 +1257,29 @@ function renderTable() {
     return db.localeCompare(da);
   });
 
-  let totEnt = 0, totSai = 0, totInv = 0;
+  let totEnt = 0, totSai = 0;
   tbody.innerHTML = ordenado.map(i => {
     if (i.tipo === "Entrada") totEnt += i.valor;
     else                      totSai += i.valor;
-    totInv += (i.inv || 0);
 
-    const invTxt = i.inv ? formatMoney(i.inv) : "—";
     const docTxt = i.doc || "—";
 
     return `
     <tr data-id="${i.id}">
       <td class="td-data" contenteditable data-f="data">${i.data || ""}</td>
-      <td class="td-cat"  contenteditable data-f="cat">${i.cat  || ""}</td>
-      <td><span class="badge ${i.tipo === "Entrada" ? "entrada" : "saida"} btnTipo">${i.tipo}</span></td>
-      <td class="td-val"  contenteditable data-f="valor">${formatMoney(i.valor)}</td>
-      <td class="td-inv"  contenteditable data-f="inv">${invTxt}</td>
       <td class="td-doc"  contenteditable data-f="doc">${docTxt}</td>
+      <td><span class="badge ${i.tipo === "Entrada" ? "entrada" : "saida"} btnTipo">${i.tipo}</span></td>
+      <td class="td-cat"  contenteditable data-f="cat">${i.cat  || ""}</td>
+      <td class="td-val"  contenteditable data-f="valor" style="text-align:right">${formatMoney(i.valor)}</td>
       <td contenteditable data-f="obs"
-          style="color:var(--text2);max-width:180px;overflow:hidden;text-overflow:ellipsis">
-        ${i.obs || ""}
-      </td>
-      <td><button class="btn-del del" title="Apagar lançamento">🗑️</button></td>
+          style="color:var(--text2);max-width:180px;overflow:hidden;text-overflow:ellipsis">${i.obs || ""}</td>
+      <td><button class="del" title="Apagar">🗑</button></td>
     </tr>`;
   }).join("");
 
   const net = totEnt - totSai;
   document.getElementById("footerCount").innerText = `${filtrado.length} lançamento${filtrado.length !== 1 ? "s" : ""}`;
-  document.getElementById("footerTotal").innerText =
-    `Resultado: ${formatMoney(net)}${totInv ? " | Investimentos: " + formatMoney(totInv) : ""}`;
+  document.getElementById("footerTotal").innerText = `Resultado: ${formatMoney(net)}`;
   document.getElementById("totalLanc").innerText = `${todos.length} total`;
 }
 
@@ -1631,15 +1613,15 @@ tbody.addEventListener("blur", e => {
 
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
-    // Campos numéricos: valor e inv
-    if (td.dataset.f === "valor" || td.dataset.f === "inv") {
+    // Campo numérico: valor
+    if (td.dataset.f === "valor") {
       const n = normalizeValue(td.innerText);
-      if (n === null && td.dataset.f === "valor") {
+      if (n === null) {
         td.innerText = formatMoney(item.valor);
         alert("Valor inválido");
         return;
       }
-      item[td.dataset.f] = n || 0;
+      item.valor = n;
     } else {
       item[td.dataset.f] = td.innerText.trim();
     }
@@ -1654,10 +1636,9 @@ tbody.addEventListener("blur", e => {
 fBusca.addEventListener("input",   () => { filterState.busca = fBusca.value.trim();   renderTable(); });
 fTipo.addEventListener("change",   () => { filterState.tipo  = fTipo.value;           renderTable(); });
 fMes.addEventListener("change",    () => { filterState.mes   = fMes.value;            renderTable(); });
-fInv.addEventListener("change",    () => { filterState.inv   = fInv.value;            renderTable(); });
 clearFilter.addEventListener("click", () => {
-  fBusca.value = ""; fTipo.value = ""; fMes.value = ""; fInv.value = "";
-  filterState  = { busca: "", tipo: "", mes: "", inv: "" };
+  fBusca.value = ""; fTipo.value = ""; fMes.value = "";
+  filterState  = { busca: "", tipo: "", mes: "" };
   renderTable();
 });
 
