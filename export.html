@@ -139,10 +139,10 @@ tbody tr:hover { background: #f1f5ff; }
 </div>
 
 <!-- Canvases ocultos de alta resolução para exportação PDF (560×340px) -->
-<div style="position:absolute;left:-9999px;width:560px;opacity:.01;pointer-events:none">
-  <canvas id="cvPizza"    width="560" height="340"></canvas>
-  <canvas id="cvEvolucao" width="560" height="340"></canvas>
-  <canvas id="cvBar"      width="560" height="340"></canvas>
+<div style="position:absolute;left:-9999px;opacity:.01;pointer-events:none">
+  <canvas id="cvPizza"    width="500" height="300"></canvas>
+  <canvas id="cvEvolucao" width="560" height="300"></canvas>
+  <canvas id="cvBar"      width="380" height="300"></canvas>
 </div>
 
 <div class="page">
@@ -758,17 +758,22 @@ function exportPDF() {
       y += 13;
 
       const gW = (cW - 8) / 3, gH = 52;
-      const gTitles = ["GASTOS POR CATEGORIA", "EVOLUÇÃO MENSAL", "ENTRADAS × SAÍDAS"];
-      const gCanvases = ["cvPizza", "cvEvolucao", "cvBar"];
+      const gTitles   = ["GASTOS POR CATEGORIA", "EVOLUÇÃO MENSAL", "ENTRADAS × SAÍDAS"];
+      const gCanvasIds = ["cvPizza", "cvEvolucao", "cvBar"];
 
       gTitles.forEach((t, idx) => {
         const xg = M + idx * (gW + 4);
+        const cv = document.getElementById(gCanvasIds[idx]);
+        // Calcula altura proporcional ao canvas real para não distorcer
+        const ratio = cv.height / cv.width;
+        const imgH  = Math.min(gH, gW * ratio);
+        const imgY  = y + 7 + (gH - imgH) / 2; // Centraliza verticalmente
+
         doc.setFillColor(250, 251, 253); doc.roundedRect(xg, y, gW, gH + 8, 3, 3, "F");
         doc.setDrawColor(...C.lg); doc.setLineWidth(.2); doc.roundedRect(xg, y, gW, gH + 8, 3, 3, "S");
         doc.setFontSize(5.5); doc.setFont(undefined, "bold"); doc.setTextColor(...C.gray);
         doc.text(t, xg + gW/2, y + 5, { align: "center" });
-        const cv = document.getElementById(gCanvases[idx]);
-        doc.addImage(cv.toDataURL("image/png", 1), "PNG", xg + 1, y + 7, gW - 2, gH, undefined, "FAST");
+        doc.addImage(cv.toDataURL("image/png", 1), "PNG", xg + 1, imgY, gW - 2, imgH, undefined, "FAST");
       });
       y += gH + 18;
 
@@ -802,13 +807,18 @@ function exportPDF() {
       y += 6;
 
       // ── RELATÓRIO DETALHADO ───────────────────────────────────
-      novaPag(30);
+      const boxW = (cW - 8) / 3;
+      function relBoxH(items) { return 14 + items.length * 7.5 + 12; }
+
+      // Calcula a altura máxima dos 3 boxes para decidir se cabe na página
+      const itensResultado = [["Total entradas", totalEnt], ["(–) Saídas", -totalSai], ["Margem", resultado]];
+      const alturaRelatorio = Math.max(relBoxH(topEnt), relBoxH(topSai), relBoxH(itensResultado)) + 26;
+      novaPag(alturaRelatorio);
+
       doc.setFillColor(...C.priD); doc.rect(M, y, 3, 10, "F");
       doc.setFontSize(9); doc.setFont(undefined, "bold"); doc.setTextColor(...C.dark);
       doc.text("Relatório Detalhado por Categoria", M + 7, y + 7);
       y += 14;
-
-      const boxW = (cW - 8) / 3;
       function relBox(xp, yp, titulo, corT, bg, border, items, total) {
         const boxH = 14 + items.length * 7.5 + 12;
         doc.setFillColor(...bg); doc.roundedRect(xp, yp, boxW, boxH, 3, 3, "F");
