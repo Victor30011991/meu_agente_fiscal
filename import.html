@@ -196,13 +196,14 @@ button:hover { opacity: .85; transform: translateY(-1px); }
 
     <!-- Zona de upload de arquivo -->
     <div class="file-zone">
-      <input type="file" id="file" accept=".xlsx,.xls,.pdf">
+      <input type="file" id="file" accept=".xlsx,.xls,.pdf,.json">
       <div class="icon">📂</div>
       <strong>Clique ou arraste o arquivo aqui</strong>
-      <p>Extrato bancário em PDF ou planilha Excel</p>
+      <p>Extrato bancário em PDF, planilha Excel ou backup JSON</p>
       <div class="file-types">
         <span class="file-type-badge ft-excel">✅ Excel (.xlsx / .xls)</span>
         <span class="file-type-badge ft-pdf">📄 PDF (extrato / relatório)</span>
+        <span class="file-type-badge" style="background:#fef3c7;color:#b45309">💾 Backup (.json)</span>
       </div>
     </div>
 
@@ -302,7 +303,14 @@ button:hover { opacity: .85; transform: translateY(-1px); }
 /* ============================================================
    CONFIGURAÇÃO
    ============================================================ */
-const KEY = "fluxopro_v14";
+// Tenta chave mais recente primeiro (compatibilidade total)
+let KEY = "fluxopro_v14";
+const _rawDb = localStorage.getItem("fluxopro_v14")
+            || localStorage.getItem("fluxopro_v13")
+            || localStorage.getItem("fluxopro_v12");
+if (_rawDb) {
+  try { const t=JSON.parse(_rawDb); if(t&&t.profiles){ /* ok */ } } catch(e){}
+}
 
 // Configura worker do PDF.js (processamento local, sem servidor)
 pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -317,12 +325,16 @@ let buffer     = [];   // Lançamentos válidos a importar
 let ignored    = [];   // Linhas ignoradas (formato inválido)
 let db;
 let rawPdfText = "";
+let importMode = "lancamentos"; // "lancamentos" ou "backup"
 
 /* ============================================================
    INICIALIZAÇÃO — valida acesso ao banco de dados
    ============================================================ */
 try {
-  db = JSON.parse(localStorage.getItem(KEY));
+  const raw = localStorage.getItem("fluxopro_v14")
+           || localStorage.getItem("fluxopro_v13")
+           || localStorage.getItem("fluxopro_v12");
+  db = raw ? JSON.parse(raw) : null;
   if (!db || !db.profiles) throw new Error("Base de dados não encontrada. Abra o FluxoPro primeiro.");
   if (!perfil) perfil = db.active;
   if (!perfil || !db.profiles[perfil]) throw new Error("Perfil não encontrado: " + perfil);
@@ -443,7 +455,7 @@ function inferirTipo(desc) {
    ============================================================ */
 document.getElementById("file").addEventListener("change", function () {
   // Reset do estado
-  buffer = []; ignored = []; rawPdfText = "";
+  buffer = []; ignored = []; rawPdfText = ""; importMode = "lancamentos";
   document.getElementById("previewCard").style.display  = "none";
   document.getElementById("rawSection").style.display   = "none";
   document.getElementById("statusBox").innerHTML         = "";
@@ -452,44 +464,63 @@ document.getElementById("file").addEventListener("change", function () {
   const f = this.files[0];
   if (!f) return;
   const ext = f.name.split(".").pop().toLowerCase();
-  if (ext === "pdf")                   processPDF(f);
+  if (ext === "pdf")                        processPDF(f);
   else if (ext === "xlsx" || ext === "xls") processExcel(f);
-  else showStatus("Formato não suportado. Use .xlsx, .xls ou .pdf", "error");
+  else if (ext === "json")                  processBackupJSON(f);
+  else showStatus("Formato não suportado. Use .xlsx, .xls, .pdf ou .json (backup)", "error");
 });
 
 /* ============================================================
-   PROCESSAMENTO EXCEL
+   PROCESSAMENTO EXCEL — detecta formato FluxoPro ou genérico
    ============================================================ */
 function processExcel(file) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
       const wb    = XLSX.read(e.target.result, { type: "binary" });
-      const sheet = wb.Sheets[wb.SheetNames[0]];
+      // Tenta aba "Extrato Completo" primeiro (exportado pelo FluxoPro), depois a primeira
+      const sheetName = wb.SheetNames.includes("Extrato Completo")
+        ? "Extrato Completo" : wb.SheetNames[0];
+      const sheet = wb.Sheets[sheetName];
       const data  = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
       if (!data.length) { showStatus("Arquivo vazio ou sem dados válidos.", "warning"); return; }
 
-      data.forEach((linha, index) => {
-        const dt   = validateDate(String(linha.Data || ""));
-        const tipo = validateTipo(String(linha.Tipo || ""));
-        const val  = normalizeValue(linha.Valor);
-        const cat  = String(linha.Categoria || "").trim();
-        // Suporte à coluna Observação com/sem acento
-        const obs  = String(linha.Observacao || linha["Observação"] || "").trim();
-        // Novas colunas opcionais
-        const inv  = normalizeValue(linha.Investimento) || 0;
-        const doc  = String(linha.CPF_CNPJ || linha["CPF/CNPJ"] || linha.Documento || "").trim();
+      // Remove linhas de totais (TOTAL ENTRADAS, TOTAL SAÍDAS, RESULTADO, INVESTIMENTOS)
+      const palavrasReservadas = ["total entradas","total saídas","resultado","investimentos"];
+      const dataFiltrada = data.filter(linha => {
+        const cat = String(linha["Categoria"] || linha["categoria"] || "").trim().toLowerCase();
+        return !palavrasReservadas.includes(cat) && (linha["Data"] || linha["data"]);
+      });
 
-        if (!tipo) { ignored.push({ motivo: `Linha ${index + 2}: tipo inválido ("${linha.Tipo || ""}")` }); return; }
-        if (!val)  { ignored.push({ motivo: `Linha ${index + 2}: valor inválido ("${linha.Valor || ""}")` }); return; }
-        if (!dt)   { ignored.push({ motivo: `Linha ${index + 2}: data inválida ("${linha.Data || ""}")` });  return; }
+      dataFiltrada.forEach((linha, index) => {
+        // Suporte a colunas do FluxoPro exportado E colunas genéricas
+        const dt   = validateDate(String(
+          linha["Data"] || linha["data"] || ""));
+        const tipo = validateTipo(String(
+          linha["Tipo"] || linha["tipo"] || ""));
+        const val  = normalizeValue(
+          linha["Valor (R$)"] ?? linha["Valor"] ?? linha["valor"] ?? "");
+        const cat  = String(
+          linha["Categoria"] || linha["categoria"] || "").trim();
+        const obs  = String(
+          linha["Observação"] || linha["Observacao"] || linha["observacao"] || linha["obs"] || "").trim();
+        const inv  = normalizeValue(
+          linha["Investimento"] || linha["investimento"] || 0) || 0;
+        // CPF: aceita ambos os formatos (exportado e genérico)
+        const doc  = String(
+          linha["CPF / CNPJ"] || linha["CPF_CNPJ"] || linha["CPF/CNPJ"] ||
+          linha["cpf"] || linha["Documento"] || "").trim();
 
-        buffer.push({ data: dt, cat: cat || "Sem categoria", tipo, valor: val, inv, doc, obs });
+        if (!tipo) { ignored.push({ motivo: `Linha ${index+2}: tipo inválido ("${linha["Tipo"]||linha["tipo"]||""}")` }); return; }
+        if (!val)  { ignored.push({ motivo: `Linha ${index+2}: valor inválido` }); return; }
+        if (!dt)   { ignored.push({ motivo: `Linha ${index+2}: data inválida ("${linha["Data"]||linha["data"]||""}")` }); return; }
+
+        buffer.push({ data:dt, cat:cat||"Sem categoria", tipo, valor:val, inv, doc, obs });
       });
 
       document.getElementById("sourceTag").innerHTML =
-        `<span class="badge badge-entrada">Excel</span>`;
+        `<span class="badge badge-entrada">Excel${sheetName==="Extrato Completo"?" · FluxoPro":""}</span>`;
       renderPreview();
     } catch (err) {
       showStatus("Erro ao ler arquivo: " + err.message, "error");
@@ -497,6 +528,57 @@ function processExcel(file) {
     }
   };
   reader.readAsBinaryString(file);
+}
+
+/* ============================================================
+   PROCESSAMENTO JSON — restaura backup completo do FluxoPro
+   ============================================================ */
+function processBackupJSON(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const bk = JSON.parse(e.target.result);
+      if (!bk || !bk.profiles) {
+        showStatus("Arquivo JSON não é um backup válido do FluxoPro.", "error"); return;
+      }
+      // Conta todos os lançamentos de todos os perfis
+      let total = 0;
+      Object.values(bk.profiles).forEach(arr => { if(Array.isArray(arr)) total += arr.length; });
+      const perfisLista = Object.keys(bk.profiles).join(", ");
+
+      importMode = "backup";
+      // Coloca o DB do backup no buffer (vamos restaurá-lo inteiro na confirmação)
+      buffer = [bk]; // reutiliza buffer como container do DB completo
+      ignored = [];
+
+      document.getElementById("sourceTag").innerHTML =
+        `<span class="badge" style="background:#fef3c7;color:#b45309">💾 Backup JSON</span>`;
+      document.getElementById("countValid").innerText   = total;
+      document.getElementById("countIgnored").innerText = 0;
+      document.getElementById("previewCard").style.display = "block";
+      document.getElementById("rawSection").style.display  = "none";
+
+      document.getElementById("tb").innerHTML = `
+        <tr>
+          <td colspan="9" style="text-align:center;padding:20px">
+            <div style="font-size:14px;font-weight:700;color:#1a1f36;margin-bottom:6px">
+              💾 Backup completo do FluxoPro
+            </div>
+            <div style="font-size:12px;color:#6b7280;margin-bottom:4px">
+              <strong>${total} lançamentos</strong> em ${Object.keys(bk.profiles).length} perfil(is): <em>${perfisLista}</em>
+            </div>
+            <div style="font-size:11px;color:#d97706;margin-top:8px;padding:8px;background:#fef9c3;border-radius:8px;border:1px solid #fde68a;display:inline-block">
+              ⚠️ Isso irá <strong>SUBSTITUIR TODOS OS DADOS ATUAIS</strong> pelos dados do backup.<br>
+              Todos os perfis e lançamentos existentes serão sobrescritos.
+            </div>
+          </td>
+        </tr>`;
+      showStatus(`✅ Backup válido — ${total} lançamentos encontrados em ${Object.keys(bk.profiles).length} perfil(is).`, "success");
+    } catch(err) {
+      showStatus("Erro ao ler JSON: " + err.message, "error");
+    }
+  };
+  reader.readAsText(file);
 }
 
 /* ============================================================
@@ -680,14 +762,30 @@ function renderPreview() {
    ============================================================ */
 function confirmar() {
   if (!buffer.length) { alert("Nenhum lançamento válido para importar."); return; }
-  if (!confirm(`Importar ${buffer.length} lançamentos para o perfil "${perfil}"?`)) return;
 
+  // MODO BACKUP: restaura o banco inteiro
+  if (importMode === "backup") {
+    const bk = buffer[0];
+    if (!confirm(`ATENÇÃO: Isso irá substituir TODOS os dados atuais pelo backup.\n\nContinuar?`)) return;
+    try {
+      // Salva nas chaves conhecidas para garantir compatibilidade
+      const json = JSON.stringify(bk);
+      localStorage.setItem("fluxopro_v14", json);
+      localStorage.setItem("fluxopro_v13", json);
+      alert("✅ Backup restaurado com sucesso!\n\nRecarregue o FluxoPro para ver os dados.");
+      window.close();
+    } catch(err) { alert("Erro ao restaurar backup: "+err.message); }
+    return;
+  }
+
+  // MODO NORMAL: adiciona lançamentos ao perfil atual
+  if (!confirm(`Importar ${buffer.length} lançamentos para o perfil "${perfil}"?`)) return;
   try {
-    // Adiciona cada lançamento com um UUID único
     buffer.forEach(l => {
       db.profiles[perfil].push({ id: crypto.randomUUID(), ...l });
     });
-    localStorage.setItem(KEY, JSON.stringify(db));
+    const KEY_SAVE = localStorage.getItem("fluxopro_v14") ? "fluxopro_v14" : "fluxopro_v13";
+    localStorage.setItem(KEY_SAVE, JSON.stringify(db));
     alert(`✅ Importação concluída!\n\n${buffer.length} lançamentos adicionados ao perfil "${perfil}".`);
     window.close();
   } catch (err) {
