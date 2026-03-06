@@ -67,10 +67,16 @@ button:hover { opacity: .88; transform: translateY(-1px); }
 .kpi-net { background: #eef2ff; border-color: #c7d2fe; } .kpi-net::after { background: #4f46e5; } .kpi-net .kpi-label { color: #3730a3; }
 
 /* ── Gráficos ── */
-.chart-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 13px 18px 15px; align-items: start; }
+.chart-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 13px 18px 15px; align-items: stretch; }
 @media (max-width: 700px) { .chart-row { grid-template-columns: 1fr; } }
-.chart-box { border: 1px solid #f1f3f9; border-radius: 10px; padding: 11px; display: flex; flex-direction: column; gap: 6px; }
-.chart-box h3 { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #6b7280; text-align: center; }
+.chart-box {
+  border: 1px solid #f1f3f9; border-radius: 10px; padding: 11px 11px 8px;
+  display: flex; flex-direction: column; gap: 6px;
+  overflow: hidden; /* garante que nada ultrapasse a borda */
+  min-width: 0;     /* evita overflow no grid */
+}
+.chart-box h3 { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #6b7280; text-align: center; flex-shrink: 0; }
+.chart-box .chart-inner { position: relative; width: 100%; flex: 1; }
 
 /* ── Filtros da tabela ── */
 .filter-row {
@@ -192,9 +198,9 @@ tbody tr:hover { background: #f1f5ff; }
   <div class="card">
     <div class="card-head"><span class="dot" style="background:#7c3aed"></span><h2>Resumo Visual</h2></div>
     <div class="chart-row">
-      <div class="chart-box"><h3>Gastos por Categoria</h3><canvas id="cPizza"    height="210"></canvas></div>
-      <div class="chart-box"><h3>Evolução Mensal</h3>       <canvas id="cEvolucao" height="210"></canvas></div>
-      <div class="chart-box"><h3>Entradas × Saídas</h3>    <canvas id="cBar"      height="210"></canvas></div>
+      <div class="chart-box"><h3>Gastos por Categoria</h3><div class="chart-inner"><canvas id="cPizza"></canvas></div></div>
+      <div class="chart-box"><h3>Evolução Mensal</h3>      <div class="chart-inner"><canvas id="cEvolucao"></canvas></div></div>
+      <div class="chart-box"><h3>Entradas × Saídas</h3>   <div class="chart-inner"><canvas id="cBar"></canvas></div></div>
     </div>
   </div>
 
@@ -520,47 +526,50 @@ const catL    = Object.keys(mapacat).sort((a, b) => mapacat[b] - mapacat[a]);
 const catV    = catL.map(k => mapacat[k]);
 const monthly = buildMonthly(dadosRaw);
 
-// Doughnut — Gastos por categoria
+// Doughnut — Gastos por categoria (quadrado: 1:1)
 new Chart(document.getElementById("cPizza"), {
   type: "doughnut",
   data: { labels: catL, datasets: [{ data: catV, backgroundColor: PALETTE.slice(0, catL.length), borderWidth: 2, borderColor: "#fff", hoverOffset: 6 }] },
-  options: { responsive: true, cutout: "62%",
+  options: { responsive: true, aspectRatio: 1.6, cutout: "62%",
     plugins: {
-      legend: { position: "right", labels: { font: { family: "DM Sans", size: 10 }, color: gc.color, boxWidth: 10, padding: 8, usePointStyle: true } },
+      legend: { position: "bottom", labels: { font: { family: "DM Sans", size: 10 }, color: gc.color, boxWidth: 8, padding: 8, usePointStyle: true } },
       tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${fmtMoney(ctx.parsed)}` } }
     }
   }
 });
 
-// Linha — Evolução mensal
+// Linha — Evolução mensal (mais largo: 2:1)
 new Chart(document.getElementById("cEvolucao"), {
   type: "line",
   data: { labels: monthly.labels, datasets: [
     { label: "Entradas", data: monthly.ent, borderColor: "#059669", backgroundColor: "rgba(5,150,105,.07)", fill: true, tension: .38, pointRadius: 3, borderWidth: 2 },
     { label: "Saídas",   data: monthly.sai, borderColor: "#dc2626", backgroundColor: "rgba(220,38,38,.06)",  fill: true, tension: .38, pointRadius: 3, borderWidth: 2 }
   ]},
-  options: { responsive: true, interaction: { mode: "index", intersect: false },
+  options: { responsive: true, aspectRatio: 1.6, interaction: { mode: "index", intersect: false },
+    layout: { padding: { right: 8 } },
     scales: {
       x: { grid: { color: gc.grid }, ticks: { color: gc.color, font: { size: 9 }, maxTicksLimit: 6 } },
       y: { grid: { color: gc.grid }, ticks: { color: gc.color, font: { size: 9 }, maxTicksLimit: 5,
           callback: v => "R$" + (Math.abs(v) >= 1000 ? (v/1000).toFixed(1).replace(/\.0$/, "") + "k" : v) }, beginAtZero: true }
     },
     plugins: {
-      legend: { position: "top", labels: { font: { size: 10 }, color: gc.color, boxWidth: 10 } },
+      legend: { position: "top", labels: { font: { size: 10 }, color: gc.color, boxWidth: 8, usePointStyle: true } },
       tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmtMoney(ctx.parsed.y)}` } }
     }
   }
 });
 
-// Barra — Entradas × Saídas
+// Barra — Entradas × Saídas (mesma proporção)
 new Chart(document.getElementById("cBar"), {
   type: "bar",
   data: { labels: ["Entradas", "Saídas"], datasets: [{
     data: [totalEnt, totalSai],
     backgroundColor: ["rgba(5,150,105,.8)", "rgba(220,38,38,.8)"],
-    borderColor: ["#059669", "#dc2626"], borderWidth: 2, borderRadius: 7
+    borderColor: ["#059669", "#dc2626"], borderWidth: 2, borderRadius: 7,
+    barPercentage: 0.55, categoryPercentage: 0.7
   }]},
-  options: { responsive: true,
+  options: { responsive: true, aspectRatio: 1.6,
+    layout: { padding: { right: 12, left: 4 } },
     scales: {
       x: { grid: { display: false }, ticks: { color: gc.color, font: { size: 10 } } },
       y: { grid: { color: gc.grid }, ticks: { color: gc.color, font: { size: 9 }, maxTicksLimit: 5,
