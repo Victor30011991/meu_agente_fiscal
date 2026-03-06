@@ -226,6 +226,7 @@ tbody tr:hover { background: #f0f2ff; }
       <button class="btn-back" onclick="window.close()">← Voltar</button>
       <button class="btn-excel" onclick="exportExcel()">📥 Excel</button>
       <button class="btn-pdf"   onclick="exportPDF()">📄 PDF</button>
+      <button style="background:linear-gradient(135deg,#d97706,#b45309);color:#fff;box-shadow:0 2px 8px rgba(217,119,6,.3)" onclick="exportBackup()">💾 Backup JSON</button>
     </div>
   </div>
 
@@ -869,7 +870,26 @@ function exportExcel() {
 }
 
 /* ============================================================
-   EXPORTAR PDF — design aprimorado + tabela CPF
+   BACKUP JSON — salva dados completos para reimportar depois
+   ============================================================ */
+function exportBackup() {
+  try {
+    const raw = localStorage.getItem("fluxopro_v14")
+             || localStorage.getItem("fluxopro_v13")
+             || localStorage.getItem("fluxopro_v12");
+    if (!raw) { alert("Sem dados para fazer backup."); return; }
+    const blob = new Blob([raw], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "fluxopro_backup_"+perfil+"_"+Date.now()+".json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch(e) { alert("Erro ao gerar backup: "+e.message); }
+}
+
+
+/* ============================================================
+   EXPORTAR PDF
    ============================================================ */
 function exportPDF() {
   if (!dadosRaw.length) { alert("Sem dados para exportar."); return; }
@@ -959,32 +979,75 @@ function exportPDF() {
       });
       y+=32;
 
-      // ── GRÁFICOS ─────────────────────────────────────────────
-      secTitle("Resumo Visual");
-      const gW=(cW-8)/3, gH=54;
-      for (let idx=0;idx<3;idx++) {
-        const tipo = document.getElementById("selChart"+idx).value;
-        const titulo = CHART_TITLES[tipo]||"";
-        const xg=M+idx*(gW+4);
-        const cv=document.getElementById("cChart"+idx);
-        const ratio=cv.height/cv.width||0.8;
-        const imgH=Math.min(gH-8,+(gW*ratio).toFixed(1));
-        const imgY=y+8+(gH-8-imgH)/2;
-        doc.setFillColor(...C.cardBg); doc.roundedRect(xg,y,gW,gH+8,3,3,"F");
-        doc.setDrawColor(...C.cardBdr); doc.setLineWidth(.2); doc.roundedRect(xg,y,gW,gH+8,3,3,"S");
-        doc.setFontSize(5); doc.setFont(undefined,"bold"); doc.setTextColor(...C.gray);
-        doc.text(titulo,xg+gW/2,y+5.5,{align:"center"});
-        doc.addImage(cv.toDataURL("image/png",1),"PNG",xg+2,imgY,gW-4,imgH,undefined,"FAST");
+      // ── RESUMO NUMÉRICO (substituiu gráficos) ─────────────────
+      // helper: mini-tabela 2 colunas
+      function miniTabela(xp, yp, wT, titulo, corAccent, bg, border, rows) {
+        const rowH=6.5, hdrH=8, totalH=hdrH+rows.length*rowH+2;
+        doc.setFillColor(...bg); doc.roundedRect(xp,yp,wT,totalH,3,3,"F");
+        doc.setDrawColor(...border); doc.setLineWidth(.25); doc.roundedRect(xp,yp,wT,totalH,3,3,"S");
+        doc.setFillColor(...corAccent); doc.roundedRect(xp,yp,wT,hdrH,3,0,"F");
+        doc.setFontSize(6); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+        doc.text(titulo,xp+4,yp+5.5);
+        let ry=yp+hdrH+rowH;
+        rows.forEach(([lbl,val,cor],i)=>{
+          if(i%2===0){ doc.setFillColor(255,255,255,0.4); doc.rect(xp+1,ry-4.5,wT-2,rowH,"F"); }
+          doc.setFontSize(6); doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
+          doc.text(String(lbl).substring(0,24),xp+4,ry);
+          doc.setFont(undefined,"bold"); doc.setTextColor(...(cor||C.dark));
+          const vt=String(val);
+          doc.text(vt,xp+wT-4-doc.getTextWidth(vt),ry);
+          ry+=rowH;
+        });
+        return totalH;
       }
-      y+=gH+18;
+
+      // Linha 1: Resumo geral (esquerda) + Evolução mensal (direita)
+      const lW=(cW-6)/2;
+      const resumoRows=[
+        ["Total entradas",    fmtMoney(totalEnt),  C.ok ],
+        ["Total saídas",      fmtMoney(totalSai),  C.bad],
+        ["Resultado líquido", fmtMoney(resultado), resultado>=0?C.pri:C.bad],
+        ["Investimentos",     fmtMoney(totalInv),  C.warn],
+        ["Qtd. lançamentos",  dadosRaw.length,     C.dark],
+        ["Qtd. entradas",     qtdEnt,              C.ok ],
+        ["Qtd. saídas",       qtdSai,              C.bad],
+        ["Ticket médio saída",fmtMoney(qtdSai>0?totalSai/qtdSai:0), C.gray],
+        ["Margem líquida",    pct(resultado,totalEnt), resultado>=0?C.ok:C.bad],
+      ];
+      const mesesEvolRows = Object.keys(porMes).sort().map(k=>{
+        const r=+(porMes[k].ent-porMes[k].sai).toFixed(2);
+        const [yr,mo]=k.split("-");
+        const lbl=new Date(+yr,+mo-1).toLocaleDateString("pt-BR",{month:"short",year:"2-digit"});
+        return [lbl+" — E:"+fmtMoney(porMes[k].ent), "S:"+fmtMoney(porMes[k].sai), r>=0?C.ok:C.bad];
+      });
+
+      novaPag(16+Math.max(resumoRows.length,mesesEvolRows.length)*6.5+20);
+      secTitle("Resumo Numérico");
+      const h1=miniTabela(M,    y, lW,"INDICADORES GERAIS",    C.pri, C.priL, C.priB, resumoRows);
+      const h2=miniTabela(M+lW+6, y, lW,"EVOLUÇÃO MENSAL",      C.ok,  C.okL,  C.okB,  mesesEvolRows.length?mesesEvolRows:[["Sem dados mensais","—",C.gray]]);
+      y+=Math.max(h1,h2)+10;
+
+      // Linha 2: Top categorias saídas (esquerda) + Top entradas (direita)
+      const topSaiRows = topSai.map(([k,v])=>[k, fmtMoney(v)+" ("+pct(v,totalSai)+")", C.bad]);
+      const topEntRows = topEnt.map(([k,v])=>[k, fmtMoney(v)+" ("+pct(v,totalEnt)+")", C.ok]);
+      novaPag(16+Math.max(topSaiRows.length,topEntRows.length)*6.5+20);
+      secTitle("Top Categorias");
+      const h3=miniTabela(M,    y, lW,"TOP SAÍDAS",   C.bad, C.badL, C.badB, topSaiRows.length?topSaiRows:[["Sem dados","—",C.gray]]);
+      const h4=miniTabela(M+lW+6, y, lW,"TOP ENTRADAS", C.ok,  C.okL,  C.okB,  topEntRows.length?topEntRows:[["Sem dados","—",C.gray]]);
+      y+=Math.max(h3,h4)+10;
 
       // ── RELATÓRIO DETALHADO POR CATEGORIA ────────────────────
-      secTitle("Relatório Detalhado por Categoria");
       const boxW=(cW-8)/3;
       function relBoxH(items){ return 14+items.length*7.5+12; }
       const itensResultado=[["Total entradas",totalEnt],["(–) Saídas",-totalSai],["Margem",resultado]];
       const alturaRel=Math.max(relBoxH(topEnt),relBoxH(topSai),relBoxH(itensResultado))+16;
-      novaPag(alturaRel);
+      // Garante espaço para título + conteúdo juntos (evita lacuna)
+      novaPag(14+alturaRel);
+      // Título manual sem novaPag interno
+      doc.setFillColor(...C.priD); doc.roundedRect(M,y,3,10,1,1,"F");
+      doc.setFontSize(9); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark);
+      doc.text("Relatório Detalhado por Categoria",M+7,y+7);
+      y+=14;
 
       function relBox(xp,yp,titulo,corT,bg,border,items,total) {
         const bH=14+items.length*7.5+12;
@@ -1017,62 +1080,110 @@ function exportPDF() {
         [["Total entradas",totalEnt],["(–) Saídas",-totalSai],["Margem",resultado]],resultado);
       y+=Math.max(maxH1,maxH2,60)+14;
 
-      // ── TABELA CPF / CNPJ ─────────────────────────────────────
+      // ── TABELA COMPLETA POR CPF / CNPJ ───────────────────────
       if (cpfOrdenado.length>0) {
         doc.addPage(); y=18;
-        secTitle("Gastos por CPF / CNPJ");
-        const cpfColW=(cW-12)/5;
-        // Cabeçalho
+        // Título manual (sem novaPag duplo)
+        doc.setFillColor(...C.priD); doc.roundedRect(M,y,3,10,1,1,"F");
+        doc.setFontSize(9); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark);
+        doc.text("Gastos Detalhados por CPF / CNPJ",M+7,y+7);
+        y+=14;
+
+        // Resumo geral por CPF — tabela horizontal
         doc.setFillColor(...C.pri); doc.roundedRect(M,y,cW,8,2,2,"F");
-        const cpfHdrs=["CPF / CNPJ","Total Saídas","Movimentos","Ticket Médio","% Total"];
-        cpfHdrs.forEach((h,i)=>{
+        const cCpf=[
+          {t:"CPF / CNPJ", x:M+2,   w:40, a:"left"},
+          {t:"Saídas",     x:M+44,  w:28, a:"right"},
+          {t:"Entradas",   x:M+74,  w:28, a:"right"},
+          {t:"Movimentos", x:M+104, w:22, a:"center"},
+          {t:"Ticket Méd.",x:M+128, w:28, a:"right"},
+          {t:"% Total",    x:M+158, w:20, a:"right"},
+        ];
+        cCpf.forEach(c=>{
           doc.setFontSize(5.5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
-          doc.text(h, M+i*(cpfColW+3)+cpfColW/2, y+5.5, {align:"center"});
+          doc.text(c.t,c.a==="right"?c.x+c.w:c.a==="center"?c.x+c.w/2:c.x, y+5.5, {align:c.a});
         });
         y+=10;
         cpfOrdenado.forEach(([cpf,total],idx)=>{
-          novaPag(8);
-          if (idx%2===0){ doc.setFillColor(...C.cardBg); doc.rect(M,y-3.5,cW,7,"F"); }
+          novaPag(7.5);
+          if(idx%2===0){ doc.setFillColor(...C.cardBg); doc.rect(M,y-3.5,cW,7,"F"); }
           const qtdC=cpfQtd[cpf]||0;
           const media=qtdC>0?total/qtdC:0;
+          const entC=cpfEntradas[cpf]||0;
           const pctT=totalSai>0?(total/totalSai*100).toFixed(1)+"%" : "—";
-          const vals=[cpf.substring(0,18),fmtMoney(total),String(qtdC),fmtMoney(media),pctT];
-          vals.forEach((v,i)=>{
-            doc.setFontSize(6.5); doc.setFont(undefined,i===1||i===3?"bold":"normal");
-            doc.setTextColor(...(i===1?C.bad:i===3?C.warn:C.dark));
-            doc.text(String(v),M+i*(cpfColW+3)+cpfColW/2,y,{align:"center"});
+          cCpf.forEach((c,i)=>{
+            const vals=[cpf.substring(0,22),fmtMoney(total),fmtMoney(entC),String(qtdC),fmtMoney(media),pctT];
+            doc.setFontSize(6.5); doc.setFont(undefined,i===1?"bold":"normal");
+            doc.setTextColor(...(i===1?C.bad:i===2?C.ok:i===4?C.warn:C.dark));
+            doc.text(String(vals[i]),c.a==="right"?c.x+c.w:c.a==="center"?c.x+c.w/2:c.x,y,{align:c.a});
           });
           y+=7;
         });
-        y+=8;
+        y+=10;
 
-        // Detalhe por CPF — top categorias
-        secTitle("Detalhe de Categorias por CPF");
-        cpfOrdenado.forEach(([cpf,total])=>{
-          const cats=Object.entries(cpfCats[cpf]||{}).sort((a,b)=>b[1]-a[1]);
-          if (!cats.length) return;
-          novaPag(14+cats.length*6+8);
-          // Header do CPF
-          doc.setFillColor(...C.priL); doc.setDrawColor(...C.priB); doc.setLineWidth(.3);
-          doc.roundedRect(M,y,cW,10,2,2,"FD");
-          doc.setFontSize(7.5); doc.setFont(undefined,"bold"); doc.setTextColor(...C.pri);
-          doc.text(cpf.substring(0,30),M+5,y+7);
-          doc.setTextColor(...C.bad);
-          doc.text(fmtMoney(total),M+cW-5-doc.getTextWidth(fmtMoney(total)),y+7);
-          y+=13;
-          cats.forEach(([cat,v],ci)=>{
-            novaPag(6);
-            if (ci%2===0){ doc.setFillColor(...C.cardBg); doc.rect(M,y-3,cW,5.5,"F"); }
-            doc.setFontSize(6); doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
-            doc.text(cat.substring(0,28),M+5,y);
-            doc.setFont(undefined,"bold"); doc.setTextColor(...C.bad);
-            const vt=fmtMoney(v);
-            doc.text(vt,M+cW-5-doc.getTextWidth(vt),y);
-            doc.setTextColor(...C.gray); doc.setFont(undefined,"normal");
-            doc.text(pct(v,total),M+cW/2,y,{align:"center"});
-            y+=5.5;
+        // Tabela de lançamentos por CPF (tudo)
+        const dadosPorCPF = {};
+        dadosRaw.forEach(l=>{
+          const k=(l.doc&&l.doc.trim())?l.doc.trim():"Sem CPF";
+          if(!dadosPorCPF[k]) dadosPorCPF[k]=[];
+          dadosPorCPF[k].push(l);
+        });
+
+        cpfOrdenado.forEach(([cpf,totalCpf])=>{
+          const lins=(dadosPorCPF[cpf]||[]).slice().sort((a,b)=>(a.data||"").localeCompare(b.data||""));
+          if(!lins.length) return;
+
+          // Cabeçalho do CPF
+          novaPag(12+lins.length*6.5+10);
+          doc.setFillColor(...C.priL); doc.setDrawColor(...C.priB); doc.setLineWidth(.25);
+          doc.roundedRect(M,y,cW,11,2,2,"FD");
+          doc.setFontSize(8); doc.setFont(undefined,"bold"); doc.setTextColor(...C.pri);
+          doc.text(cpf.substring(0,34),M+5,y+4.5);
+          const totCpfSai=lins.filter(l=>!ehEntrada(l.tipo)).reduce((s,l)=>s+Number(l.valor||0),0);
+          const totCpfEnt=lins.filter(l=>ehEntrada(l.tipo)).reduce((s,l)=>s+Number(l.valor||0),0);
+          doc.setFontSize(6.5);
+          doc.setTextColor(...C.bad); doc.text("Saídas: "+fmtMoney(totCpfSai),M+5,y+9.5);
+          doc.setTextColor(...C.ok);  doc.text("Entradas: "+fmtMoney(totCpfEnt),M+55,y+9.5);
+          doc.setTextColor(...C.gray);doc.text(lins.length+" lançamentos",M+110,y+9.5);
+          y+=14;
+
+          // Cabeçalho de colunas
+          doc.setFillColor(220,224,255); doc.rect(M,y,cW,6,"F");
+          doc.setFontSize(5.5); doc.setFont(undefined,"bold"); doc.setTextColor(...C.pri);
+          const thdr=[
+            {t:"DATA",     x:M+2,   w:18},{t:"TIPO",      x:M+22, w:16},
+            {t:"CATEGORIA",x:M+40,  w:50},{t:"VALOR",     x:M+138,w:22,a:"right"},
+            {t:"OBS.",     x:M+142, w:36}
+          ];
+          thdr.forEach(c=>doc.text(c.t,(c.a==="right"?c.x+c.w:c.x),y+4.5,{align:c.a||"left"}));
+          y+=8;
+
+          lins.forEach((l,li)=>{
+            novaPag(6.5);
+            if(li%2===0){ doc.setFillColor(...C.cardBg); doc.rect(M,y-3,cW,6,"F"); }
+            const isE=ehEntrada(l.tipo);
+            doc.setFontSize(6); doc.setFont(undefined,"normal");
+            doc.setTextColor(...C.dark); doc.text(fmtDate(l.data||""),M+2,y);
+            doc.setFont(undefined,"bold"); doc.setTextColor(...(isE?C.ok:C.bad));
+            doc.text((l.tipo||"—").substring(0,6),M+22,y);
+            doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
+            doc.text((l.cat||"—").substring(0,28),M+40,y);
+            doc.setFont(undefined,"bold"); doc.setTextColor(...(isE?C.ok:C.bad));
+            const vt=fmtMoney(l.valor);
+            doc.text(vt,M+138+22-doc.getTextWidth(vt),y);
+            doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
+            doc.text((l.obs||"—").substring(0,20),M+142,y);
+            y+=6.5;
           });
-          y+=5;
+          // Subtotal desse CPF
+          y+=2;
+          doc.setDrawColor(...C.priB); doc.setLineWidth(.4); doc.line(M,y,M+cW,y); y+=4;
+          doc.setFontSize(6.5); doc.setFont(undefined,"bold");
+          doc.setTextColor(...C.bad);  doc.text("Total saídas: "+fmtMoney(totCpfSai),M+5,y);
+          doc.setTextColor(...C.ok);   doc.text("Total entradas: "+fmtMoney(totCpfEnt),M+65,y);
+          doc.setTextColor(resultado>=0?C.pri[0]:C.bad[0],resultado>=0?C.pri[1]:C.bad[1],resultado>=0?C.pri[2]:C.bad[2]);
+          doc.text("Resultado: "+fmtMoney(totCpfEnt-totCpfSai),M+135,y);
+          y+=10;
         });
       }
 
