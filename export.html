@@ -901,7 +901,8 @@ function exportPDF() {
       doc.text(`Entradas: ${fmtMoney(totalEnt)}`, M + 6, y + 5);
       doc.setTextColor(...C.bad);
       doc.text(`Saídas: ${fmtMoney(totalSai)}`, M + 65, y + 5);
-      doc.setTextColor(resultado >= 0 ? ...C.pri : ...C.bad);
+      const corRes = resultado >= 0 ? C.pri : C.bad;
+      doc.setTextColor(...corRes);
       doc.text(`Resultado: ${fmtMoney(resultado)}`, M + 124, y + 5);
       doc.setFontSize(6); doc.setFont(undefined, "normal"); doc.setTextColor(...C.gray);
       doc.text(`${dadosRaw.length} lançamentos no total`, M + 6, y + 10);
