@@ -422,7 +422,6 @@ td[contenteditable]:focus{outline:2px solid var(--primary);outline-offset:-1px;b
       </div>
 
       <div class="card">
-        <!-- Filtros com intervalo de datas -->
         <div class="filter-bar">
           <input type="text" class="f-search" id="fBusca" placeholder="Buscar categoria, CPF, observação...">
           <select class="f-sel" id="fTipo">
@@ -435,7 +434,6 @@ td[contenteditable]:focus{outline:2px solid var(--primary);outline-offset:-1px;b
           <button class="btn-clr" id="btnClr">✕ Limpar</button>
         </div>
 
-        <!-- Tabela -->
         <div class="tbl-wrap">
           <table>
             <thead>
@@ -524,9 +522,6 @@ td[contenteditable]:focus{outline:2px solid var(--primary);outline-offset:-1px;b
 </div>
 
 <script>
-/* ================================================================
-   CONSTANTES
-   ================================================================ */
 const KEY = "fluxopro_v14";
 const PALETTE = ["#4f46e5","#059669","#dc2626","#d97706","#7c3aed","#db2777","#0891b2","#65a30d","#ea580c","#2563eb"];
 const CATS_PAD = ["Salário","Freelance","Vendas","Aluguel","Alimentação","Transporte","Saúde","Educação","Lazer","Outros"];
@@ -641,7 +636,6 @@ function updateResumo(){
   const datas=list().map(i=>i.data).filter(Boolean).sort();
   document.getElementById("periodoBadge").innerText=datas.length>=2?fmtD(datas[0])+" — "+fmtD(datas[datas.length-1]):datas[0]||"—";
 
-  // Meta
   const db=loadDB(); const meta=db.meta?.[db.active]||0;
   const bar=document.getElementById("metaBar");
   const pct=document.getElementById("metaPct");
@@ -697,7 +691,6 @@ function renderDash(){
   const d=list(); const{t,g}=gColors();
   const base={legend:{display:false},tooltip:{bodyFont:{family:"Plus Jakarta Sans"},titleFont:{family:"Plus Jakarta Sans"}}};
 
-  // Pizza
   const ft=document.getElementById("gTipo").value||"Saída";
   const mc={};
   d.filter(i=>i.tipo===ft).forEach(i=>{ mc[i.cat||"Outros"]=(mc[i.cat||"Outros"]||0)+i.valor; });
@@ -707,11 +700,10 @@ function renderDash(){
   const cp=document.getElementById("cPizza").getContext("2d");
   if(cv.length){
     charts.p=new Chart(cp,{type:"doughnut",data:{labels:cl,datasets:[{data:cv,backgroundColor:PALETTE.slice(0,cl.length),borderWidth:2,borderColor:"var(--card)",hoverOffset:6}]},
-      options:{responsive:true,cutout:"62%",plugins:{...base,legend:{display:true,position:"bottom",labels:{font:{family:"Plus Jakarta Sans",size:10},color:t,boxWidth:8,padding:8,usePointStyle:true}},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${fmt(ctx.parsed)}`}}}}});
+      options:{responsive:true,cutout:"62%",plugins:{...base,legend:{display:true,position:"bottom",labels:{font:{family:"Plus Jakarta Sans",size:10},color:t,boxWidth:8,padding:8,usePointStyle:true}},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(ctx.parsed)}`}}}}});
     document.getElementById("tPizza").innerText=`${cl.length} categoria${cl.length!==1?"s":""} de ${ft.toLowerCase()}`;
   } else document.getElementById("tPizza").innerText="Sem dados.";
 
-  // Evolução
   const m=buildMonthly(d);
   if(charts.e)charts.e.destroy();
   const ce=document.getElementById("cEv").getContext("2d");
@@ -721,18 +713,17 @@ function renderDash(){
       {label:"Saídas",data:m.sai,borderColor:"#dc2626",backgroundColor:"rgba(220,38,38,.06)",fill:true,tension:.38,pointRadius:3,borderWidth:2}
     ]},options:{responsive:true,interaction:{mode:"index",intersect:false},
       scales:{x:{grid:{color:g},ticks:{color:t,font:{family:"Plus Jakarta Sans",size:9},maxTicksLimit:8}},y:{grid:{color:g},ticks:{color:t,font:{family:"Plus Jakarta Sans",size:9},maxTicksLimit:5,callback:v=>"R$"+(Math.abs(v)>=1000?(v/1000).toFixed(1)+"k":v)},beginAtZero:true}},
-      plugins:{...base,legend:{display:true,position:"top",labels:{font:{family:"Plus Jakarta Sans",size:10},color:t,boxWidth:8,usePointStyle:true}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmt(ctx.parsed.y)}`}}}}});
+      plugins:{...base,legend:{display:true,position:"top",labels:{font:{family:"Plus Jakarta Sans",size:10},color:t,boxWidth:8,usePointStyle:true}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(ctx.parsed.y)}`}}}}});
     document.getElementById("tEv").innerText=`${m.labels.length} mês${m.labels.length!==1?"es":""} de histórico`;
   }
 
-  // Top gastos
   const ts=Object.entries(mc).sort((a,b)=>b[1]-a[1]).slice(0,7);
   if(charts.t)charts.t.destroy();
   const ct=document.getElementById("cTop").getContext("2d");
   if(ts.length){
     charts.t=new Chart(ct,{type:"bar",data:{labels:ts.map(([k])=>k),datasets:[{data:ts.map(([,v])=>v),backgroundColor:PALETTE.slice(0,ts.length),borderRadius:4,borderWidth:0}]},
       options:{indexAxis:"y",responsive:true,scales:{x:{grid:{color:g},ticks:{color:t,font:{family:"Plus Jakarta Sans",size:9},maxTicksLimit:5,callback:v=>"R$"+(Math.abs(v)>=1000?(v/1000).toFixed(1)+"k":v)},beginAtZero:true},y:{grid:{display:false},ticks:{color:t,font:{family:"Plus Jakarta Sans",size:10,weight:"600"}}}},
-      plugins:{...base,tooltip:{callbacks:{label:ctx=>` ${fmt(ctx.parsed.x)}`}}}}});
+      plugins:{...base,tooltip:{callbacks:{label:ctx=>` ${new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(ctx.parsed.x)}`}}}}});
     document.getElementById("tTop").innerText=`${ts.length} categoria${ts.length!==1?"s":""}`;
   }
 }
@@ -795,7 +786,6 @@ document.getElementById("btnSalvar").addEventListener("click",()=>{
 });
 document.getElementById("qData").value=new Date().toISOString().split("T")[0];
 
-// Toggle recorrente
 document.getElementById("recurRow").addEventListener("click",()=>{
   const r=document.getElementById("recurRow");
   const o=document.getElementById("recurOpts");
@@ -904,10 +894,29 @@ document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{
   if(b.dataset.tab==="conf")updateStats();
 }));
 
-/* ── IMPORT/EXPORT ── */
-function abrirImport(){window.open("import.html?perfil="+encodeURIComponent(loadDB().active),"_blank");}
-function abrirExport(){window.open("export.html","_blank");}
-document.getElementById("btnImpMain").addEventListener("click",abrirImport);
+/* ══════════════════════════════════════════════════════════════
+   IMPORT / EXPORT — CORRIGIDO
+   Injeta os dados no sessionStorage ANTES de abrir a aba.
+   sessionStorage é propagado para abas abertas via window.open
+   no mesmo contexto de origem — resolve o localStorage vazio.
+   ══════════════════════════════════════════════════════════════ */
+function abrirExport() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) sessionStorage.setItem("fluxopro_transfer", raw);
+  } catch(e) {}
+  window.open("export.html", "_blank");
+}
+
+function abrirImport() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) sessionStorage.setItem("fluxopro_transfer", raw);
+  } catch(e) {}
+  window.open("import.html?perfil=" + encodeURIComponent(loadDB().active), "_blank");
+}
+
+document.getElementById("btnImpMain").addEventListener("click", abrirImport);
 
 /* ── BACKUP ── */
 function backupDados(){
@@ -959,7 +968,7 @@ function processarExcel(file){
   };r.readAsBinaryString(file);
 }
 document.getElementById("resetAll").addEventListener("click",()=>{
-  if(confirm("⚠️ Apagar TUDO?"))if(confirm("Tem certeza? Não há como desfazer.")){{localStorage.removeItem(KEY);location.reload();}}
+  if(confirm("⚠️ Apagar TUDO?"))if(confirm("Tem certeza? Não há como desfazer.")){localStorage.removeItem(KEY);location.reload();}
 });
 
 /* ── TEMAS ── */
