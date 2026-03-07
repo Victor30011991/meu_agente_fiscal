@@ -968,7 +968,13 @@ function processarExcel(file){
   };r.readAsBinaryString(file);
 }
 document.getElementById("resetAll").addEventListener("click",()=>{
-  if(confirm("⚠️ Apagar TUDO?"))if(confirm("Tem certeza? Não há como desfazer.")){localStorage.removeItem(KEY);location.reload();}
+  if(confirm("⚠️ Apagar TUDO? Todos os perfis e lançamentos serão removidos."))
+  if(confirm("Tem certeza absoluta? Esta ação não pode ser desfeita.")){
+    // Remove todas as chaves FluxoPro
+    ["fluxopro_v14","fluxopro_v13","fluxopro_v12","fluxopro_v11","fluxopro_v10"].forEach(k=>localStorage.removeItem(k));
+    sessionStorage.clear();
+    location.reload();
+  }
 });
 
 /* ── TEMAS ── */
