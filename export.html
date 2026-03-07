@@ -687,7 +687,8 @@ function exportExcel(){
 
 function exportBackup(){
   try{
-    const raw=localStorage.getItem("fluxopro_v14")||localStorage.getItem("fluxopro_v13")||localStorage.getItem("fluxopro_v12");
+    // Usa o db já carregado (funciona mesmo quando veio via sessionStorage)
+    const raw=JSON.stringify(db);
     if(!raw){alert("Sem dados para fazer backup.");return;}
     const blob=new Blob([raw],{type:"application/json"});
     const a=document.createElement("a");
@@ -969,8 +970,15 @@ function exportPDF(){
         function cpfSubHdr(){
           doc.setFillColor(230,234,255);doc.rect(M,y,cW,5.5,"F");
           doc.setFontSize(5.5);doc.setFont(undefined,"bold");doc.setTextColor(...C.pri);
-          const th=[{t:"DATA",x:M+2},{t:"TIPO",x:M+22},{t:"CATEGORIA",x:M+40},{t:"VALOR",x:M+160,a:"right"},{t:"OBS.",x:M+164}];
-          th.forEach(c=>doc.text(c.t,c.a==="right"?c.x:c.x,y+4,{align:c.a||"left"}));
+          // DATA(18) TIPO(14) CATEGORIA(40) VALOR(26, right) OBS(restante)
+          const th=[
+            {t:"DATA",     x:M+2,   a:"left" },
+            {t:"TIPO",     x:M+20,  a:"left" },
+            {t:"CATEGORIA",x:M+34,  a:"left" },
+            {t:"VALOR",    x:M+122, a:"right"},
+            {t:"OBS.",     x:M+124, a:"left" },
+          ];
+          th.forEach(c=>doc.text(c.t,c.x,y+4,{align:c.a}));
           y+=7;
         }
 
@@ -1009,16 +1017,18 @@ function exportPDF(){
             if(li%2===0){doc.setFillColor(...C.white);}else{doc.setFillColor(...C.rowAlt);}
             doc.rect(M,y-3,cW,5.5,"F");
             doc.setFontSize(6);doc.setFont(undefined,"normal");
-            doc.setTextColor(...C.gray);doc.text(fmtDate(l.data||""),M+2,y);
+            // Mesmas posições do cpfSubHdr: DATA(M+2) TIPO(M+20) CAT(M+34) VALOR(M+122,right) OBS(M+124)
+            doc.setTextColor(60,70,100);
+            doc.text(fmtDate(l.data||""),M+2,y);
             doc.setFont(undefined,"bold");doc.setTextColor(...(isE?C.ok:C.bad));
-            doc.text((l.tipo||"—").substring(0,6),M+22,y);
+            doc.text((l.tipo||"—").substring(0,6),M+20,y);
             doc.setFont(undefined,"normal");doc.setTextColor(60,70,100);
-            doc.text((l.cat||"—").substring(0,26),M+40,y);
+            doc.text((l.cat||"—").substring(0,20),M+34,y);
             doc.setFont(undefined,"bold");doc.setTextColor(...(isE?C.ok:C.bad));
             const vt=fmtMoney(l.valor);
-            doc.text(vt,M+178-doc.getTextWidth(vt),y);
+            doc.text(vt,M+122,y,{align:"right"});
             doc.setFont(undefined,"normal");doc.setTextColor(...C.gray);
-            doc.text((l.obs||"—").substring(0,18),M+164,y);
+            doc.text((l.obs||"—").substring(0,24),M+124,y);
             y+=5.5;
           });
 
@@ -1065,21 +1075,25 @@ function exportPDF(){
       doc.addPage();y=16;
       secTitle("Extrato Completo de Lançamentos");
 
-      // Colunas do extrato
+      // Colunas: #(6) DATA(18) CPF(28) TIPO(14) CAT(40) VALOR(26) OBS(46) = 178mm ✓
       const TC=[
-        {x:M+1,t:"#",align:"left",maxC:3},
-        {x:M+8,t:"DATA",align:"left",maxC:10},
-        {x:M+28,t:"CPF/CNPJ",align:"left",maxC:17},
-        {x:M+60,t:"TIPO",align:"left",maxC:8},
-        {x:M+77,t:"CATEGORIA",align:"left",maxC:22},
-        {x:M+141,t:"VALOR",align:"right",maxC:12},
-        {x:M+144,t:"OBS.",align:"left",maxC:18},
+        {x:M+1,   t:"#",        align:"left",  maxC:3 },
+        {x:M+7,   t:"DATA",     align:"left",  maxC:10},
+        {x:M+25,  t:"CPF/CNPJ", align:"left",  maxC:16},
+        {x:M+53,  t:"TIPO",     align:"left",  maxC:7 },
+        {x:M+67,  t:"CATEGORIA",align:"left",  maxC:22},
+        {x:M+127, t:"VALOR",    align:"right", maxC:13},
+        {x:M+131, t:"OBS.",     align:"left",  maxC:26},
       ];
 
       function extratoHdr(){
         doc.setFillColor(...C.pri);doc.roundedRect(M,y,cW,7.5,2,2,"F");
         doc.setFontSize(5.5);doc.setFont(undefined,"bold");doc.setTextColor(...C.white);
-        TC.forEach(c=>doc.text(c.t,c.x,y+5.5,{align:c.align}));
+        TC.forEach((c,i)=>{
+          if(i===5) doc.text(c.t,c.x+c.w,y+5.5,{align:"right"}); // VALOR à direita
+          else if(i===6) doc.text(c.t,c.x+TC[5].w+1,y+5.5,{align:"left"}); // OBS após VALOR
+          else doc.text(c.t,c.x,y+5.5,{align:"left"});
+        });
         y+=9;
       }
       extratoHdr();
@@ -1104,18 +1118,27 @@ function exportPDF(){
         if(idx%2===0){doc.setFillColor(...C.white);}else{doc.setFillColor(...C.rowAlt);}
         doc.rect(M,y-3,cW,6.5,"F");
         doc.setFontSize(6.5);doc.setFont(undefined,"normal");
-        doc.setTextColor(...C.gray);doc.text(trunc(idx+1,TC[0].maxC),TC[0].x,y);
-        doc.setTextColor(60,70,100);doc.text(fmtDate(l.data||""),TC[1].x,y);
-        doc.setTextColor(...C.gray);doc.text(trunc(l.doc,TC[2].maxC),TC[2].x,y);
-        doc.setFont(undefined,"bold");doc.setTextColor(...(isE?C.ok:C.bad));
-        doc.text(trunc(l.tipo,TC[3].maxC),TC[3].x,y);
-        doc.setFont(undefined,"normal");doc.setTextColor(60,70,100);
-        doc.text(trunc(l.cat,TC[4].maxC),TC[4].x,y);
-        doc.setFont(undefined,"bold");doc.setTextColor(...(isE?C.ok:C.bad));
+        // Renderiza cada célula na posição correta
+        doc.setFontSize(6);doc.setFont(undefined,"normal");
+        doc.setTextColor(...C.gray);
+        doc.text(trunc(idx+1,TC[0].maxC),TC[0].x,y);           // #
+        doc.setTextColor(60,70,100);
+        doc.text(fmtDate(l.data||""),TC[1].x,y);               // DATA
+        doc.setTextColor(...C.gray);
+        doc.text(trunc(l.doc,TC[2].maxC),TC[2].x,y);           // CPF
+        doc.setFont(undefined,"bold");
+        doc.setTextColor(...(isE?C.ok:C.bad));
+        doc.text(trunc(l.tipo,TC[3].maxC),TC[3].x,y);          // TIPO
+        doc.setFont(undefined,"normal");
+        doc.setTextColor(60,70,100);
+        doc.text(trunc(l.cat,TC[4].maxC),TC[4].x,y);           // CATEGORIA
+        doc.setFont(undefined,"bold");
+        doc.setTextColor(...(isE?C.ok:C.bad));
         const valTxt=fmtMoney(l.valor);
-        doc.text(valTxt,TC[5].x,y,{align:"right"});
-        doc.setFont(undefined,"normal");doc.setTextColor(...C.gray);
-        doc.text(trunc(l.obs,TC[6].maxC),TC[6].x,y);
+        doc.text(valTxt,TC[5].x+TC[5].w,y,{align:"right"});   // VALOR (alinhado à direita)
+        doc.setFont(undefined,"normal");
+        doc.setTextColor(...C.gray);
+        doc.text(trunc(l.obs,TC[6].maxC),TC[6].x+TC[5].w+1,y); // OBS (após coluna VALOR)
         y+=6.5;
       });
 
