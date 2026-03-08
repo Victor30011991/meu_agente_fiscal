@@ -257,20 +257,26 @@ button:hover { opacity: .85; transform: translateY(-1px); }
 
   <!-- Prévia dos dados antes de confirmar importação -->
   <div class="card" id="previewCard" style="display:none">
+
+    <!-- Cabeçalho com título + botões de ação no topo -->
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px">
-      <div class="card-title" style="margin:0">📋 Prévia dos dados</div>
-      <div id="sourceTag"></div>
+      <div class="card-title" style="margin:0">📋 Prévia dos dados &nbsp;<span id="sourceTag"></span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-main"   onclick="confirmar()">✅ Confirmar importação</button>
+        <button class="btn-cancel" onclick="cancelar()">✕ Cancelar</button>
+      </div>
     </div>
 
-    <!-- Contador de válidos / ignorados -->
-    <p style="margin-bottom:6px;font-size:13px">
-      <strong>Válidos:</strong> <span id="countValid" style="color:#059669;font-weight:800">0</span>
-      &nbsp;|&nbsp;
-      <strong>Ignorados:</strong> <span id="countIgnored" style="color:#dc2626;font-weight:800">0</span>
-    </p>
-    <p style="font-size:11px;color:#92400e;background:#fef9c3;padding:5px 10px;border-radius:6px;margin-bottom:10px;display:inline-block">
-      ★ = categoria nova (será criada automaticamente ao confirmar)
-    </p>
+    <!-- Resumo financeiro -->
+    <div id="resumoImport" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px"></div>
+
+    <!-- Contador + legenda -->
+    <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+      <span style="font-size:13px"><strong>Válidos:</strong> <span id="countValid" style="color:#059669;font-weight:800">0</span></span>
+      <span style="color:#d1d5db">|</span>
+      <span style="font-size:13px"><strong>Ignorados:</strong> <span id="countIgnored" style="color:#dc2626;font-weight:800">0</span></span>
+      <span id="legendaCatNova" style="font-size:11px;color:#92400e;background:#fef9c3;padding:3px 9px;border-radius:6px;display:none">★ = categoria nova (criada ao confirmar)</span>
+    </div>
 
     <!-- Texto extraído do PDF (toggle) -->
     <div id="rawSection" style="display:none">
@@ -278,7 +284,7 @@ button:hover { opacity: .85; transform: translateY(-1px); }
       <pre class="raw-box" id="rawBox"></pre>
     </div>
 
-    <!-- Tabela de prévia com as novas colunas -->
+    <!-- Tabela de prévia -->
     <div style="overflow-x:auto">
       <table>
         <thead>
@@ -298,10 +304,10 @@ button:hover { opacity: .85; transform: translateY(-1px); }
       </table>
     </div>
 
-    <!-- Botões de ação -->
-    <div class="actions">
+    <!-- Botões também no rodapé para conveniência -->
+    <div class="actions" style="margin-top:16px;padding-top:14px;border-top:1px solid #f3f4f6">
       <button class="btn-main"   onclick="confirmar()">✅ Confirmar importação</button>
-      <button class="btn-cancel" onclick="cancelar()">❌ Cancelar</button>
+      <button class="btn-cancel" onclick="cancelar()">✕ Cancelar</button>
     </div>
   </div>
 
@@ -732,6 +738,40 @@ function renderPreview() {
 
   showStatus(`✅ ${buffer.length} lançamentos encontrados! Revise abaixo e confirme.${msgExtra}`, "success");
   document.getElementById("previewCard").style.display = "block";
+
+  // Mostra legenda de categoria nova só se houver
+  document.getElementById("legendaCatNova").style.display = catsNovas.length ? "inline-block" : "none";
+
+  // ── Resumo financeiro ──
+  const totalEnt = buffer.filter(l=>l.tipo==="Entrada").reduce((a,l)=>a+l.valor,0);
+  const totalSai = buffer.filter(l=>l.tipo==="Saída").reduce((a,l)=>a+l.valor,0);
+  const resultado = totalEnt - totalSai;
+  const qtdEnt = buffer.filter(l=>l.tipo==="Entrada").length;
+  const qtdSai = buffer.filter(l=>l.tipo==="Saída").length;
+  const fmtR = v => "R$ " + Math.abs(v).toLocaleString("pt-BR",{minimumFractionDigits:2});
+  const resumoEl = document.getElementById("resumoImport");
+  resumoEl.innerHTML = `
+    <div style="background:#ecfdf5;border:1.5px solid #a7f3d0;border-radius:10px;padding:12px 14px">
+      <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#059669;margin-bottom:4px">↑ Entradas</div>
+      <div style="font-size:20px;font-weight:800;color:#059669">${fmtR(totalEnt)}</div>
+      <div style="font-size:10px;color:#6b7280;margin-top:2px">${qtdEnt} lançamento${qtdEnt!==1?"s":""}</div>
+    </div>
+    <div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:10px;padding:12px 14px">
+      <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#dc2626;margin-bottom:4px">↓ Saídas</div>
+      <div style="font-size:20px;font-weight:800;color:#dc2626">${fmtR(totalSai)}</div>
+      <div style="font-size:10px;color:#6b7280;margin-top:2px">${qtdSai} lançamento${qtdSai!==1?"s":""}</div>
+    </div>
+    <div style="background:${resultado>=0?"#eff6ff":"#fef2f2"};border:1.5px solid ${resultado>=0?"rgba(var(--primary-rgb),.25)":"#fecaca"};border-radius:10px;padding:12px 14px">
+      <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:${resultado>=0?"var(--primary)":"#dc2626"};margin-bottom:4px">= Resultado</div>
+      <div style="font-size:20px;font-weight:800;color:${resultado>=0?"var(--primary)":"#dc2626"}">${resultado>=0?"+":"−"}${fmtR(resultado)}</div>
+      <div style="font-size:10px;color:#6b7280;margin-top:2px">${buffer.length} lançamento${buffer.length!==1?"s":""} no total</div>
+    </div>
+    ${catsNovas.length?`<div style="background:#fef9c3;border:1.5px solid #fde68a;border-radius:10px;padding:12px 14px">
+      <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#92400e;margin-bottom:4px">★ Categorias novas</div>
+      <div style="font-size:20px;font-weight:800;color:#92400e">${catsNovas.length}</div>
+      <div style="font-size:10px;color:#6b7280;margin-top:2px">serão criadas ao confirmar</div>
+    </div>`:""}
+  `;
 
   document.getElementById("tb").innerHTML =
     buffer.slice(0, 50).map((l, i) => {
