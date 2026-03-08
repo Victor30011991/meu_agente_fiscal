@@ -11,6 +11,12 @@
 <style>
 /* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --primary:   var(--primary);
+  --primary-rgb: 79,70,229;
+  --primary-l: var(--primary-l);
+  --primary-d: var(--primary-d);
+}
 body { font-family: 'DM Sans', system-ui, sans-serif; background: #f0f2f8; color: #1a1f36; font-size: 14px; }
 
 /* ── Layout ── */
@@ -33,7 +39,7 @@ button {
 }
 button:hover { opacity: .88; transform: translateY(-1px); }
 .btn-excel  { background: #059669; color: #fff; }
-.btn-pdf    { background: #4f46e5; color: #fff; }
+.btn-pdf    { background: var(--primary); color: #fff; }
 .btn-back   { background: #f3f4f6; color: #1a1f36; border: 1px solid #e2e5ef; }
 
 /* ── Cards ── */
@@ -64,7 +70,7 @@ button:hover { opacity: .88; transform: translateY(-1px); }
 .kpi-sub   { font-size: 10px; color: #9ca3af; margin-top: 3px; }
 .kpi-ent { background: #f0fdf4; border-color: #a7f3d0; } .kpi-ent::after { background: #059669; } .kpi-ent .kpi-label { color: #047857; } .kpi-ent .kpi-val { color: #059669; }
 .kpi-sai { background: #fef2f2; border-color: #fecaca; } .kpi-sai::after { background: #dc2626; } .kpi-sai .kpi-label { color: #b91c1c; } .kpi-sai .kpi-val { color: #dc2626; }
-.kpi-net { background: #eef2ff; border-color: #c7d2fe; } .kpi-net::after { background: #4f46e5; } .kpi-net .kpi-label { color: #3730a3; }
+.kpi-net { background: var(--primary-l); border-color: rgba(var(--primary-rgb),.3); } .kpi-net::after { background: var(--primary); } .kpi-net .kpi-label { color: var(--primary-d); }
 
 /* ── Gráficos ── */
 .chart-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 13px 18px 15px; align-items: stretch; }
@@ -87,7 +93,7 @@ button:hover { opacity: .88; transform: translateY(-1px); }
   padding: 5px 9px; border-radius: 7px; border: 1px solid #d1d5db;
   background: #fff; color: #1a1f36; font-family: 'DM Sans', sans-serif; font-size: 11px;
 }
-.filter-row select:focus, .filter-row input:focus { outline: none; border-color: #4f46e5; }
+.filter-row select:focus, .filter-row input:focus { outline: none; border-color: var(--primary); }
 .btn-clear { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb !important; padding: 5px 9px !important; font-size: 11px; border-radius: 7px; }
 
 /* ── Tabela ── */
@@ -113,9 +119,9 @@ tbody tr:hover { background: #f1f5ff; }
 .analise-box { border-radius: 10px; padding: 13px; border: 1px solid transparent; display: flex; flex-direction: column; }
 .analise-box.ent { background: #f0fdf4; border-color: #a7f3d0; }
 .analise-box.sai { background: #fef2f2; border-color: #fecaca; }
-.analise-box.net { background: #eef2ff; border-color: #c7d2fe; }
+.analise-box.net { background: var(--primary-l); border-color: rgba(var(--primary-rgb),.3); }
 .analise-box h3  { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 9px; }
-.analise-box.ent h3 { color: #047857; } .analise-box.sai h3 { color: #b91c1c; } .analise-box.net h3 { color: #3730a3; }
+.analise-box.ent h3 { color: #047857; } .analise-box.sai h3 { color: #b91c1c; } .analise-box.net h3 { color: var(--primary-d); }
 .analise-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(0,0,0,.05); font-size: 11px; }
 .analise-item:last-child { border-bottom: none; }
 .analise-item .lbl { color: #6b7280; font-weight: 500; }
@@ -140,9 +146,9 @@ tbody tr:hover { background: #f1f5ff; }
 }
 .cpf-avatar {
   width: 36px; height: 36px; border-radius: 50%;
-  background: linear-gradient(135deg, #eef2ff, #4f46e5);
+  background: linear-gradient(135deg, var(--primary-l), var(--primary));
   display: flex; align-items: center; justify-content: center;
-  font-size: 14px; font-weight: 800; color: #4f46e5; flex-shrink: 0;
+  font-size: 14px; font-weight: 800; color: var(--primary); flex-shrink: 0;
 }
 .cpf-title { font-size: 14px; font-weight: 800; color: #1a1f36; }
 .cpf-doc   { font-size: 12px; color: #6b7280; font-family: monospace; }
@@ -153,7 +159,7 @@ tbody tr:hover { background: #f1f5ff; }
 }
 .cpf-kpi-e { background: #f0fdf4; color: #059669; border: 1px solid #a7f3d0; }
 .cpf-kpi-s { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
-.cpf-kpi-n { background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe; }
+.cpf-kpi-n { background: var(--primary-l); color: var(--primary); border: 1px solid rgba(var(--primary-rgb),.3); }
 .cpf-kpi-q { background: #f8fafc; color: #6b7280; border: 1px solid #e2e5ef; }
 .empty { text-align: center; padding: 40px; color: #9ca3af; }
 </style>
@@ -186,7 +192,7 @@ tbody tr:hover { background: #f1f5ff; }
 
   <!-- Identificação do perfil -->
   <div class="card">
-    <div class="card-head"><span class="dot" style="background:#4f46e5"></span><h2>Identificação do Perfil</h2></div>
+    <div class="card-head"><span class="dot" style="background:var(--primary)"></span><h2>Identificação do Perfil</h2></div>
     <div class="perfil-info">
       <div class="pi-item"><label>Perfil</label><span id="piPerfil">—</span></div>
       <div class="pi-item"><label>Nome / Razão Social</label><span id="piNome">—</span></div>
@@ -210,7 +216,7 @@ tbody tr:hover { background: #f1f5ff; }
       </div>
       <div class="kpi kpi-net">
         <div class="kpi-label">Resultado Líquido</div>
-        <div class="kpi-val" id="kNet" style="color:#4f46e5">R$ 0</div>
+        <div class="kpi-val" id="kNet" style="color:${getPrimary()}">R$ 0</div>
         <div class="kpi-sub" id="kNetPct">—</div>
       </div>
     </div>
@@ -314,6 +320,22 @@ function pct(a, b) { return b ? (a / b * 100).toFixed(1) + "%" : "—"; }
    DADOS — carrega do localStorage
    ============================================================ */
 const KEY = "fluxopro_v14";
+
+/* ── TEMA — aplica cor salva pelo usuário ── */
+(function applyTheme(){
+  try{
+    const db=JSON.parse(localStorage.getItem(KEY)||"{}");
+    const hex=db.customColor||"#4f46e5";
+    const[r,g,b]=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));
+    const L="#"+[r,g,b].map(c=>Math.round(c+(255-c)*.85).toString(16).padStart(2,"0")).join("");
+    const D="#"+[r,g,b].map(c=>Math.round(c*.7).toString(16).padStart(2,"0")).join("");
+    const root=document.documentElement;
+    root.style.setProperty("--primary",hex);
+    root.style.setProperty("--primary-rgb",`${r},${g},${b}`);
+    root.style.setProperty("--primary-l",L);
+    root.style.setProperty("--primary-d",D);
+  }catch(e){}
+})();
 let db, perfil, dadosRaw, info;
 
 /* ── Dados de demonstração usados quando o localStorage está vazio ── */
@@ -359,7 +381,7 @@ try {
     document.addEventListener("DOMContentLoaded", () => {
       const aviso = document.createElement("div");
       aviso.style.cssText = "background:#fef9c3;border:1px solid #fde68a;border-radius:10px;padding:11px 16px;margin-bottom:14px;font-size:12px;font-weight:600;color:#92400e;display:flex;align-items:center;gap:8px;";
-      aviso.innerHTML = "⚠️ <span>Nenhum dado encontrado no navegador. Exibindo <strong>dados de demonstração</strong>. Para ver seus dados reais, abra o <a href='index.html' style='color:#4f46e5;text-decoration:underline'>FluxoPro principal</a> primeiro e depois volte aqui.</span>";
+      aviso.innerHTML = "⚠️ <span>Nenhum dado encontrado no navegador. Exibindo <strong>dados de demonstração</strong>. Para ver seus dados reais, abra o <a href='index.html' style='color:${getPrimary()};text-decoration:underline'>FluxoPro principal</a> primeiro e depois volte aqui.</span>";
       document.querySelector(".page")?.prepend(aviso);
     });
   }
@@ -374,12 +396,16 @@ try {
     `<div class="card"><div style="padding:40px;text-align:center;color:#6b7280">
       <h2 style="color:#1a1f36;margin-bottom:8px">Erro ao carregar</h2>
       <p>${err.message}</p>
-      <a href="index.html" style="display:inline-block;margin-top:16px;background:#4f46e5;color:#fff;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;text-decoration:none;font-weight:700;">← Ir para o FluxoPro</a>
+      <a href="index.html" style="display:inline-block;margin-top:16px;background:var(--primary);color:#fff;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;text-decoration:none;font-weight:700;">← Ir para o FluxoPro</a>
     </div></div>`;
   throw err;
 }
 
-const PALETTE = ["#4f46e5","#059669","#d97706","#7c3aed","#0891b2","#db2777","#65a30d","#ea580c","#2563eb","#dc2626"];
+/* ── Helper para pegar cor do tema em tempo real ── */
+function getPrimary(){ return getComputedStyle(document.documentElement).getPropertyValue("--primary").trim()||"#4f46e5"; }
+function getPrimaryRgb(){ return getComputedStyle(document.documentElement).getPropertyValue("--primary-rgb").trim()||"79,70,229"; }
+function gPalette(){ const p=getPrimary(); return [p,"#059669","#d97706","#7c3aed","#0891b2","#db2777","#65a30d","#ea580c","#2563eb","#dc2626"]; }
+const PALETTE = [getPrimary(),"#059669","#d97706","#7c3aed","#0891b2","#db2777","#65a30d","#ea580c","#2563eb","#dc2626"];
 
 /* ============================================================
    CÁLCULOS GLOBAIS (sobre todos os dados, sem filtro)
@@ -421,7 +447,7 @@ document.getElementById("piDoc").innerText    = info.doc  || "Não informado";
 document.getElementById("kEnt").innerText    = fmtMoney(totalEnt);
 document.getElementById("kSai").innerText    = fmtMoney(totalSai);
 document.getElementById("kNet").innerText    = fmtMoney(resultado);
-document.getElementById("kNet").style.color  = resultado >= 0 ? "#4f46e5" : "#dc2626";
+document.getElementById("kNet").style.color  = resultado >= 0 ? getPrimary() : "#dc2626";
 document.getElementById("kEntQtd").innerText = qtdEnt + " lançamento" + (qtdEnt !== 1 ? "s" : "");
 document.getElementById("kSaiQtd").innerText = qtdSai + " lançamento" + (qtdSai !== 1 ? "s" : "");
 document.getElementById("kNetPct").innerText = (resultado >= 0 ? "+" : "") + pct(Math.abs(resultado), totalEnt) + " das entradas";
@@ -515,7 +541,7 @@ document.getElementById("analiseGrid").innerHTML = `
     <div class="analise-item"><span class="lbl">Investimentos</span><span class="val" style="color:#d97706">${fmtMoney(totalInv)}</span></div>
     <div class="analise-item"><span class="lbl">Margem líquida</span><span class="val">${pct(resultado, totalEnt)}</span></div>
     <div class="analise-item"><span class="lbl">Total lançamentos</span><span class="val">${dadosRaw.length}</span></div>
-    <div class="analise-total" style="color:${resultado >= 0 ? "#4f46e5" : "#dc2626"}"><span>Resultado</span><span>${fmtMoney(resultado)}</span></div>
+    <div class="analise-total" style="color:${resultado >= 0 ? getPrimary() : "#dc2626"}"><span>Resultado</span><span>${fmtMoney(resultado)}</span></div>
   </div>`;
 
 /* ============================================================
@@ -730,9 +756,9 @@ if (activeCharts.find(c => c.id === "resultado")) {
   const keysR=Object.keys(mapR).sort(); let accR=0;
   const cumR=keysR.map(k=>{accR+=mapR[k];return+accR.toFixed(2);});
   const labR=keysR.map(k=>{const[y,m]=k.split("-");return new Date(+y,+m-1).toLocaleDateString("pt-BR",{month:"short",year:"2-digit"});});
-  const corR=cumR[cumR.length-1]>=0?"#4f46e5":"#dc2626";
+  const corR=cumR[cumR.length-1]>=0?getPrimary():"#dc2626";
   if(keysR.length) new Chart(document.getElementById("cResultado"), { type:"line",
-    data:{labels:labR,datasets:[{label:"Resultado Acumulado",data:cumR,borderColor:corR,backgroundColor:corR==="#4f46e5"?"rgba(79,70,229,.08)":"rgba(220,38,38,.06)",fill:true,tension:.38,pointRadius:3,borderWidth:2.5}]},
+    data:{labels:labR,datasets:[{label:"Resultado Acumulado",data:cumR,borderColor:corR,backgroundColor:corR===getPrimary()?`rgba(${getPrimaryRgb()},.08)`:"rgba(220,38,38,.06)",fill:true,tension:.38,pointRadius:3,borderWidth:2.5}]},
     options:_mkOpts({scales:{x:{grid:{color:gc.grid},ticks:{color:gc.color,font:{size:9},maxTicksLimit:8}},y:{grid:{color:gc.grid},ticks:{color:gc.color,font:{size:9},maxTicksLimit:5,callback:v=>"R$"+(Math.abs(v)>=1000?(v/1000).toFixed(1)+"k":v)}}},
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` Acumulado: ${fmtMoney(c.parsed.y)}`}}}})
   });
@@ -1796,7 +1822,7 @@ function renderCpfTables() {
             <div class="cpf-kpis">
               <span class="cpf-kpi cpf-kpi-e">↑ Entradas: ${fmtMoney(tEnt)}</span>
               <span class="cpf-kpi cpf-kpi-s">↓ Saídas: ${fmtMoney(tSai)}</span>
-              <span class="cpf-kpi cpf-kpi-n" style="color:${resultado >= 0 ? "#4f46e5" : "#dc2626"}">= Resultado: ${fmtMoney(resultado)}</span>
+              <span class="cpf-kpi cpf-kpi-n" style="color:${resultado >= 0 ? getPrimary() : "#dc2626"}">= Resultado: ${fmtMoney(resultado)}</span>
               <span class="cpf-kpi cpf-kpi-q">📋 ${lancamentos.length} lançamento${lancamentos.length !== 1 ? "s" : ""}</span>
             </div>
           </div>
