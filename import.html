@@ -11,6 +11,12 @@
 /* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+:root {
+  --primary:   var(--primary);
+  --primary-rgb: 79,70,229;
+  --primary-l: var(--primary-l);
+  --primary-d: #3730a3;
+}
 body {
   font-family: 'DM Sans', system-ui, sans-serif;
   background: #f0f2f8;
@@ -54,7 +60,7 @@ button {
   gap: 6px;
 }
 button:hover { opacity: .85; transform: translateY(-1px); }
-.btn-main   { background: #4f46e5; color: #fff; }
+.btn-main   { background: var(--primary); color: #fff; }
 .btn-cancel { background: #ef4444; color: #fff; }
 .btn-sec    { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
 
@@ -69,14 +75,14 @@ button:hover { opacity: .85; transform: translateY(-1px); }
 .status.success { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
 .status.error   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
 .status.warning { background: #fef9c3; color: #b45309; border: 1px solid #fde68a; }
-.status.info    { background: #eff6ff; color: #4f46e5; border: 1px solid #c7d2fe; }
+.status.info    { background: #eff6ff; color: var(--primary); border: 1px solid rgba(var(--primary-rgb),.3); }
 
 /* ── Info box ── */
 .info-box {
   background: #eff6ff;
   padding: 14px;
   border-radius: 10px;
-  border-left: 4px solid #4f46e5;
+  border-left: 4px solid var(--primary);
   margin-bottom: 18px;
   font-size: 13px;
 }
@@ -86,7 +92,7 @@ button:hover { opacity: .85; transform: translateY(-1px); }
 
 /* ── Zona de upload ── */
 .file-zone {
-  border: 2px dashed #6366f1;
+  border: 2px dashed var(--primary);
   border-radius: 12px;
   padding: 28px 20px;
   text-align: center;
@@ -95,11 +101,11 @@ button:hover { opacity: .85; transform: translateY(-1px); }
   position: relative;
   background: #fafafe;
 }
-.file-zone:hover { background: #eef2ff; border-color: #4338ca; }
+.file-zone:hover { background: var(--primary-l); border-color: var(--primary-d); }
 .file-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
 .file-zone .icon { font-size: 30px; margin-bottom: 8px; }
 .file-zone p { margin: 4px 0; color: #6b7280; font-size: 13px; }
-.file-zone strong { color: #4f46e5; font-size: 14px; }
+.file-zone strong { color: var(--primary); font-size: 14px; }
 
 /* ── Badges de tipo de arquivo ── */
 .file-types { display: flex; gap: 10px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
@@ -115,8 +121,8 @@ button:hover { opacity: .85; transform: translateY(-1px); }
 .processing {
   display: none;
   align-items: center; gap: 14px;
-  background: #eef2ff;
-  border: 2px solid #6366f1;
+  background: var(--primary-l);
+  border: 2px solid var(--primary);
   border-radius: 12px;
   padding: 16px 20px;
   margin: 12px 0;
@@ -124,8 +130,8 @@ button:hover { opacity: .85; transform: translateY(-1px); }
 .processing.show { display: flex; }
 .spinner {
   width: 26px; height: 26px;
-  border: 3px solid #c7d2fe;
-  border-top: 3px solid #4f46e5;
+  border: 3px solid rgba(var(--primary-rgb),.3);
+  border-top: 3px solid var(--primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   flex-shrink: 0;
@@ -142,21 +148,21 @@ button:hover { opacity: .85; transform: translateY(-1px); }
   transition: all .3s;
 }
 .step.done   { background: #ecfdf5; color: #059669; }
-.step.active { background: #eef2ff; color: #4f46e5; }
+.step.active { background: var(--primary-l); color: var(--primary); }
 
 /* ── Toggle texto raw do PDF ── */
 .raw-toggle {
   display: inline-flex; align-items: center; gap: 5px;
-  font-size: 12px; color: #6366f1;
+  font-size: 12px; color: var(--primary);
   cursor: pointer; padding: 4px 10px;
-  border-radius: 6px; background: #eef2ff;
+  border-radius: 6px; background: var(--primary-l);
   border: 0; font-weight: 600;
   margin-bottom: 6px;
 }
 .raw-box {
   display: none;
   max-height: 160px; overflow-y: auto;
-  background: #f8fafc; border: 1px solid #e0e7ff;
+  background: #f8fafc; border: 1px solid rgba(var(--primary-rgb),.15);
   border-radius: 8px; padding: 12px;
   font-size: 11px; font-family: monospace;
   color: #475569; white-space: pre-wrap;
@@ -236,7 +242,7 @@ button:hover { opacity: .85; transform: translateY(-1px); }
       <div class="spinner"></div>
       <div>
         <strong style="display:block;color:#3730a3;font-size:14px">📄 Processando PDF...</strong>
-        <small id="procStep" style="color:#6366f1;font-size:12px">Lendo páginas do arquivo</small>
+        <small id="procStep" style="color:var(--primary);font-size:12px">Lendo páginas do arquivo</small>
       </div>
     </div>
 
@@ -257,10 +263,13 @@ button:hover { opacity: .85; transform: translateY(-1px); }
     </div>
 
     <!-- Contador de válidos / ignorados -->
-    <p style="margin-bottom:10px;font-size:13px">
+    <p style="margin-bottom:6px;font-size:13px">
       <strong>Válidos:</strong> <span id="countValid" style="color:#059669;font-weight:800">0</span>
       &nbsp;|&nbsp;
       <strong>Ignorados:</strong> <span id="countIgnored" style="color:#dc2626;font-weight:800">0</span>
+    </p>
+    <p style="font-size:11px;color:#92400e;background:#fef9c3;padding:5px 10px;border-radius:6px;margin-bottom:10px;display:inline-block">
+      ★ = categoria nova (será criada automaticamente ao confirmar)
     </p>
 
     <!-- Texto extraído do PDF (toggle) -->
@@ -304,6 +313,22 @@ button:hover { opacity: .85; transform: translateY(-1px); }
    ============================================================ */
 const KEY = "fluxopro_v14";
 
+/* ── TEMA — aplica cor salva pelo usuário ── */
+(function applyTheme(){
+  try{
+    const db=JSON.parse(localStorage.getItem(KEY)||"{}");
+    const hex=db.customColor||"#4f46e5";
+    const[r,g,b]=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));
+    const L="#"+[r,g,b].map(c=>Math.round(c+(255-c)*.85).toString(16).padStart(2,"0")).join("");
+    const D="#"+[r,g,b].map(c=>Math.round(c*.7).toString(16).padStart(2,"0")).join("");
+    const root=document.documentElement;
+    root.style.setProperty("--primary",hex);
+    root.style.setProperty("--primary-rgb",`${r},${g},${b}`);
+    root.style.setProperty("--primary-l",L);
+    root.style.setProperty("--primary-d",D);
+  }catch(e){}
+})();
+
 // Configura worker do PDF.js (processamento local, sem servidor)
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
@@ -341,7 +366,7 @@ try {
     document.addEventListener("DOMContentLoaded", () => {
       const aviso = document.createElement("div");
       aviso.style.cssText = "background:#fef9c3;border:1px solid #fde68a;border-radius:10px;padding:11px 16px;margin-bottom:14px;font-size:12px;font-weight:600;color:#92400e;";
-      aviso.innerHTML = "⚠️ Base de dados criada automaticamente. Após importar, abra o <a href='index.html' style='color:#4f46e5;text-decoration:underline'>FluxoPro principal</a> para ver os dados.";
+      aviso.innerHTML = "⚠️ Base de dados criada automaticamente. Após importar, abra o <a href='index.html' style='color:var(--primary);text-decoration:underline'>FluxoPro principal</a> para ver os dados.";
       document.querySelector(".container")?.prepend(aviso);
     });
   }
@@ -359,7 +384,7 @@ try {
     `<div class="card">
       <div class="card-title">⚠️ Erro</div>
       <div class="status error">${err.message}</div>
-      <a href="index.html" style="display:inline-block;margin-top:12px;background:#4f46e5;color:#fff;padding:9px 18px;border-radius:9px;font-weight:700;text-decoration:none;">← Ir para o FluxoPro</a>
+      <a href="index.html" style="display:inline-block;margin-top:12px;background:var(--primary);color:#fff;padding:9px 18px;border-radius:9px;font-weight:700;text-decoration:none;">← Ir para o FluxoPro</a>
     </div>`;
   throw err;
 }
@@ -466,6 +491,33 @@ function inferirTipo(desc) {
 }
 
 /* ============================================================
+   NORMALIZAÇÃO DE CATEGORIA — casa com db.cats[], cria se nova
+   ============================================================ */
+function normalizarCat(raw) {
+  const v = (raw || "").trim().toUpperCase();
+  if (!v || v === "SEM CATEGORIA") return { cat: "", nova: false };
+  const cats = db.cats || [];
+  // Tenta encontrar match exato (case insensitive)
+  const match = cats.find(c => c.toUpperCase() === v);
+  if (match) return { cat: match.toUpperCase(), nova: false };
+  // Não existe — marca como nova para criar ao confirmar
+  return { cat: v, nova: true };
+}
+
+/* ============================================================
+   RESOLVER CONTATO — casa CPF/CNPJ com db.contatos{}
+   ============================================================ */
+function resolverContato(docRaw) {
+  const v = (docRaw || "").trim();
+  if (!v) return { doc: "", nomeContato: "" };
+  const contatos = Object.values(db.contatos || {});
+  const match = contatos.find(c => c.doc && c.doc === v);
+  if (match) return { doc: v, nomeContato: match.nome };
+  return { doc: v, nomeContato: "" };
+}
+
+
+/* ============================================================
    DISPATCHER — identifica tipo de arquivo e delega
    ============================================================ */
 document.getElementById("file").addEventListener("change", function () {
@@ -500,20 +552,18 @@ function processExcel(file) {
       data.forEach((linha, index) => {
         const dt   = validateDate(String(linha.Data || ""));
         const tipo = validateTipo(String(linha.Tipo || ""));
-        // Aceita "Valor (R$)" (gerado pelo export FluxoPro) ou "Valor" (genérico)
-        const val  = normalizeValue(linha["Valor (R$)"] ?? linha.Valor);
-        const cat  = String(linha.Categoria || "").trim();
-        // Suporte à coluna Observação com/sem acento
+        const val  = normalizeValue(linha.Valor);
         const obs  = String(linha["Observação"] || linha.Observacao || linha.obs || "").trim();
-        // Novas colunas opcionais
         const inv  = normalizeValue(linha.Investimento) || 0;
-        const doc  = String(linha["CPF / CNPJ"] || linha.CPF_CNPJ || linha["CPF/CNPJ"] || linha.Documento || "").trim();
+        const catRaw = String(linha.Categoria || "").trim();
+        const { cat, nova: catNova } = normalizarCat(catRaw || inferirCategoria(obs));
+        const { doc, nomeContato } = resolverContato(String(linha["CPF / CNPJ"] || linha.CPF_CNPJ || linha["CPF/CNPJ"] || linha.Documento || "").trim());
 
         if (!tipo) { ignored.push({ motivo: `Linha ${index + 2}: tipo inválido ("${linha.Tipo || ""}")` }); return; }
-        if (!val)  { ignored.push({ motivo: `Linha ${index + 2}: valor inválido ("${linha["Valor (R$)"] ?? linha.Valor ?? ""}")` }); return; }
+        if (!val)  { ignored.push({ motivo: `Linha ${index + 2}: valor inválido ("${linha.Valor || ""}")` }); return; }
         if (!dt)   { ignored.push({ motivo: `Linha ${index + 2}: data inválida ("${linha.Data || ""}")` });  return; }
 
-        buffer.push({ data: dt, cat: cat || "Sem categoria", tipo, valor: val, inv, doc, obs });
+        buffer.push({ data: dt, cat, catNova, tipo, valor: val, inv, doc, nomeContato, obs });
       });
 
       document.getElementById("sourceTag").innerHTML =
@@ -597,47 +647,21 @@ async function processPDF(file) {
    ============================================================ */
 function parseFluxoProPDF(text) {
   const validos = [], ignorados = [];
-
-  // Formato do export FluxoPro:
-  // # · DD/MM/AAAA · CPF/CNPJ (opcional) · Tipo · CATEGORIA · R$ VALOR · Observação
-  // Exemplo: "1 01/02/2026 CNPJ Saída SUPERMERCADO R$ 119,74 ASSAÍ"
-  // Exemplo: "5 02/02/2026 SEM CPF/CNPJ Saída BACON R$ 175,00 BACON"
-  const re = /^\s*\d+\s+(\d{2}\/\d{2}\/\d{4})\s+((?:CPF\s+\w+|CNPJ|SEM\s+CF?PF\/CNPJ))\s+(Entrada|Sa[ií]da)\s+([A-ZÀ-Ú][A-ZÀ-Ú0-9\s\/\-]{0,49}?)\s+R\$\s*([\d.,]+)\s*(.*?)\s*$/gim;
-
+  // Regex: data ISO + categoria + tipo + valor monetário
+  const re = /(\d{4}-\d{2}-\d{2})\s+(.+?)\s+(Entrada|Sa[ií]da)\s+R\$\s*([\d.,]+)/gi;
   let m;
   while ((m = re.exec(text)) !== null) {
     const dt   = validateDate(m[1]);
-    const doc  = m[2].trim();
+    const cat  = m[2].trim().replace(/\s+/g, " ").substring(0, 50);
     const tipo = validateTipo(m[3]);
-    const cat  = m[4].trim().replace(/\s+/g, " ").substring(0, 50);
-    const val  = normalizeValue(m[5]);
-    const obs  = m[6].trim().substring(0, 80);
-
+    const val  = normalizeValue(m[4]);
     if (dt && tipo && val) {
-      validos.push({ data: dt, cat: cat || "Sem categoria", tipo, valor: val, inv: 0, doc, obs });
+      const { cat: catN, nova: catNova } = normalizarCat(cat || inferirCategoria(""));
+      validos.push({ data: dt, cat: catN, catNova, tipo, valor: val, inv: 0, doc: "", obs: "" });
     } else {
       ignorados.push({ motivo: "Linha ignorada: " + m[0].substring(0, 60) });
     }
   }
-
-  // Fallback: tenta formato sem coluna CPF/CNPJ
-  // Exemplo: "1 01/02/2026 Saída SUPERMERCADO R$ 119,74 ASSAÍ"
-  if (!validos.length) {
-    const re2 = /^\s*\d+\s+(\d{2}\/\d{2}\/\d{4})\s+(Entrada|Sa[ií]da)\s+([A-ZÀ-Ú][A-ZÀ-Ú0-9\s\/\-]{0,49}?)\s+R\$\s*([\d.,]+)\s*(.*?)\s*$/gim;
-    while ((m = re2.exec(text)) !== null) {
-      const dt   = validateDate(m[1]);
-      const tipo = validateTipo(m[2]);
-      const cat  = m[3].trim().replace(/\s+/g, " ").substring(0, 50);
-      const val  = normalizeValue(m[4]);
-      const obs  = m[5].trim().substring(0, 80);
-      if (dt && tipo && val) {
-        validos.push({ data: dt, cat: cat || "Sem categoria", tipo, valor: val, inv: 0, doc: "", obs });
-      } else {
-        ignorados.push({ motivo: "Linha ignorada: " + m[0].substring(0, 60) });
-      }
-    }
-  }
-
   return { validos, ignorados, modo: "FluxoPro Export" };
 }
 
@@ -662,7 +686,8 @@ function parseGenericoPDF(text) {
       const tipo = validateTipo(m[3]);
       const val  = normalizeValue(m[4]);
       if (dt && tipo && val) {
-        validos.push({ data: dt, cat: inferirCategoria(obs), tipo, valor: val, inv: 0, doc: "", obs });
+        const { cat: catN, nova: catNova } = normalizarCat(inferirCategoria(obs));
+        validos.push({ data: dt, cat: catN, catNova, tipo, valor: val, inv: 0, doc: "", obs });
         return;
       }
     }
@@ -672,7 +697,8 @@ function parseGenericoPDF(text) {
       const obs = m[2].trim().substring(0, 80);
       const val = normalizeValue(m[3]);
       if (dt && val) {
-        validos.push({ data: dt, cat: inferirCategoria(obs), tipo: inferirTipo(obs), valor: val, inv: 0, doc: "", obs });
+        const { cat: catN, nova: catNova } = normalizarCat(inferirCategoria(obs));
+        validos.push({ data: dt, cat: catN, catNova, tipo: inferirTipo(obs), valor: val, inv: 0, doc: "", obs });
       }
     }
   });
@@ -697,25 +723,41 @@ function renderPreview() {
     return;
   }
 
-  showStatus(`✅ ${buffer.length} lançamentos encontrados! Revise abaixo e confirme.`, "success");
+  // Conta categorias novas que serão criadas
+  const catsNovas = [...new Set(buffer.filter(l=>l.catNova&&l.cat).map(l=>l.cat))];
+  let msgExtra = "";
+  if (catsNovas.length) {
+    msgExtra = ` <span style="color:#d97706;font-weight:700">⚠ ${catsNovas.length} nova(s) categoria(s) serão criadas: ${catsNovas.join(", ")}</span>`;
+  }
+
+  showStatus(`✅ ${buffer.length} lançamentos encontrados! Revise abaixo e confirme.${msgExtra}`, "success");
   document.getElementById("previewCard").style.display = "block";
 
-  // Exibe até 50 linhas + linhas ignoradas
   document.getElementById("tb").innerHTML =
-    buffer.slice(0, 50).map((l, i) => `
+    buffer.slice(0, 50).map((l, i) => {
+      const catDisplay = l.cat
+        ? (l.catNova
+            ? `<span style="background:#fef9c3;color:#92400e;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700">★ ${l.cat}</span>`
+            : `<span style="font-weight:600">${l.cat}</span>`)
+        : `<span style="background:#fef9c3;color:#92400e;font-size:10px;font-style:italic">sem categoria</span>`;
+      const docDisplay = l.nomeContato
+        ? `<span style="font-weight:700;color:var(--primary)">${l.nomeContato}</span><br><span style="font-size:10px;color:#9ca3af">${l.doc}</span>`
+        : (l.doc ? `<span style="font-size:11px;color:#6b7280">${l.doc}</span>` : `<span style="color:#d1d5db">—</span>`);
+      return `
       <tr>
         <td style="color:#9ca3af;font-size:11px">${i + 1}</td>
         <td style="font-size:12px;font-weight:600">${l.data}</td>
-        <td style="font-weight:600">${l.cat}</td>
+        <td>${catDisplay}</td>
         <td><span class="badge badge-${l.tipo === "Entrada" ? "entrada" : "saida"}">${l.tipo}</span></td>
         <td style="font-weight:700;color:${l.tipo === "Entrada" ? "#059669" : "#dc2626"}">
           R$ ${Number(l.valor).toFixed(2).replace(".", ",")}
         </td>
         <td style="color:#d97706;font-weight:600">${l.inv > 0 ? "R$ " + l.inv.toFixed(2).replace(".", ",") : "—"}</td>
-        <td style="font-size:11px;color:#6b7280">${l.doc || "—"}</td>
+        <td>${docDisplay}</td>
         <td style="font-size:11px;color:#6b7280">${l.obs || "—"}</td>
         <td style="color:#059669;font-weight:700">OK</td>
-      </tr>`).join("") +
+      </tr>`;
+    }).join("") +
     ignored.slice(0, 10).map(ign => `
       <tr style="background:#fef2f2">
         <td>—</td>
@@ -735,15 +777,31 @@ function renderPreview() {
    ============================================================ */
 function confirmar() {
   if (!buffer.length) { alert("Nenhum lançamento válido para importar."); return; }
-  if (!confirm(`Importar ${buffer.length} lançamentos para o perfil "${perfil}"?`)) return;
+
+  const catsNovas = [...new Set(buffer.filter(l=>l.catNova&&l.cat).map(l=>l.cat))];
+  const msgCats = catsNovas.length
+    ? `\n\n⚠ ${catsNovas.length} nova(s) categoria(s) serão adicionadas:\n${catsNovas.join(", ")}`
+    : "";
+
+  if (!confirm(`Importar ${buffer.length} lançamentos para o perfil "${perfil}"?${msgCats}`)) return;
 
   try {
-    // Adiciona cada lançamento com um UUID único
-    buffer.forEach(l => {
-      db.profiles[perfil].push({ id: crypto.randomUUID(), ...l });
+    // Adiciona categorias novas ao db.cats
+    if (!db.cats) db.cats = [];
+    catsNovas.forEach(c => {
+      if (!db.cats.some(x => x.toUpperCase() === c.toUpperCase())) {
+        db.cats.push(c);
+      }
     });
+
+    // Adiciona cada lançamento com um UUID único (remove campos auxiliares catNova/nomeContato)
+    buffer.forEach(l => {
+      const { catNova, nomeContato, ...lancamento } = l;
+      db.profiles[perfil].push({ id: crypto.randomUUID(), ...lancamento });
+    });
+
     localStorage.setItem(KEY, JSON.stringify(db));
-    alert(`✅ Importação concluída!\n\n${buffer.length} lançamentos adicionados ao perfil "${perfil}".`);
+    alert(`✅ Importação concluída!\n\n${buffer.length} lançamentos adicionados ao perfil "${perfil}".${catsNovas.length ? `\n${catsNovas.length} categoria(s) nova(s) criada(s).` : ""}`);
     if (window.opener) { window.close(); } else { window.location.href = "index.html"; }
   } catch (err) {
     alert("Erro ao salvar: " + err.message);
