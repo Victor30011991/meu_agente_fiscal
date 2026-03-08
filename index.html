@@ -658,7 +658,14 @@ td[contenteditable]:focus{outline:2px solid var(--primary);outline-offset:-1px;b
         <div class="conf-body">
 
           <div>
-            <div class="conf-sec-title">Categorias Personalizadas</div>
+            <div class="conf-sec-title" style="display:flex;align-items:center;justify-content:space-between">
+              Categorias Personalizadas
+              <span style="font-size:10px;color:var(--text3);font-weight:400">Clique no × para remover</span>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:10px">
+              <input id="newCatInput" class="finput" placeholder="Nome da nova categoria..." style="flex:1;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+              <button id="btnAddCatConf" style="background:var(--primary);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">+ Adicionar</button>
+            </div>
             <div class="cat-chips" id="catChips"></div>
           </div>
 
@@ -918,8 +925,9 @@ function renderCatSuggest(){
 function renderCatChips(){
   const db=loadDB(); const cats=db.cats||CATS_PAD;
   document.getElementById("catChips").innerHTML=
-    cats.map(c=>`<span class="cat-chip">${c} <span class="cat-del" data-del="${c}">×</span></span>`).join("")+
-    `<button class="btn-cat-add" id="addCat">+ nova</button>`;
+    cats.length
+      ? cats.map(c=>`<span class="cat-chip">${c.toUpperCase()} <span class="cat-del" data-del="${c}">×</span></span>`).join("")
+      : `<span style="font-size:11px;color:var(--text3);font-style:italic">Nenhuma categoria ainda</span>`;
 }
 
 /* ── CONF STATS ── */
@@ -1585,18 +1593,35 @@ document.getElementById("metaBtn").addEventListener("click",()=>{
 });
 
 /* ── CATEGORIAS ── */
+function addCatNova(val){
+  const nova=(val||"").trim().toUpperCase();
+  if(!nova){toast("Digite um nome","⚠️");return;}
+  const db=loadDB();
+  if(!db.cats)db.cats=[...CATS_PAD];
+  if(db.cats.some(c=>c.toUpperCase()===nova)){toast("Categoria já existe","⚠️");return;}
+  db.cats.push(nova);
+  saveDB(db);renderCatChips();renderCatSuggest();
+  document.getElementById("newCatInput").value="";
+  toast("Categoria \""+nova+"\" adicionada!","🏷️");
+}
+
+document.getElementById("btnAddCatConf").addEventListener("click",()=>{
+  addCatNova(document.getElementById("newCatInput").value);
+});
+document.getElementById("newCatInput").addEventListener("keydown",e=>{
+  if(e.key==="Enter")addCatNova(e.target.value);
+});
+
 document.getElementById("catChips").addEventListener("click",e=>{
-  if(e.target.id==="addCat"){
-    const nova=prompt("Nova categoria:"); if(!nova||!nova.trim())return;
-    const db=loadDB();if(!db.cats)db.cats=[...CATS_PAD];
-    if(!db.cats.includes(nova.trim()))db.cats.push(nova.trim());
-    saveDB(db);renderCatChips();renderCatSuggest();toast("Categoria adicionada!","🏷️");
-  }
   const del=e.target.dataset.del;
   if(del){
-    if(!confirm(`Remover categoria "${del}"?`))return;
-    const db=loadDB();db.cats=(db.cats||CATS_PAD).filter(c=>c!==del);
-    saveDB(db);renderCatChips();renderCatSuggest();toast("Categoria removida","🗑️");
+    if(!confirm(`Remover categoria "${del}"?\n\nLançamentos que usam ela ficarão com a célula em branco.`))return;
+    const db=loadDB();
+    db.cats=(db.cats||CATS_PAD).filter(c=>c!==del);
+    // Apaga cat dos lançamentos que a usavam
+    Object.values(db.profiles).forEach(arr=>arr.forEach(i=>{if(i.cat===del)i.cat="";}));
+    saveDB(db);renderCatChips();renderCatSuggest();renderTable();
+    toast(`Categoria "${del}" removida`,"🗑️");
   }
 });
 
