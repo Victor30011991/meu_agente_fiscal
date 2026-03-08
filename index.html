@@ -41,6 +41,7 @@ body{font-family:var(--font);font-size:14px;background:var(--bg);color:var(--tex
 /* ── ONBOARDING ── */
 #onboarding{position:fixed;inset:0;z-index:9999;background:rgba(10,12,20,.75);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px}
 #onboarding.hidden{display:none}
+.hidden{display:none!important}
 .ob-box{background:var(--card);border-radius:22px;box-shadow:var(--shadow-lg);width:100%;max-width:460px;overflow:hidden}
 .ob-top{background:linear-gradient(135deg,var(--primary-d),var(--primary));padding:32px;text-align:center;color:#fff}
 .ob-logo{width:56px;height:56px;background:rgba(255,255,255,.18);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:12px;box-shadow:0 4px 16px rgba(0,0,0,.2)}
@@ -535,18 +536,9 @@ td[contenteditable]:focus{outline:2px solid var(--primary);outline-offset:-1px;b
     <section id="tab-conf" class="hidden">
       <div class="card">
         <div class="card-head" style="padding-bottom:14px">
-          <span class="card-title">Painel de Configurações</span>
+          <span class="card-title">Configurações</span>
         </div>
         <div class="conf-body">
-
-          <div>
-            <div class="conf-sec-title">Resumo do Sistema</div>
-            <div class="conf-stats">
-              <div class="stat-box"><div class="stat-lbl">Perfis</div><div class="stat-val" id="stPerfis">—</div></div>
-              <div class="stat-box"><div class="stat-lbl">Lançamentos</div><div class="stat-val" id="stLanc">—</div></div>
-              <div class="stat-box"><div class="stat-lbl">Categorias</div><div class="stat-val" id="stCats">—</div></div>
-            </div>
-          </div>
 
           <div>
             <div class="conf-sec-title">Categorias Personalizadas</div>
@@ -556,9 +548,7 @@ td[contenteditable]:focus{outline:2px solid var(--primary);outline-offset:-1px;b
           <div>
             <div class="conf-sec-title">Tema Visual</div>
             <div class="conf-row" style="align-items:center;gap:10px;flex-wrap:wrap;">
-              <div class="color-swatches" id="colorSwatches">
-                <!-- atalhos rápidos gerados pelo JS -->
-              </div>
+              <div class="color-swatches" id="colorSwatches"></div>
               <div class="color-pick-wrap" title="Cor personalizada">
                 <div class="cswatch" id="swatchCustom"></div>
                 <input type="color" id="colorPick" value="#4f46e5">
@@ -577,25 +567,20 @@ td[contenteditable]:focus{outline:2px solid var(--primary);outline-offset:-1px;b
           </div>
 
           <div>
-            <div class="conf-sec-title">🎯 Meta de Economia Mensal</div>
-            <div class="meta-wrap">
-              <div class="meta-hd">
-                <span class="meta-lbl">Meta definida para o perfil ativo</span>
-                <span class="meta-edit" id="metaBtn">editar</span>
-              </div>
-              <div class="meta-track"><div class="meta-prog" id="metaBar" style="width:0%"></div></div>
-              <div class="meta-info"><span id="metaDesc">Defina uma meta mensal</span><span class="meta-pct" id="metaPct">—</span></div>
-            </div>
-          </div>
-
-          <div>
             <div class="conf-sec-title">Painel de Gráficos</div>
-            <p style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.5">Escolha quais gráficos aparecem nos relatórios e nas exportações. As configurações são salvas por perfil.</p>
+            <p style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.5">Escolha quais gráficos aparecem nos relatórios e exportações. Salvo por perfil.</p>
             <div class="chart-cfg-grid" id="chartCfgGrid"></div>
           </div>
 
-          <!-- Gráficos renderizados (ocultos na conf, usados na exportação) -->
           <div id="chartContainer" style="display:none"></div>
+
+          <!-- Meta (oculta, mantida para JS) -->
+          <div style="display:none">
+            <span class="meta-edit" id="metaBtn"></span>
+            <div class="meta-prog" id="metaBar"></div>
+            <span id="metaDesc"></span><span id="metaPct"></span>
+            <div id="stPerfis"></div><div id="stLanc"></div><div id="stCats"></div>
+          </div>
 
           <div>
             <div class="conf-sec-title">Zona de Perigo</div>
