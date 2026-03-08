@@ -42,6 +42,56 @@ body{font-family:var(--font);font-size:14px;background:var(--bg);color:var(--tex
 #onboarding{position:fixed;inset:0;z-index:9999;background:rgba(10,12,20,.75);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px}
 #onboarding.hidden{display:none}
 .hidden{display:none!important}
+
+/* ── CONTATOS ── */
+.contatos-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.btn-novo-contato{background:var(--primary);color:#fff;border:none;border-radius:7px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;}
+.contato-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;}
+.contato-chip{display:flex;align-items:center;gap:5px;padding:4px 9px 4px 6px;border-radius:20px;border:1.5px solid var(--border);background:#f8fafc;cursor:pointer;font-size:11px;font-weight:600;color:var(--text2);transition:all .15s;}
+.contato-chip:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-l);}
+.contato-chip.ativo{border-color:var(--primary);background:var(--primary);color:#fff;}
+.contato-chip-av{width:18px;height:18px;border-radius:50%;background:var(--primary);color:#fff;font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.contato-chip.ativo .contato-chip-av{background:rgba(255,255,255,.25);}
+.contato-count{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(var(--primary-rgb),.06);border-radius:8px;border:1px solid rgba(var(--primary-rgb),.12);font-size:10px;margin-top:6px;}
+.contato-count-lbl{color:var(--text3);}
+.contato-count-val{font-weight:800;color:var(--primary);}
+.contato-resumo{margin-top:8px;border-radius:10px;overflow:hidden;border:1.5px solid rgba(var(--primary-rgb),.15);}
+.cr-head{background:var(--primary);color:#fff;padding:9px 12px;display:flex;align-items:center;gap:8px;}
+.cr-av{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.2);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cr-nome{font-size:12px;font-weight:800;}
+.cr-doc{font-size:9px;opacity:.75;margin-top:1px;}
+.cr-x{margin-left:auto;background:rgba(255,255,255,.15);border:none;color:#fff;width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:11px;}
+.cr-body{padding:10px 12px;background:rgba(var(--primary-rgb),.04);}
+.cr-kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:8px;}
+.cr-kpi{background:#fff;border-radius:7px;padding:6px 8px;text-align:center;border:1px solid var(--border);}
+.cr-kpi-lbl{font-size:8px;font-weight:700;text-transform:uppercase;color:var(--text3);}
+.cr-kpi-val{font-size:12px;font-weight:800;}
+.cr-info-row{display:flex;justify-content:space-between;font-size:10px;padding:4px 0;border-bottom:1px solid rgba(var(--primary-rgb),.08);}
+.cr-info-lbl{color:var(--text3);}.cr-info-val{font-weight:700;color:var(--text);}
+.cr-acts{display:flex;gap:5px;margin-top:8px;}
+.cr-act{flex:1;border:none;border-radius:7px;padding:6px;font-size:10px;font-weight:700;cursor:pointer;}
+.cr-act.edit{background:var(--primary-l);color:var(--primary);}
+.cr-act.del{background:#fef2f2;color:#dc2626;}
+.contato-form{margin-top:8px;background:#f8fafc;border-radius:10px;border:1.5px dashed var(--border);padding:11px;}
+.contato-form-title{font-size:10px;font-weight:800;color:var(--text2);margin-bottom:8px;}
+
+/* ── CATEGORIA DROPDOWN ── */
+.cat-dd-wrap{position:relative;}
+.cat-dd-input{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:7px 28px 7px 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--text);background:#fafbfd;cursor:pointer;}
+.cat-dd-input:focus{outline:none;border-color:var(--primary);}
+.cat-dd-input::placeholder{text-transform:none;font-weight:400;letter-spacing:0;color:var(--text3);}
+.cat-dd-arrow{position:absolute;right:9px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:10px;pointer-events:none;}
+.cat-dd-panel{position:absolute;top:calc(100%+3px);left:0;right:0;background:#fff;border:1.5px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.1);z-index:999;overflow:hidden;display:none;}
+.cat-dd-panel.open{display:block;}
+.cat-dd-list{max-height:150px;overflow-y:auto;}
+.cat-dd-item{padding:8px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;cursor:pointer;display:flex;align-items:center;gap:7px;color:var(--text);}
+.cat-dd-item:hover{background:var(--primary-l);color:var(--primary);}
+.cat-dd-dot{width:7px;height:7px;border-radius:50%;background:var(--border);flex-shrink:0;}
+.cat-dd-item:hover .cat-dd-dot{background:var(--primary);}
+.cat-dd-new{padding:8px 12px;font-size:11px;font-weight:700;color:var(--primary);background:var(--primary-l);cursor:pointer;display:flex;align-items:center;gap:7px;border-top:1px solid var(--border);}
+.cat-dd-new-ico{width:17px;height:17px;border-radius:50%;background:var(--primary);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cat-dd-input.selected{border-color:var(--primary);background:var(--primary-l);color:var(--primary);}
+
 .ob-box{background:var(--card);border-radius:22px;box-shadow:var(--shadow-lg);width:100%;max-width:460px;overflow:hidden}
 .ob-top{background:linear-gradient(135deg,var(--primary-d),var(--primary));padding:32px;text-align:center;color:#fff}
 .ob-logo{width:56px;height:56px;background:rgba(255,255,255,.18);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:12px;box-shadow:0 4px 16px rgba(0,0,0,.2)}
@@ -396,6 +446,37 @@ td[contenteditable]:focus{outline:2px solid var(--primary);outline-offset:-1px;b
       </div>
     </div>
 
+    <!-- Contatos -->
+    <div class="card">
+      <div class="card-head" style="padding-bottom:10px">
+        <span class="card-title">Contatos</span>
+        <button class="btn-novo-contato" id="btnNovoContato">+ Novo</button>
+      </div>
+      <div id="contatoFormWrap" class="hidden">
+        <div class="contato-form">
+          <div class="contato-form-title">➕ Novo Contato</div>
+          <label class="flbl">Nome *</label>
+          <input id="cNome" class="finput" placeholder="Maria Oliveira" style="margin-bottom:6px">
+          <div class="f-grid">
+            <div><label class="flbl">CPF / CNPJ</label><input id="cDoc" class="finput" placeholder="Opcional"></div>
+            <div><label class="flbl">Tipo</label><select id="cTipo" class="fselect"><option value="PF">Pessoa Física</option><option value="PJ">Pessoa Jurídica</option></select></div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <button class="btn-save" id="btnSalvarContato" style="flex:1;padding:8px">Salvar</button>
+            <button id="btnCancelarContato" style="background:#f1f5f9;border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;font-size:11px;font-weight:700;cursor:pointer;color:var(--text2)">Cancelar</button>
+          </div>
+        </div>
+      </div>
+      <div class="contato-chips" id="contatoChips"></div>
+      <div id="contatoResumoWrap" class="hidden">
+        <div class="contato-resumo" id="contatoResumo"></div>
+      </div>
+      <div class="contato-count">
+        <span class="contato-count-lbl">Contatos ativos</span>
+        <span class="contato-count-val" id="contatoCount">0 contatos</span>
+      </div>
+    </div>
+
     <!-- Novo Lançamento -->
     <div class="card">
       <div class="card-head" style="padding-bottom:10px">
@@ -407,11 +488,29 @@ td[contenteditable]:focus{outline:2px solid var(--primary);outline-offset:-1px;b
           <div><label class="flbl">Tipo</label><select id="qTipo" class="fselect"><option value="Entrada">Entrada</option><option value="Saída">Saída</option></select></div>
         </div>
         <div class="f-grid">
-          <div><label class="flbl">Categoria</label><input type="text" id="qCat" class="finput" placeholder="Ex: Salário" list="catList" autocomplete="off"><datalist id="catList"></datalist></div>
+          <div>
+            <label class="flbl">Categoria</label>
+            <div class="cat-dd-wrap">
+              <input type="text" id="qCat" class="cat-dd-input" placeholder="Selecione ou crie..." autocomplete="off">
+              <span class="cat-dd-arrow" id="catArrow">▾</span>
+              <div class="cat-dd-panel" id="catPanel">
+                <div class="cat-dd-list" id="catList"></div>
+                <div class="cat-dd-new hidden" id="catNewOpt">
+                  <div class="cat-dd-new-ico">+</div>
+                  <span id="catNewLbl">Criar categoria</span>
+                </div>
+              </div>
+            </div>
+          </div>
           <div><label class="flbl">Valor (R$)</label><input type="text" id="qValor" class="finput" placeholder="0,00"></div>
         </div>
         <div class="f-grid">
-          <div><label class="flbl">CPF / CNPJ</label><input type="text" id="qDoc" class="finput" placeholder="Opcional"></div>
+          <div>
+            <label class="flbl">CPF / CNPJ</label>
+            <select id="qDoc" class="fselect">
+              <option value="">— Nenhum —</option>
+            </select>
+          </div>
           <div><label class="flbl">Investimento (R$)</label><input type="text" id="qInv" class="finput" placeholder="0,00"></div>
         </div>
 
@@ -1749,6 +1848,197 @@ document.getElementById("expExcel").addEventListener("click",()=>{
   const url="export.html?"+params.toString();
   const w=window.open(url,"_blank"); if(!w)location.href=url;
 });
+
+/* ================================================================
+   CONTATOS
+   ================================================================ */
+function loadContatos(){
+  const db=loadDB();
+  return db.contatos||(db.contatos={},db.contatos);
+}
+function saveContatos(c){
+  const db=loadDB(); db.contatos=c; saveDB(db);
+}
+function getContatos(){
+  const db=loadDB(); return Object.values(db.contatos||{});
+}
+
+function renderContatos(){
+  const contatos=getContatos();
+  const wrap=document.getElementById("contatoChips");
+  wrap.innerHTML="";
+  contatos.forEach(c=>{
+    const chip=document.createElement("div");
+    chip.className="contato-chip";
+    chip.dataset.id=c.id;
+    chip.innerHTML=`<div class="contato-chip-av">${c.nome.charAt(0).toUpperCase()}</div>${c.nome}`;
+    chip.addEventListener("click",()=>toggleContatoResumo(c,chip));
+    wrap.appendChild(chip);
+  });
+  const ct=contatos.length;
+  document.getElementById("contatoCount").innerText=ct+" contato"+(ct!==1?"s":"");
+  renderDocSelect();
+}
+
+function toggleContatoResumo(c, chip){
+  const ativos=document.querySelectorAll(".contato-chip.ativo");
+  const eraAtivo=chip.classList.contains("ativo");
+  ativos.forEach(a=>a.classList.remove("ativo"));
+  const wrap=document.getElementById("contatoResumoWrap");
+  if(eraAtivo){ wrap.classList.add("hidden"); return; }
+  chip.classList.add("ativo");
+  // Calcula KPIs do contato
+  const lancamentos=list().filter(i=>i.doc&&i.doc===c.doc);
+  const ent=lancamentos.filter(i=>i.tipo==="Entrada").reduce((a,i)=>a+i.valor,0);
+  const sai=lancamentos.filter(i=>i.tipo==="Saída").reduce((a,i)=>a+i.valor,0);
+  const net=ent-sai;
+  const ultimo=lancamentos.map(i=>i.data).sort().pop()||"—";
+  document.getElementById("contatoResumo").innerHTML=`
+    <div class="cr-head">
+      <div class="cr-av">${c.nome.charAt(0).toUpperCase()}</div>
+      <div><div class="cr-nome">${c.nome}</div><div class="cr-doc">${c.doc||"Sem CPF/CNPJ"} · ${c.tipo==="PJ"?"Pessoa Jurídica":"Pessoa Física"}</div></div>
+      <button class="cr-x" onclick="document.getElementById('contatoResumoWrap').classList.add('hidden');document.querySelectorAll('.contato-chip.ativo').forEach(a=>a.classList.remove('ativo'))">✕</button>
+    </div>
+    <div class="cr-body">
+      <div class="cr-kpis">
+        <div class="cr-kpi"><div class="cr-kpi-lbl">Entradas</div><div class="cr-kpi-val" style="color:#10b981">${fmt(ent)}</div></div>
+        <div class="cr-kpi"><div class="cr-kpi-lbl">Saídas</div><div class="cr-kpi-val" style="color:#ef4444">${fmt(sai)}</div></div>
+        <div class="cr-kpi"><div class="cr-kpi-lbl">Saldo</div><div class="cr-kpi-val" style="color:${net>=0?"#3b82f6":"#ef4444"}">${net>=0?"+":""}${fmt(net)}</div></div>
+      </div>
+      <div class="cr-info-row"><span class="cr-info-lbl">Lançamentos</span><span class="cr-info-val">${lancamentos.length}</span></div>
+      <div class="cr-info-row" style="border:none"><span class="cr-info-lbl">Último lançamento</span><span class="cr-info-val">${fmtD(ultimo)}</span></div>
+      <div class="cr-acts">
+        <button class="cr-act del" onclick="removerContato('${c.id}')">🗑 Remover</button>
+      </div>
+    </div>`;
+  wrap.classList.remove("hidden");
+}
+
+function removerContato(id){
+  if(!confirm("Remover este contato?")) return;
+  const db=loadDB();
+  delete db.contatos[id];
+  saveDB(db);
+  document.getElementById("contatoResumoWrap").classList.add("hidden");
+  renderContatos();
+  toast("Contato removido","🗑");
+}
+
+function renderDocSelect(){
+  const sel=document.getElementById("qDoc");
+  const cur=sel.value;
+  sel.innerHTML=`<option value="">— Nenhum —</option>`;
+  getContatos().forEach(c=>{
+    const opt=document.createElement("option");
+    opt.value=c.doc||c.nome;
+    opt.text=c.nome+(c.doc?" — "+c.doc:"");
+    sel.appendChild(opt);
+  });
+  if(cur) sel.value=cur;
+}
+
+// Botão Novo Contato
+document.getElementById("btnNovoContato").addEventListener("click",()=>{
+  document.getElementById("contatoFormWrap").classList.toggle("hidden");
+  document.getElementById("cNome").focus();
+});
+document.getElementById("btnCancelarContato").addEventListener("click",()=>{
+  document.getElementById("contatoFormWrap").classList.add("hidden");
+  document.getElementById("cNome").value="";
+  document.getElementById("cDoc").value="";
+});
+document.getElementById("btnSalvarContato").addEventListener("click",()=>{
+  const nome=document.getElementById("cNome").value.trim();
+  if(!nome){toast("Nome é obrigatório","⚠️");return;}
+  const doc=document.getElementById("cDoc").value.trim();
+  const tipo=document.getElementById("cTipo").value;
+  const db=loadDB();
+  if(!db.contatos) db.contatos={};
+  const id="c"+Date.now();
+  db.contatos[id]={id,nome,doc,tipo};
+  saveDB(db);
+  document.getElementById("contatoFormWrap").classList.add("hidden");
+  document.getElementById("cNome").value="";
+  document.getElementById("cDoc").value="";
+  renderContatos();
+  toast("Contato salvo: "+nome,"👤");
+});
+
+/* ================================================================
+   CATEGORIA DROPDOWN
+   ================================================================ */
+function buildCatPanel(filter){
+  const db=loadDB();
+  const cats=(db.cats||[]);
+  const list=document.getElementById("catList");
+  const newOpt=document.getElementById("catNewOpt");
+  const newLbl=document.getElementById("catNewLbl");
+  const q=(filter||"").toUpperCase().trim();
+  const filtered=q?cats.filter(c=>c.toUpperCase().includes(q)):cats;
+  list.innerHTML="";
+  filtered.forEach(cat=>{
+    const d=document.createElement("div");
+    d.className="cat-dd-item";
+    d.innerHTML=`<div class="cat-dd-dot"></div>${cat.toUpperCase()}`;
+    d.addEventListener("mousedown",e=>{
+      e.preventDefault();
+      selectCat(cat);
+    });
+    list.appendChild(d);
+  });
+  // Opção "criar nova"
+  if(q && !cats.some(c=>c.toUpperCase()===q)){
+    newOpt.classList.remove("hidden");
+    newLbl.innerText=`Criar "${q}" como nova categoria`;
+  } else {
+    newOpt.classList.add("hidden");
+  }
+}
+
+function selectCat(val){
+  const v=val.toUpperCase();
+  const inp=document.getElementById("qCat");
+  inp.value=v;
+  inp.classList.add("selected");
+  document.getElementById("catArrow").innerText="✓";
+  document.getElementById("catPanel").classList.remove("open");
+  // Adiciona à lista se nova
+  const db=loadDB();
+  if(!db.cats) db.cats=[];
+  if(!db.cats.some(c=>c.toUpperCase()===v)){
+    db.cats.push(val.trim());
+    saveDB(db);
+    renderCatChips();
+  }
+}
+
+const qCatInp=document.getElementById("qCat");
+const catPanel=document.getElementById("catPanel");
+
+qCatInp.addEventListener("focus",()=>{
+  buildCatPanel(qCatInp.value);
+  catPanel.classList.add("open");
+});
+qCatInp.addEventListener("input",()=>{
+  qCatInp.classList.remove("selected");
+  document.getElementById("catArrow").innerText="▾";
+  buildCatPanel(qCatInp.value);
+  catPanel.classList.add("open");
+  // forçar uppercase enquanto digita
+  const pos=qCatInp.selectionStart;
+  qCatInp.value=qCatInp.value.toUpperCase();
+  qCatInp.setSelectionRange(pos,pos);
+});
+qCatInp.addEventListener("blur",()=>{
+  setTimeout(()=>catPanel.classList.remove("open"),150);
+});
+document.getElementById("catNewOpt").addEventListener("mousedown",e=>{
+  e.preventDefault();
+  selectCat(qCatInp.value);
+});
+
+// Inicializa contatos ao carregar
+renderContatos();
 </script>
 </body>
 </html>
