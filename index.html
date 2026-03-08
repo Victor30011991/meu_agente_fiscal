@@ -743,25 +743,23 @@ function buildMonthly(d){
 function gColors(){ const s=getComputedStyle(document.documentElement); return{t:s.getPropertyValue("--text2").trim()||"#6b7280",g:s.getPropertyValue("--border").trim()||"#e2e6f0"}; }
 /* ── DEFINIÇÕES DE GRÁFICOS ── */
 const CHART_DEFS = [
-  { id:"pizza",    icon:"🍩", name:"Por Categoria",         desc:"Distribuição de valores por categoria",
+  { id:"pizza",      icon:"🍩", name:"Por Categoria",        desc:"Distribuição de valores por categoria",
     opts:[{key:"tipo",label:"Tipo",values:["Saída","Entrada"]}] },
-  { id:"evolucao", icon:"📈", name:"Evolução Mensal",        desc:"Entradas e saídas ao longo dos meses",      opts:[] },
-  { id:"topGastos",icon:"🏆", name:"Top Gastos",            desc:"Ranking das maiores categorias de gasto",
+  { id:"evolucao",   icon:"📈", name:"Evolução Mensal",       desc:"Entradas e saídas ao longo dos meses",       opts:[] },
+  { id:"topGastos",  icon:"🏆", name:"Top Gastos",           desc:"Ranking das maiores categorias de gasto",
     opts:[{key:"limit",label:"Mostrar",values:["5","7","10","todas"]}] },
-  { id:"fluxo",    icon:"🌊", name:"Fluxo de Caixa",        desc:"Entradas vs saídas agrupadas por período",
-    opts:[{key:"group",label:"Agrupar por",values:["mes","trimestre"]}] },
-  { id:"pizzaCpf", icon:"🍕", name:"Pizza por CPF / CNPJ",  desc:"Participação de cada documento nos valores",
+  { id:"pizzaCpf",   icon:"🍕", name:"Pizza por CPF / CNPJ", desc:"Participação de cada documento nos valores",
     opts:[{key:"tipo",label:"Tipo",values:["Saída","Entrada","Resultado"]}] },
-  { id:"resultado",icon:"💰", name:"Resultado Acumulado",   desc:"Evolução do saldo líquido ao longo do tempo", opts:[] },
-  { id:"radar",    icon:"🕸️", name:"Radar de Categorias",  desc:"Comparativo visual em forma de teia",
-    opts:[{key:"tipo",label:"Tipo",values:["Saída","Entrada"]}] },
-  { id:"saldos",   icon:"📉", name:"Evolução de Saldos",    desc:"Por dia (até 3 meses) ou por mês (mais de 3)", opts:[] },
+  { id:"balanco",    icon:"📊", name:"Balanço por Mês",      desc:"Verde se sobrou, vermelho se estourou — por mês", opts:[] },
+  { id:"calor",      icon:"🗓️", name:"Mapa de Calor",       desc:"Dias e semanas com maior volume de gastos",   opts:[] },
+  { id:"comparativo",icon:"📅", name:"Comparativo de Meses", desc:"Últimos meses lado a lado: entradas vs saídas",opts:[] },
+  { id:"saude",      icon:"🎯", name:"Saúde Financeira",     desc:"Score de 0–100% baseado na taxa de economia", opts:[] },
 ];
 
 function defaultChartCfg(){
   const c={};
   CHART_DEFS.forEach(d=>{
-    c[d.id]={active:d.id==="pizza"||d.id==="evolucao"||d.id==="topGastos"};
+    c[d.id]={active:true}; // todos ativos por padrão
     d.opts.forEach(o=>{ c[d.id][o.key]=o.values[0]; });
   });
   return c;
@@ -843,12 +841,12 @@ function renderDash(){
   container.innerHTML=active.map(def=>{
     const c=cfg[def.id];
     let extra="";
-    if(def.id==="pizza"||def.id==="radar"){
+    if(def.id==="pizza"){
       extra=`<div class="chart-filter"><select class="chart-filter-sel" onchange="updateChartOpt('${def.id}','tipo',this.value)"><option value="Saída" ${c.tipo==="Saída"?"selected":""}>Saídas</option><option value="Entrada" ${c.tipo==="Entrada"?"selected":""}>Entradas</option></select></div>`;
     } else if(def.id==="pizzaCpf"){
       extra=`<div class="chart-filter"><select class="chart-filter-sel" onchange="updateChartOpt('${def.id}','tipo',this.value)"><option value="Saída" ${c.tipo==="Saída"?"selected":""}>Saídas</option><option value="Entrada" ${c.tipo==="Entrada"?"selected":""}>Entradas</option><option value="Resultado" ${c.tipo==="Resultado"?"selected":""}>Resultado</option></select></div>`;
     }
-    const h=def.id==="pizza"?190:170;
+    const h=def.id==="pizza"||def.id==="saude"?190:def.id==="calor"?200:170;
     return `<div class="card"><div class="card-head"><span class="card-title">${def.icon} ${def.name}</span></div>${extra}<div class="chart-wrap" style="padding-top:10px"><canvas id="gc-${def.id}" height="${h}"></canvas></div><p class="chart-note" id="gn-${def.id}"></p></div>`;
   }).join("");
 
@@ -862,14 +860,14 @@ function renderChartById(id,cfg,d,t,g,base){
   if(!el)return;
   const ctx=el.getContext("2d");
   switch(id){
-    case "pizza":    _cPizza(ctx,cfg,d,t,base,noteEl);    break;
-    case "evolucao": _cEvolucao(ctx,d,t,g,base,noteEl);   break;
-    case "topGastos":_cTopGastos(ctx,cfg,d,t,g,base,noteEl); break;
-    case "fluxo":    _cFluxo(ctx,cfg,d,t,g,base,noteEl);  break;
-    case "pizzaCpf": _cPizzaCpf(ctx,cfg,d,t,base,noteEl); break;
-    case "resultado":_cResultado(ctx,d,t,g,base,noteEl);  break;
-    case "radar":    _cRadar(ctx,cfg,d,t,base,noteEl);    break;
-    case "saldos":   _cSaldos(ctx,d,t,g,base,noteEl);     break;
+    case "pizza":      _cPizza(ctx,cfg,d,t,base,noteEl);       break;
+    case "evolucao":   _cEvolucao(ctx,d,t,g,base,noteEl);      break;
+    case "topGastos":  _cTopGastos(ctx,cfg,d,t,g,base,noteEl); break;
+    case "pizzaCpf":   _cPizzaCpf(ctx,cfg,d,t,base,noteEl);    break;
+    case "balanco":    _cBalanco(ctx,d,t,g,base,noteEl);        break;
+    case "calor":      _cCalor(ctx,d,t,g,base,noteEl);         break;
+    case "comparativo":_cComparativo(ctx,d,t,g,base,noteEl);   break;
+    case "saude":      _cSaude(ctx,d,t,g,base,noteEl);         break;
   }
 }
 
@@ -911,27 +909,201 @@ function _cTopGastos(ctx,cfg,d,t,g,base,n){
   if(n)n.innerText=`${ts.length} categoria${ts.length!==1?"s":""}`;
 }
 
-function _cFluxo(ctx,cfg,d,t,g,base,n){
-  const group=cfg.group||"mes";
+function _cFluxo(){}   // removido
+function _cResultado(){} // removido
+function _cRadar(){}   // removido
+function _cSaldos(){}  // removido
+
+/* ── 📊 BALANÇO POR MÊS — verde/vermelho por sobra mensal ── */
+function _cBalanco(ctx,d,t,g,base,n){
   const map={};
   d.forEach(i=>{
     if(!i.data)return;
-    let key;
-    if(group==="trimestre"){const[y,m]=i.data.split("-");key=`${y}-T${Math.ceil(parseInt(m)/3)}`;}
-    else key=i.data.substring(0,7);
-    if(!map[key])map[key]={e:0,s:0};
-    i.tipo==="Entrada"?map[key].e+=i.valor:map[key].s+=i.valor;
+    const m=i.data.substring(0,7);
+    if(!map[m])map[m]={e:0,s:0};
+    i.tipo==="Entrada"?map[m].e+=i.valor:map[m].s+=i.valor;
   });
   const keys=Object.keys(map).sort();
   if(!keys.length)return;
-  const labels=group==="trimestre"?keys:keys.map(k=>{const[y,m]=k.split("-");return new Date(+y,+m-1).toLocaleDateString("pt-BR",{month:"short",year:"2-digit"});});
-  charts.fluxo=new Chart(ctx,{type:"bar",data:{labels,datasets:[
-    {label:"Entradas",data:keys.map(k=>map[k].e),backgroundColor:"rgba(5,150,105,.75)",borderRadius:3,borderWidth:0},
-    {label:"Saídas",  data:keys.map(k=>map[k].s),backgroundColor:"rgba(220,38,38,.75)",borderRadius:3,borderWidth:0}
+  const saldos=keys.map(k=>+(map[k].e-map[k].s).toFixed(2));
+  const labels=keys.map(k=>{const[y,m]=k.split("-");return new Date(+y,+m-1).toLocaleDateString("pt-BR",{month:"short",year:"2-digit"});});
+  const cores=saldos.map(v=>v>=0?"rgba(5,150,105,.8)":"rgba(220,38,38,.8)");
+  const coresBorda=saldos.map(v=>v>=0?"#059669":"#dc2626");
+  charts.balanco=new Chart(ctx,{type:"bar",data:{labels,datasets:[{
+    label:"Saldo do mês",data:saldos,
+    backgroundColor:cores,borderColor:coresBorda,
+    borderWidth:1.5,borderRadius:5,borderSkipped:false
+  }]},options:{responsive:true,
+    scales:{
+      x:{grid:{color:g},ticks:{color:t,font:{family:"Plus Jakarta Sans",size:9}}},
+      y:{grid:{color:g},ticks:{color:t,font:{family:"Plus Jakarta Sans",size:9},
+          callback:v=>"R$"+(Math.abs(v)>=1000?(v/1000).toFixed(1)+"k":v)},
+        afterDataLimits:ax=>{const mx=Math.max(Math.abs(ax.min),Math.abs(ax.max));ax.min=-mx;ax.max=mx;}
+      }
+    },
+    plugins:{...base,
+      tooltip:{callbacks:{label:c=>{const v=c.parsed.y;return` ${v>=0?"+ sobra":"- déficit"}: ${fmt(Math.abs(v))}`;}}}
+    }}});
+  const pos=saldos.filter(v=>v>=0).length;
+  const neg=saldos.length-pos;
+  if(n)n.innerText=`${pos} ${pos===1?"mês":"meses"} positivo${pos!==1?"s":""}${neg?` · ${neg} negativo${neg!==1?"s":""}`:""}`;
+}
+
+/* ── 🗓️ MAPA DE CALOR — grid de dias por semana ── */
+function _cCalor(ctx,d,t,g,base,n){
+  // Agrupa gastos por data
+  const mapD={};
+  d.filter(i=>i.tipo==="Saída"&&i.data).forEach(i=>{
+    mapD[i.data]=(mapD[i.data]||0)+i.valor;
+  });
+  const dates=Object.keys(mapD).sort();
+  if(!dates.length){if(n)n.innerText="Sem dados de saída.";return;}
+
+  // Pega os últimos 10 semanas (~70 dias)
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const SEMANAS=10;
+  // Começa na última domingo antes do primeiro dia
+  const inicio=new Date(hoje); inicio.setDate(inicio.getDate()-SEMANAS*7+1);
+  // Ajusta para domingo
+  const diaSem=inicio.getDay(); inicio.setDate(inicio.getDate()-diaSem);
+
+  const maxVal=Math.max(...Object.values(mapD),1);
+  const pri=getComputedStyle(document.documentElement).getPropertyValue("--primary").trim()||"#4f46e5";
+  const r=parseInt(pri.slice(1,3)||"4f",16);
+  const gv=parseInt(pri.slice(3,5)||"46",16);
+  const b=parseInt(pri.slice(5,7)||"e5",16);
+
+  // Monta datasets: 7 datasets (um por dia da semana), cada um com SEMANAS pontos
+  const diasNome=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+  const semLabels=Array.from({length:SEMANAS},(_,i)=>{
+    const dt=new Date(inicio); dt.setDate(dt.getDate()+i*7);
+    return dt.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"});
+  });
+
+  const datasets=diasNome.map((dia,dIdx)=>({
+    label:dia,
+    data:Array.from({length:SEMANAS},(_,sIdx)=>{
+      const dt=new Date(inicio); dt.setDate(dt.getDate()+sIdx*7+dIdx);
+      const iso=dt.toISOString().split("T")[0];
+      return mapD[iso]||0;
+    }),
+    backgroundColor:Array.from({length:SEMANAS},(_,sIdx)=>{
+      const dt=new Date(inicio); dt.setDate(dt.getDate()+sIdx*7+dIdx);
+      const iso=dt.toISOString().split("T")[0];
+      const v=mapD[iso]||0;
+      const alpha=v>0?0.12+0.78*(v/maxVal):0.06;
+      return `rgba(${r},${gv},${b},${alpha.toFixed(2)})`;
+    }),
+    borderColor:"rgba(0,0,0,0)",
+    borderWidth:0,
+    borderRadius:3,
+    barPercentage:0.85,
+    categoryPercentage:0.9,
+  }));
+
+  charts.calor=new Chart(ctx,{type:"bar",
+    data:{labels:semLabels,datasets},
+    options:{responsive:true,
+      scales:{
+        x:{stacked:false,grid:{color:g},ticks:{color:t,font:{family:"Plus Jakarta Sans",size:8},maxTicksLimit:10}},
+        y:{display:false,beginAtZero:true}
+      },
+      plugins:{...base,
+        legend:{display:true,position:"right",labels:{font:{family:"Plus Jakarta Sans",size:9},color:t,boxWidth:8,padding:6,usePointStyle:true}},
+        tooltip:{callbacks:{
+          title:c=>`${diasNome[c[0].datasetIndex]}, semana ${semLabels[c[0].dataIndex]}`,
+          label:c=>c.parsed.y>0?` Gastos: ${fmt(c.parsed.y)}`:` Sem gastos`
+        }}
+      }
+    }
+  });
+  const diasComGasto=Object.keys(mapD).length;
+  if(n)n.innerText=`${diasComGasto} dias com gastos nas últimas ${SEMANAS} semanas`;
+}
+
+/* ── 📅 COMPARATIVO DE MESES — últimos 6 meses lado a lado ── */
+function _cComparativo(ctx,d,t,g,base,n){
+  const map={};
+  d.forEach(i=>{
+    if(!i.data)return;
+    const m=i.data.substring(0,7);
+    if(!map[m])map[m]={e:0,s:0};
+    i.tipo==="Entrada"?map[m].e+=i.valor:map[m].s+=i.valor;
+  });
+  const keys=Object.keys(map).sort().slice(-6);
+  if(!keys.length)return;
+  const labels=keys.map(k=>{const[y,m]=k.split("-");return new Date(+y,+m-1).toLocaleDateString("pt-BR",{month:"short",year:"2-digit"});});
+  charts.comparativo=new Chart(ctx,{type:"bar",data:{labels,datasets:[
+    {label:"Entradas",data:keys.map(k=>map[k].e),backgroundColor:"rgba(5,150,105,.75)",borderColor:"#059669",borderWidth:1.5,borderRadius:4,borderSkipped:false},
+    {label:"Saídas",  data:keys.map(k=>map[k].s),backgroundColor:"rgba(220,38,38,.75)",  borderColor:"#dc2626",borderWidth:1.5,borderRadius:4,borderSkipped:false}
   ]},options:{responsive:true,interaction:{mode:"index",intersect:false},
-    scales:{x:{grid:{color:g},ticks:{color:t,font:{family:"Plus Jakarta Sans",size:9}}},y:{grid:{color:g},ticks:{color:t,font:{family:"Plus Jakarta Sans",size:9},callback:v=>"R$"+(Math.abs(v)>=1000?(v/1000).toFixed(1)+"k":v)},beginAtZero:true}},
-    plugins:{...base,legend:{display:true,position:"top",labels:{font:{family:"Plus Jakarta Sans",size:10},color:t,boxWidth:8,usePointStyle:true}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.parsed.y)}`}}}}});
-  if(n)n.innerText=`${keys.length} ${group==="trimestre"?"trimestre":"mês"}${keys.length!==1?"s":""}`;
+    scales:{
+      x:{grid:{color:g},ticks:{color:t,font:{family:"Plus Jakarta Sans",size:9}}},
+      y:{grid:{color:g},ticks:{color:t,font:{family:"Plus Jakarta Sans",size:9},maxTicksLimit:5,callback:v=>"R$"+(Math.abs(v)>=1000?(v/1000).toFixed(1)+"k":v)},beginAtZero:true}
+    },
+    plugins:{...base,
+      legend:{display:true,position:"top",labels:{font:{family:"Plus Jakarta Sans",size:10},color:t,boxWidth:8,usePointStyle:true}},
+      tooltip:{callbacks:{
+        afterBody:items=>{
+          if(items.length<2)return[];
+          const ent=items.find(i=>i.dataset.label==="Entradas")?.parsed.y||0;
+          const sai=items.find(i=>i.dataset.label==="Saídas")?.parsed.y||0;
+          const sal=ent-sai;
+          return[`─────────────`,` Saldo: ${sal>=0?"+":""}${fmt(sal)}`];
+        },
+        label:c=>` ${c.dataset.label}: ${fmt(c.parsed.y)}`
+      }}
+    }}});
+  if(n)n.innerText=`Comparativo dos últimos ${keys.length} ${keys.length===1?"mês":"meses"}`;
+}
+
+/* ── 🎯 SAÚDE FINANCEIRA — gauge de 0–100% ── */
+function _cSaude(ctx,d,t,g,base,n){
+  let totalE=0,totalS=0;
+  d.forEach(i=>i.tipo==="Entrada"?totalE+=i.valor:totalS+=i.valor);
+  if(!totalE){if(n)n.innerText="Sem entradas para calcular.";return;}
+
+  const taxa=Math.max(0,Math.min(1,(totalE-totalS)/totalE));
+  const pct=Math.round(taxa*100);
+  const cor=pct>=80?"#059669":pct>=60?"#0891b2":pct>=40?"#d97706":pct>=20?"#ea580c":"#dc2626";
+  const label=pct>=80?"Excelente":pct>=60?"Bom":pct>=40?"Regular":pct>=20?"Atenção":"Crítico";
+  const rest=100-pct;
+
+  // Plugin inline registrado antes de criar o chart
+  const gaugePlugin={
+    id:"gaugeText_"+Math.random().toString(36).slice(2),
+    afterDraw:function(chart){
+      const c=chart.ctx;
+      const{left,right,bottom}=chart.chartArea;
+      const cx=(left+right)/2, cy=bottom;
+      c.save();
+      c.font="800 30px sans-serif";
+      c.fillStyle=cor; c.textAlign="center"; c.textBaseline="bottom";
+      c.fillText(pct+"%",cx,cy-6);
+      c.font="600 11px sans-serif";
+      c.fillStyle=t||"#6b7280"; c.textBaseline="top";
+      c.fillText(label,cx,cy+4);
+      c.font="500 8px sans-serif";
+      c.fillStyle="#9ca3af";
+      c.fillText("0%",left+6,cy+4);
+      c.fillText("100%",right-6,cy+4);
+      c.restore();
+    }
+  };
+
+  charts.saude=new Chart(ctx,{
+    type:"doughnut",
+    data:{labels:[label,""],datasets:[{
+      data:[pct,rest,100],
+      backgroundColor:[cor,"rgba(229,231,235,.4)","rgba(0,0,0,0)"],
+      borderWidth:0,hoverOffset:0,circumference:180,rotation:270,cutout:"72%"
+    }]},
+    options:{responsive:true,plugins:{...base,legend:{display:false},tooltip:{enabled:false}}},
+    plugins:[gaugePlugin]
+  });
+
+  const sobra=totalE-totalS;
+  if(n)n.innerText=`Taxa de economia: ${pct}% — ${sobra>=0?"sobra de":"déficit de"} ${fmt(Math.abs(sobra))}`;
 }
 
 function _cPizzaCpf(ctx,cfg,d,t,base,n){
@@ -951,65 +1123,6 @@ function _cPizzaCpf(ctx,cfg,d,t,base,n){
   charts.pizzaCpf=new Chart(ctx,{type:"doughnut",data:{labels,datasets:[{data,backgroundColor:PALETTE.slice(0,labels.length),borderWidth:2,borderColor:"var(--card)",hoverOffset:6}]},
     options:{responsive:true,cutout:"60%",plugins:{...base,legend:{display:true,position:"bottom",labels:{font:{family:"Plus Jakarta Sans",size:9},color:t,boxWidth:7,padding:6,usePointStyle:true}},tooltip:{callbacks:{label:c=>` ${c.label}: ${fmt(c.parsed)}`}}}}});
   if(n)n.innerText=`${labels.length} CPF/CNPJ — ${tipo.toLowerCase()}`;
-}
-
-function _cResultado(ctx,d,t,g,base,n){
-  const map={};
-  d.forEach(i=>{if(!i.data)return;const m=i.data.substring(0,7);if(!map[m])map[m]=0;map[m]+=i.tipo==="Entrada"?i.valor:-i.valor;});
-  const keys=Object.keys(map).sort();if(!keys.length)return;
-  let acc=0;
-  const cum=keys.map(k=>{acc+=map[k];return+acc.toFixed(2);});
-  const labels=keys.map(k=>{const[y,m]=k.split("-");return new Date(+y,+m-1).toLocaleDateString("pt-BR",{month:"short",year:"2-digit"});});
-  const cor=cum[cum.length-1]>=0?"#4f46e5":"#dc2626";
-  charts.resultado=new Chart(ctx,{type:"line",data:{labels,datasets:[{
-    label:"Resultado Acumulado",data:cum,borderColor:cor,
-    backgroundColor:cor==="#4f46e5"?"rgba(79,70,229,.08)":"rgba(220,38,38,.06)",
-    fill:true,tension:.38,pointRadius:3,borderWidth:2.5,
-    pointBackgroundColor:cum.map(v=>v>=0?"#4f46e5":"#dc2626")
-  }]},options:{responsive:true,
-    scales:{x:{grid:{color:g},ticks:{color:t,font:{family:"Plus Jakarta Sans",size:9},maxTicksLimit:8}},y:{grid:{color:g},ticks:{color:t,font:{family:"Plus Jakarta Sans",size:9},maxTicksLimit:5,callback:v=>"R$"+(Math.abs(v)>=1000?(v/1000).toFixed(1)+"k":v)}}},
-    plugins:{...base,tooltip:{callbacks:{label:c=>` Acumulado: ${fmt(c.parsed.y)}`}}}}});
-  if(n)n.innerText=`Saldo acumulado em ${keys.length} ${keys.length===1?"mês":"meses"}`;
-}
-
-function _cRadar(ctx,cfg,d,t,base,n){
-  const tipo=cfg.tipo||"Saída";
-  const mc={};
-  d.filter(i=>i.tipo===tipo).forEach(i=>{mc[i.cat||"Outros"]=(mc[i.cat||"Outros"]||0)+i.valor;});
-  const cats=Object.keys(mc).sort((a,b)=>mc[b]-mc[a]).slice(0,8);
-  if(!cats.length){if(n)n.innerText="Sem dados.";return;}
-  const cor=tipo==="Entrada"?"rgba(5,150,105":"rgba(220,38,38";
-  charts.radar=new Chart(ctx,{type:"radar",data:{labels:cats,datasets:[{
-    label:tipo,data:cats.map(k=>mc[k]),
-    backgroundColor:`${cor},.15)`,borderColor:`${cor},1)`,
-    pointBackgroundColor:`${cor},1)`,borderWidth:2,pointRadius:3
-  }]},options:{responsive:true,
-    scales:{r:{grid:{color:g},ticks:{color:t,font:{family:"Plus Jakarta Sans",size:8},backdropColor:"transparent",maxTicksLimit:4,callback:v=>"R$"+(Math.abs(v)>=1000?(v/1000).toFixed(1)+"k":v)},pointLabels:{color:t,font:{family:"Plus Jakarta Sans",size:9,weight:"600"}},beginAtZero:true}},
-    plugins:{...base,tooltip:{callbacks:{label:c=>` ${fmt(c.parsed.r)}`}}}}});
-  if(n)n.innerText=`${cats.length} categorias — ${tipo.toLowerCase()}`;
-}
-
-function _cSaldos(ctx,d,t,g,base,n){
-  const dates=d.map(i=>i.data).filter(Boolean).sort();
-  if(!dates.length)return;
-  const months=new Set(dates.map(dt=>dt.substring(0,7)));
-  const byDay=months.size<=3;
-  const map={};
-  d.forEach(i=>{
-    if(!i.data)return;
-    const key=byDay?i.data:i.data.substring(0,7);
-    if(!map[key])map[key]={e:0,s:0};
-    i.tipo==="Entrada"?map[key].e+=i.valor:map[key].s+=i.valor;
-  });
-  const keys=Object.keys(map).sort();
-  const labels=byDay?keys.map(k=>{const[y,m,dy]=k.split("-");return`${dy}/${m}`;}):keys.map(k=>{const[y,m]=k.split("-");return new Date(+y,+m-1).toLocaleDateString("pt-BR",{month:"short",year:"2-digit"});});
-  charts.saldos=new Chart(ctx,{type:"line",data:{labels,datasets:[
-    {label:"Entradas",data:keys.map(k=>map[k].e),borderColor:"#059669",backgroundColor:"rgba(5,150,105,.07)",fill:true,tension:.3,pointRadius:byDay?2:3,borderWidth:2},
-    {label:"Saídas",  data:keys.map(k=>map[k].s),borderColor:"#dc2626",backgroundColor:"rgba(220,38,38,.05)",fill:true,tension:.3,pointRadius:byDay?2:3,borderWidth:2}
-  ]},options:{responsive:true,interaction:{mode:"index",intersect:false},
-    scales:{x:{grid:{color:g},ticks:{color:t,font:{family:"Plus Jakarta Sans",size:9},maxTicksLimit:byDay?15:12}},y:{grid:{color:g},ticks:{color:t,font:{family:"Plus Jakarta Sans",size:9},maxTicksLimit:5,callback:v=>"R$"+(Math.abs(v)>=1000?(v/1000).toFixed(1)+"k":v)},beginAtZero:true}},
-    plugins:{...base,legend:{display:true,position:"top",labels:{font:{family:"Plus Jakarta Sans",size:10},color:t,boxWidth:8,usePointStyle:true}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.parsed.y)}`}}}}});
-  if(n)n.innerText=byDay?`Por dia — ${keys.length} dias`:`Por mês — ${keys.length} meses`;
 }
 
 /* ── REFRESH ── */
