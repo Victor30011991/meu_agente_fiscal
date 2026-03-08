@@ -1136,11 +1136,11 @@ function exportPDF() {
 
         // Forma diagonal principal
         doc.setFillColor(...C.pri);
-        doc.triangle(0,0, 85,0, 0,60, "F");
+        doc.lines([[85,0],[70,52],[-70,0],[0,-52]],0,0,null,"F");
 
         // Forma diagonal clara (efeito sobreposição)
         doc.setFillColor(...priLRgb);
-        doc.triangle(75,0, 100,0, 20,60, "F");
+        doc.lines([[25,0],[25,52],[-25,0],[0,-52]],75,0,null,"F");
 
         // Logo dentro do triângulo
         doc.setFontSize(16); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
