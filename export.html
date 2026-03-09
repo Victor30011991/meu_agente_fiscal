@@ -1078,58 +1078,84 @@ function exportPDF() {
     try {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF("p", "mm", "a4");
-      const W = 210, H = 297, M = 14, cW = W - M * 2;
+      const W = 210, H = 297, M = 13, cW = W - M * 2;
       let y = 0;
 
-      // ── Parâmetros da URL ──────────────────────────────────────
-      const urlP       = new URLSearchParams(window.location.search);
-      const pdfStyle   = urlP.get("style")  || db.pdfConfig?.[perfil]?.style || "clean";
-      const showPeriodo= (urlP.get("periodo")||"1") !== "0";
-      const showQtd    = (urlP.get("qtd")   ||"1") !== "0";
+      // ── URL params ────────────────────────────────────────────
+      const urlP        = new URLSearchParams(window.location.search);
+      const pdfStyle    = urlP.get("style") || db.pdfConfig?.[perfil]?.style || "clean";
+      const showPeriodo = (urlP.get("periodo")||"1") !== "0";
+      const showQtd     = (urlP.get("qtd")   ||"1") !== "0";
 
-      // ── Cores do tema ─────────────────────────────────────────
+      // ── Cores ─────────────────────────────────────────────────
       let themeHex = decodeURIComponent(urlP.get("color")||"") || "#4f46e5";
       if (!themeHex.startsWith("#")) themeHex = "#4f46e5";
-      const hR = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16));
+      const hR      = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16));
       const lighten = (rgb,f) => rgb.map(c => Math.round(c+(255-c)*f));
       const darken  = (rgb,f) => rgb.map(c => Math.round(c*f));
       const priRgb  = hR(themeHex);
-      const priDRgb = darken(priRgb, .65);
-      const priLRgb = lighten(priRgb, .88);
-      const priBRgb = lighten(priRgb, .55);
+      const priDRgb = darken(priRgb,.62);
+      const priLRgb = lighten(priRgb,.90);
+      const priBRgb = lighten(priRgb,.58);
+      const priMRgb = lighten(priRgb,.45); // mid
 
       const C = {
-        pri:priRgb, priL:priLRgb, priB:priBRgb, priD:priDRgb,
-        ok:[5,150,105],   okL:[240,253,244],  okB:[167,243,208],
-        bad:[220,38,38],  badL:[254,242,242],  badB:[254,202,202],
-        warn:[217,119,6], warnL:[255,251,235], warnB:[253,230,138],
-        dark:[26,31,54],  gray:[107,114,128],  lg:[241,243,249],
-        card:[248,250,252], white:[255,255,255], sep:[220,224,235]
+        pri:priRgb, priL:priLRgb, priB:priBRgb, priD:priDRgb, priM:priMRgb,
+        ok:[5,150,105],   okL:[236,253,245],  okB:[110,231,183], okD:[3,105,74],
+        bad:[220,38,38],  badL:[254,242,242],  badB:[252,165,165], badD:[153,27,27],
+        warn:[217,119,6], warnL:[255,251,235], warnB:[253,211,77],
+        dark:[22,28,50],  darkM:[55,65,90],    gray:[120,128,148], grayL:[180,188,205],
+        lg:[242,244,250], lg2:[232,235,245],   card:[249,250,253], white:[255,255,255],
+        sep:[215,220,235]
       };
 
-      // ── Helpers ───────────────────────────────────────────────
+      // ── Formatadores ──────────────────────────────────────────
       const fmtM = v => "R$ " + Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
-      const fmtD = s => { if (!s) return "—"; const [y,m,d]=s.split("-"); return d&&m&&y?`${d}/${m}/${y}`:s; };
-      const pct  = (v,t) => t>0 ? (v/t*100).toFixed(1)+"%" : "—";
+      const fmtD = s => { if(!s)return"—"; const[a,m,d]=s.split("-"); return d?`${d}/${m}/${a}`:s; };
+      const pctS = (v,t) => t>0?(v/t*100).toFixed(1)+"%":"—";
 
-      // Quebra de página inteligente — só adiciona se realmente não cabe
+      // ── Página / espaço ───────────────────────────────────────
+      const FOOTER_H = 9;
       function novaPag(h) {
-        if (y + h > H - 12) { doc.addPage(); y = 16; }
+        if (y + h > H - FOOTER_H - 4) { doc.addPage(); y = 16; }
       }
 
-      // Separador de seção compacto
-      function secLabel(txt) {
-        novaPag(10);
-        doc.setFillColor(...C.priD); doc.rect(M, y, 2.5, 8, "F");
-        doc.setFontSize(8); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark);
-        doc.text(txt, M+6, y+6);
-        y += 11;
+      // ── Separador de seção PROFISSIONAL ───────────────────────
+      // Badge colorido com título + contagem opcional
+      function secHeader(titulo, badge) {
+        novaPag(14);
+        // Linha horizontal fina antes da seção
+        if (y > 20) {
+          doc.setDrawColor(...C.sep); doc.setLineWidth(0.3);
+          doc.line(M, y-3, W-M, y-3);
+          y += 1;
+        }
+        // Barra vertical + título
+        doc.setFillColor(...C.priD); doc.roundedRect(M, y, 3, 9, 1, 1, "F");
+        doc.setFontSize(8.5); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark);
+        doc.text(titulo, M+6, y+6.8);
+        // Badge lateral se fornecido
+        if (badge) {
+          const bw = doc.getTextWidth(badge) + 6;
+          const bx = M + 6 + doc.getTextWidth(titulo) + 4;
+          doc.setFillColor(...C.priL); doc.roundedRect(bx, y+1.5, bw, 6, 3, 3, "F");
+          doc.setFontSize(5.5); doc.setFont(undefined,"bold"); doc.setTextColor(...C.pri);
+          doc.text(badge, bx+3, y+5.8);
+        }
+        y += 12;
+      }
+
+      // ── Linha divisória leve (intra-seção) ────────────────────
+      function divider() {
+        doc.setDrawColor(...C.lg2); doc.setLineWidth(0.2);
+        doc.line(M, y, W-M, y);
+        y += 3;
       }
 
       // ══════════════════════════════════════════════════════════
-      // 1. CABEÇALHO
+      // CABEÇALHO
       // ══════════════════════════════════════════════════════════
-      const nomePessoa = (info.nome || perfil).substring(0, 44);
+      const nomePessoa = (info.nome || perfil).substring(0,44);
       const subDoc     = info.doc || "";
       const metaParts  = [];
       if (showPeriodo && periodo !== "—") metaParts.push(periodo);
@@ -1137,405 +1163,501 @@ function exportPDF() {
       const metaLine = metaParts.join("   ·   ");
 
       if (pdfStyle === "bold") {
-        doc.setFillColor(...C.pri);  doc.rect(0, 0, W, 48, "F");
-        doc.setFillColor(...C.priD); doc.rect(0, 35, W, 13, "F");
-        doc.setFillColor(255,255,255); doc.setGState(doc.GState({opacity:.16}));
-        doc.roundedRect(M, 9, 16, 16, 3, 3, "F");
-        doc.setGState(doc.GState({opacity:1}));
+        doc.setFillColor(...C.pri);  doc.rect(0,0,W,50,"F");
+        doc.setFillColor(...C.priD); doc.rect(0,37,W,13,"F");
+        // Logo box
+        doc.setFillColor(255,255,255); doc.setGState(doc.GState({opacity:.14}));
+        doc.roundedRect(M,10,16,16,3,3,"F"); doc.setGState(doc.GState({opacity:1}));
         doc.setFontSize(8); doc.setFont(undefined,"bold"); doc.setTextColor(...C.pri);
-        doc.text("Fx", M+3.5, 19.5);
-        doc.setFontSize(16); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
-        doc.text(nomePessoa, M+21, 19);
+        doc.text("Fx", M+3.8, 20.5);
+        doc.setFontSize(17); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+        doc.text(nomePessoa, M+21, 20);
         doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(...lighten(priRgb,.5));
-        doc.text([subDoc,"Relatório Financeiro"].filter(Boolean).join("   ·   "), M+21, 26);
-        if (metaLine) { doc.setFontSize(6.5); doc.setTextColor(210,225,255); doc.text(metaLine, M, 44); }
-        doc.setFontSize(5.5); doc.setTextColor(...lighten(priDRgb,.3)); doc.text("FluxoPro v14", W-M, 44, {align:"right"});
-        y = 58;
+        doc.text([subDoc,"Relatório Financeiro"].filter(Boolean).join("   ·   "), M+21, 27);
+        if (metaLine) { doc.setFontSize(6.5); doc.setTextColor(210,225,255); doc.text(metaLine, M, 46); }
+        doc.setFontSize(5.5); doc.setTextColor(...lighten(priDRgb,.35)); doc.text("FluxoPro v14", W-M, 46, {align:"right"});
+        y = 60;
 
       } else if (pdfStyle === "diagonal") {
-        doc.setFillColor(245,246,250); doc.rect(0,0,W,56,"F");
-        doc.setFillColor(...C.pri); doc.lines([[85,0],[70,52],[-70,0],[0,-52]],0,0,null,"F");
-        doc.setFillColor(...priLRgb); doc.lines([[25,0],[25,52],[-25,0],[0,-52]],75,0,null,"F");
-        doc.setFontSize(14); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255); doc.text("Fx",M+2,22);
+        doc.setFillColor(244,245,250); doc.rect(0,0,W,58,"F");
+        doc.setFillColor(...C.pri); doc.lines([[88,0],[72,54],[-72,0],[0,-54]],0,0,null,"F");
+        doc.setFillColor(...priLRgb); doc.lines([[26,0],[26,54],[-26,0],[0,-54]],77,0,null,"F");
+        doc.setFontSize(14); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255); doc.text("Fx",M+2,23);
         doc.setFontSize(6); doc.setFont(undefined,"normal"); doc.setTextColor(...lighten(priRgb,.6));
-        doc.text("FluxoPro",M+2,29); doc.text("v14",M+2,34);
-        doc.setFontSize(15); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark); doc.text(nomePessoa,108,20);
+        doc.text("FluxoPro",M+2,30); doc.text("v14",M+2,35);
+        doc.setFontSize(16); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark); doc.text(nomePessoa,108,21);
         doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-        doc.text([subDoc,"Relatório Financeiro"].filter(Boolean).join("   ·   "),108,28);
-        doc.setFillColor(...priLRgb); doc.rect(0,46,W,10,"F");
-        doc.setFillColor(...C.pri);   doc.rect(0,46,W,0.7,"F");
-        if (metaLine) { doc.setFontSize(6.5); doc.setFont(undefined,"normal"); doc.setTextColor(...C.pri); doc.text(metaLine,M,52.5); }
-        doc.setFontSize(5.5); doc.setTextColor(...C.gray); doc.text("FluxoPro v14",W-M,52.5,{align:"right"});
-        y = 62;
+        doc.text([subDoc,"Relatório Financeiro"].filter(Boolean).join("   ·   "),108,29);
+        doc.setFillColor(...priLRgb); doc.rect(0,47,W,11,"F");
+        doc.setFillColor(...C.pri); doc.rect(0,47,W,0.7,"F");
+        if (metaLine) { doc.setFontSize(6.5); doc.setFont(undefined,"normal"); doc.setTextColor(...C.pri); doc.text(metaLine,M,54); }
+        doc.setFontSize(5.5); doc.setTextColor(...C.gray); doc.text("FluxoPro v14",W-M,54,{align:"right"});
+        y = 64;
 
       } else if (pdfStyle === "dark") {
-        doc.setFillColor(15,23,42); doc.rect(0,0,W,54,"F");
+        doc.setFillColor(15,23,42); doc.rect(0,0,W,56,"F");
         doc.setFillColor(...C.pri); doc.rect(0,0,W,2.5,"F");
-        doc.setFillColor(...C.pri); doc.roundedRect(M,10,16,16,3,3,"F");
-        doc.setFontSize(8); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255); doc.text("Fx",M+3.5,20.5);
-        doc.setFontSize(16); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255); doc.text(nomePessoa,M+21,20);
+        doc.setFillColor(...C.pri); doc.roundedRect(M,11,16,16,3,3,"F");
+        doc.setFontSize(8); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255); doc.text("Fx",M+3.8,21.5);
+        doc.setFontSize(17); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255); doc.text(nomePessoa,M+21,21);
         doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(100,116,139);
-        doc.text([subDoc,"Relatório Financeiro"].filter(Boolean).join("   ·   "),M+21,28);
-        doc.setFillColor(...C.pri); doc.rect(0,40,W,0.7,"F");
-        doc.setFillColor(15,23,42); doc.rect(0,41,W,13,"F");
-        if (metaLine) { doc.setFontSize(6.5); doc.setTextColor(100,116,139); doc.text(metaLine,M,50); }
-        doc.setFontSize(5.5); doc.setTextColor(55,65,81); doc.text("FluxoPro v14",W-M,50,{align:"right"});
+        doc.text([subDoc,"Relatório Financeiro"].filter(Boolean).join("   ·   "),M+21,29);
+        doc.setFillColor(...C.pri); doc.rect(0,42,W,0.7,"F");
+        doc.setFillColor(15,23,42); doc.rect(0,42.7,W,13.3,"F");
+        if (metaLine) { doc.setFontSize(6.5); doc.setTextColor(100,116,139); doc.text(metaLine,M,52); }
+        doc.setFontSize(5.5); doc.setTextColor(55,65,81); doc.text("FluxoPro v14",W-M,52,{align:"right"});
         y = 62;
 
       } else {
-        // CLEAN (padrão)
-        doc.setFillColor(...C.lg); doc.rect(0,0,W,58,"F");
+        // CLEAN
+        doc.setFillColor(...C.lg); doc.rect(0,0,W,60,"F");
         doc.setFillColor(...C.pri); doc.rect(0,0,W,2.5,"F");
-        doc.setFillColor(...C.pri); doc.roundedRect(M,12,15,15,2.5,2.5,"F");
-        doc.setFontSize(8); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255); doc.text("Fx",M+3.5,22);
-        doc.setFontSize(17); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark); doc.text(nomePessoa,M+21,21);
-        doc.setFillColor(...C.pri); doc.rect(M+21,23.5,Math.min(nomePessoa.length*3.5,cW-21),1,"F");
+        doc.setFillColor(...C.pri); doc.roundedRect(M,12,16,16,2.5,2.5,"F");
+        doc.setFontSize(8.5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255); doc.text("Fx",M+3.8,22.5);
+        doc.setFontSize(18); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark); doc.text(nomePessoa,M+22,22);
+        doc.setFillColor(...C.pri); doc.rect(M+22,24.5,Math.min(doc.getTextWidth(nomePessoa),cW-22),1,"F");
         doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-        doc.text([subDoc,"Relatório Financeiro"].filter(Boolean).join("   ·   "),M+21,30);
-        doc.setFillColor(...priLRgb); doc.rect(0,43,W,15,"F");
-        doc.setFillColor(...C.pri);   doc.rect(0,43,W,0.7,"F");
-        if (metaLine) { doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(...C.pri); doc.text(metaLine,M,53); }
-        doc.setFontSize(5.5); doc.setTextColor(...C.gray); doc.text("FluxoPro v14",W-M,53,{align:"right"});
-        y = 66;
+        doc.text([subDoc,"Relatório Financeiro"].filter(Boolean).join("   ·   "),M+22,31);
+        doc.setFillColor(...priLRgb); doc.rect(0,44,W,16,"F");
+        doc.setFillColor(...C.pri); doc.rect(0,44,W,0.7,"F");
+        if (metaLine) { doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(...C.pri); doc.text(metaLine,M,54); }
+        doc.setFontSize(5.5); doc.setTextColor(...C.gray); doc.text("FluxoPro v14",W-M,54,{align:"right"});
+        y = 68;
       }
 
       // ══════════════════════════════════════════════════════════
-      // 2. BOXES DE CATEGORIA (Entradas / Saídas / Resultado)
+      // 1. RELATÓRIO POR CATEGORIA — 3 boxes SEMPRE visíveis
       // ══════════════════════════════════════════════════════════
-      const boxW = (cW - 6) / 3;
+      const boxW3 = (cW - 6) / 3;
 
-      function relBoxH(items) { return 10 + items.length * 6.5 + 10; }
+      function drawRelBox(xp, yp, titulo, corT, corTD, bg, border, items, total, fixH, inactive) {
+        // inactive = sem dados (entradas zeradas p.ex.)
+        const actualCor   = inactive ? C.gray    : corT;
+        const actualCorD  = inactive ? C.grayL   : corTD;
+        const actualBg    = inactive ? C.lg      : bg;
+        const actualBord  = inactive ? C.sep     : border;
 
-      function relBox(xp, yp, titulo, corT, bg, border, items, total, fixH) {
-        if (!items.length && total === 0) return; // não desenha box vazio
-        const bH = fixH;
-        doc.setFillColor(...bg); doc.roundedRect(xp, yp, boxW, bH, 2.5, 2.5, "F");
-        doc.setDrawColor(...border); doc.setLineWidth(.25); doc.roundedRect(xp, yp, boxW, bH, 2.5, 2.5, "S");
-        doc.setFillColor(...corT); doc.roundedRect(xp, yp, boxW, 7, 2.5, 0, "F");
-        doc.setFontSize(6); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
-        doc.text(titulo, xp + boxW/2, yp + 5, {align:"center"});
-        let ry = yp + 13;
-        items.forEach(([k,v]) => {
-          doc.setFontSize(6); doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
-          doc.text(k.substring(0,22), xp+3.5, ry);
-          doc.setFont(undefined,"bold"); doc.setTextColor(...corT);
-          const vt = fmtM(Math.abs(v));
-          doc.text(vt, xp+boxW-3 - doc.getTextWidth(vt), ry);
-          ry += 6.5;
-        });
-        // Linha + total
-        const lineY = yp + bH - 9;
-        doc.setDrawColor(...border); doc.setLineWidth(.35);
-        doc.line(xp+3, lineY, xp+boxW-3, lineY);
-        doc.setFontSize(7); doc.setFont(undefined,"bold"); doc.setTextColor(...corT);
-        const tt = fmtM(Math.abs(total));
-        doc.text("Total", xp+3.5, lineY+6);
-        doc.text(tt, xp+boxW-3 - doc.getTextWidth(tt), lineY+6);
+        doc.setFillColor(...actualBg);
+        doc.roundedRect(xp, yp, boxW3, fixH, 2.5, 2.5, "F");
+        doc.setDrawColor(...actualBord); doc.setLineWidth(0.25);
+        doc.roundedRect(xp, yp, boxW3, fixH, 2.5, 2.5, "S");
+
+        // Faixa do título
+        doc.setFillColor(...(inactive ? C.lg2 : actualCor));
+        doc.roundedRect(xp, yp, boxW3, 8, 2.5, 0, "F");
+        doc.setFontSize(6); doc.setFont(undefined,"bold");
+        doc.setTextColor(inactive ? C.gray : [255,255,255]);
+        if (inactive) doc.setTextColor(...C.gray); else doc.setTextColor(255,255,255);
+        doc.text(titulo, xp + boxW3/2, yp+5.5, {align:"center"});
+
+        if (inactive) {
+          // Estado vazio elegante
+          doc.setFontSize(9); doc.setFont(undefined,"bold"); doc.setTextColor(...C.grayL);
+          doc.text("R$ 0,00", xp+boxW3/2, yp+fixH/2+3, {align:"center"});
+          doc.setFontSize(5.5); doc.setFont(undefined,"normal"); doc.setTextColor(...C.grayL);
+          doc.text("sem lançamentos", xp+boxW3/2, yp+fixH/2+8, {align:"center"});
+        } else {
+          let ry = yp + 14;
+          items.forEach(([k,v]) => {
+            doc.setFontSize(6); doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
+            doc.text(k.substring(0,22), xp+3.5, ry);
+            doc.setFont(undefined,"bold"); doc.setTextColor(...actualCor);
+            const vt = fmtM(Math.abs(v));
+            doc.text(vt, xp+boxW3-3.5 - doc.getTextWidth(vt), ry);
+            ry += 6.5;
+          });
+          // Linha + total
+          const lineY = yp + fixH - 10;
+          doc.setDrawColor(...actualBord); doc.setLineWidth(0.3);
+          doc.line(xp+3, lineY, xp+boxW3-3, lineY);
+          doc.setFontSize(7); doc.setFont(undefined,"bold"); doc.setTextColor(...actualCor);
+          const tt = fmtM(Math.abs(total));
+          doc.text("Total", xp+3.5, lineY+7);
+          doc.text(tt, xp+boxW3-3.5 - doc.getTextWidth(tt), lineY+7);
+        }
       }
 
-      // Calcula altura unificada dos 3 boxes
-      const itensRes = [["Total entradas",totalEnt],["(–) Saídas",-totalSai],["Margem",resultado]];
-      const bH = Math.max(relBoxH(topEnt), relBoxH(topSai), relBoxH(itensRes));
-      novaPag(bH + 14);
-      secLabel("Relatório por Categoria");
-      relBox(M,             y, "ENTRADAS (GANHOS)", C.ok,  C.okL,  C.okB,  topEnt, totalEnt, bH);
-      relBox(M+boxW+3,      y, "SAÍDAS (GASTOS)",   C.bad, C.badL, C.badB, topSai, totalSai, bH);
-      relBox(M+(boxW+3)*2,  y, "RESULTADO LÍQUIDO",
-        resultado>=0?C.pri:C.bad, C.priL, C.priB, itensRes, resultado, bH);
-      y += bH + 8;
+      const itensRes = [["Total entradas",totalEnt],["(–) Saídas",-totalSai],["Resultado",resultado]];
+      function relBoxH(items) { return 14 + items.length*6.5 + 12; }
+      const fixH = Math.max(relBoxH(topEnt), relBoxH(topSai), relBoxH(itensRes), 45);
+
+      secHeader("Relatório por Categoria",
+        `↑ ${fmtM(totalEnt)}  ↓ ${fmtM(totalSai)}`);
+
+      drawRelBox(M,              y, "ENTRADAS (GANHOS)",  C.ok,  C.okD,  C.okL,  C.okB,  topEnt, totalEnt, fixH, totalEnt===0);
+      drawRelBox(M+boxW3+3,      y, "SAÍDAS (GASTOS)",    C.bad, C.badD, C.badL, C.badB, topSai, totalSai, fixH, totalSai===0);
+      drawRelBox(M+(boxW3+3)*2,  y, "RESULTADO LÍQUIDO",
+        resultado>=0?C.ok:C.bad, resultado>=0?C.okD:C.badD,
+        resultado>=0?C.okL:C.badL, resultado>=0?C.okB:C.badB,
+        itensRes, resultado, fixH, false);
+      y += fixH + 10;
 
       // ══════════════════════════════════════════════════════════
-      // 3. ANÁLISE INTERPRETATIVA
+      // 2. ANÁLISE DO PERÍODO
       // ══════════════════════════════════════════════════════════
       const tickMedE = qtdEnt>0 ? totalEnt/qtdEnt : 0;
       const tickMedS = qtdSai>0 ? totalSai/qtdSai : 0;
       const concG    = mapacat[maiorG] ? (mapacat[maiorG]/totalSai*100).toFixed(1) : 0;
       const mesesU   = [...new Set(dadosRaw.map(l=>(l.data||"").substring(0,7)).filter(Boolean))].sort();
       const nM       = mesesU.length;
-      const mmEnt    = nM>0 ? totalEnt/nM : 0;
-      const mmSai    = nM>0 ? totalSai/nM : 0;
+      const mmEnt    = nM>0?totalEnt/nM:0;
+      const mmSai    = nM>0?totalSai/nM:0;
+      const saude    = resultado>0?"✓ POSITIVA":resultado<0?"⚠ NEGATIVA":"= NEUTRA";
+      const saudeCor = resultado>0?C.ok:resultado<0?C.bad:C.warn;
 
       const txts = [
-        `Período: ${dadosRaw.length} lançamentos (${qtdEnt} entradas / ${qtdSai} saídas) de ${fmtD(datas[0])} a ${fmtD(datas[datas.length-1])}, em ${nM} ${nM===1?"mês":"meses"}.`,
-        totalEnt>0 ? `Entradas: ${fmtM(totalEnt)} — média mensal ${fmtM(mmEnt)}, ticket médio ${fmtM(tickMedE)}. Principal receita: "${maiorE}" (${fmtM(catEntradas[maiorE]||0)} — ${pct(catEntradas[maiorE]||0,totalEnt)}).` : null,
-        totalSai>0 ? `Saídas: ${fmtM(totalSai)} — média mensal ${fmtM(mmSai)}, ticket médio ${fmtM(tickMedS)}. Maior gasto: "${maiorG}" (${fmtM(mapacat[maiorG]||0)} — ${concG}% das saídas)${topSai[1]?`, seguido por "${topSai[1][0]}" (${fmtM(topSai[1][1]||0)})`:""}.` : null,
-        `Resultado: ${fmtM(resultado)} — margem ${pct(resultado,totalEnt)}. Saúde financeira: ${resultado>0?"✓ POSITIVA":resultado<0?"⚠ NEGATIVA":"NEUTRA"}.`
-      ].filter(Boolean);
+        `Período: ${dadosRaw.length} lançamentos (${qtdEnt} entradas · ${qtdSai} saídas), de ${fmtD(datas[0])} a ${fmtD(datas[datas.length-1])}, em ${nM} ${nM===1?"mês":"meses"}.`,
+        totalEnt>0 ? `Entradas: ${fmtM(totalEnt)} | Média mensal ${fmtM(mmEnt)} | Ticket médio ${fmtM(tickMedE)}. Principal receita: "${maiorE}" (${fmtM(catEntradas[maiorE]||0)} — ${pctS(catEntradas[maiorE]||0,totalEnt)}).` : `Entradas: sem receitas registradas no período.`,
+        totalSai>0 ? `Saídas: ${fmtM(totalSai)} | Média mensal ${fmtM(mmSai)} | Ticket médio ${fmtM(tickMedS)}. Maior gasto: "${maiorG}" (${fmtM(mapacat[maiorG]||0)} — ${concG}%)${topSai[1]?`, seguido de "${topSai[1][0]}" (${fmtM(topSai[1][1]||0)})`:""}.` : `Saídas: sem gastos registrados no período.`,
+        `Resultado: ${fmtM(resultado)} | Margem ${pctS(resultado,totalEnt)} sobre entradas. Saúde financeira: ${saude}.`
+      ];
 
-      doc.setFontSize(7); doc.setFont(undefined,"normal");
-      let totalH = 6;
-      const splits = txts.map(t => { const s=doc.splitTextToSize(t,cW-10); totalH+=s.length*4.8+4; return s; });
-      novaPag(totalH+12);
-      secLabel("Análise do Período");
-      doc.setFillColor(...C.priL); doc.setDrawColor(...C.priB); doc.setLineWidth(.2);
-      doc.roundedRect(M, y, cW, totalH, 2.5, 2.5, "FD");
-      y += 5;
-      splits.forEach(lines => {
-        novaPag(lines.length*4.8+5);
-        doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
-        doc.text(lines, M+5, y);
-        y += lines.length*4.8+4;
+      doc.setFontSize(7);
+      let analH = 10;
+      const splits = txts.map(t => { const s=doc.splitTextToSize(t,cW-14); analH+=s.length*4.6+4; return s; });
+      novaPag(analH+14);
+      secHeader("Análise do Período");
+
+      // Card da análise com borda esquerda colorida
+      doc.setFillColor(...C.priL); doc.setDrawColor(...C.priB); doc.setLineWidth(0.2);
+      doc.roundedRect(M, y, cW, analH, 2.5, 2.5, "FD");
+      doc.setFillColor(...C.pri); doc.rect(M, y, 2.5, analH, "F"); // borda esquerda sólida
+      // Badge de saúde financeira
+      const sw = doc.getTextWidth(saude)+8;
+      doc.setFillColor(...saudeCor); doc.roundedRect(M+cW-sw-2, y+3, sw+2, 7, 3,3,"F");
+      doc.setFontSize(5.5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+      doc.text(saude, M+cW-sw/2-1, y+7.5, {align:"center"});
+
+      y += 7;
+      splits.forEach((lines, i) => {
+        novaPag(lines.length*4.6+6);
+        doc.setFontSize(6.8); doc.setFont(undefined, i===3?"bold":"normal");
+        if(i===3) doc.setTextColor(...saudeCor); else doc.setTextColor(...C.dark);
+        doc.text(lines, M+6, y);
+        y += lines.length*4.6+4;
       });
       y += 5;
 
       // ══════════════════════════════════════════════════════════
-      // 4. GRÁFICOS (apenas ativos)
+      // 3. GRÁFICOS (ativos)
       // ══════════════════════════════════════════════════════════
       if (activeCharts.length > 0) {
-        novaPag(18);
-        secLabel("Resumo Visual");
         const perRow = Math.min(activeCharts.length, 3);
-        const gW = perRow===1 ? cW*.65 : perRow===2 ? (cW-4)/2 : (cW-8)/3;
-        const gH = 50;
-        let rowY = y;
+        const gW = perRow===1?cW*.65:perRow===2?(cW-4)/2:(cW-8)/3;
+        const gH = 48;
+        // Estima espaço necessário para primeira fileira
+        novaPag(gH + 22);
+        secHeader("Resumo Visual — Gráficos", `${activeCharts.length} gráfico${activeCharts.length!==1?"s":""} ativo${activeCharts.length!==1?"s":""}`);
 
+        let rowY = y;
         activeCharts.forEach((cm, idx) => {
-          if (idx>0 && idx%3===0) { y = rowY+gH+10; rowY=y; novaPag(gH+12); }
+          if (idx>0 && idx%3===0) {
+            y = rowY+gH+10; rowY=y;
+            novaPag(gH+14);
+          }
           const xg = M + (idx%3)*(gW+4);
           const cv = document.getElementById(cm.canvasId);
           if (!cv) return;
-          const ratio = cv.height&&cv.width ? cv.height/cv.width : .65;
+          const ratio = cv.height&&cv.width?cv.height/cv.width:.65;
           const imgH  = Math.min(gH, +(gW*ratio).toFixed(1));
-          const imgY  = rowY+6+(gH-imgH)/2;
-          doc.setFillColor(250,251,253); doc.roundedRect(xg, rowY, gW, gH+6, 2.5, 2.5, "F");
-          doc.setDrawColor(...C.lg); doc.setLineWidth(.15); doc.roundedRect(xg, rowY, gW, gH+6, 2.5, 2.5, "S");
-          doc.setFontSize(5); doc.setFont(undefined,"bold"); doc.setTextColor(...C.gray);
-          doc.text(cm.pdfTitle, xg+gW/2, rowY+4.5, {align:"center"});
-          try { doc.addImage(cv.toDataURL("image/png",1),"PNG",xg+1,imgY,gW-2,imgH,undefined,"FAST"); } catch(e){}
+          const imgY  = rowY+8+(gH-imgH)/2;
+          // Card do gráfico com sombra simulada
+          doc.setFillColor(235,237,245); doc.roundedRect(xg+1, rowY+1, gW, gH+9, 2.5, 2.5, "F");
+          doc.setFillColor(250,251,254); doc.roundedRect(xg, rowY, gW, gH+8, 2.5, 2.5, "F");
+          doc.setDrawColor(...C.sep); doc.setLineWidth(0.15); doc.roundedRect(xg, rowY, gW, gH+8, 2.5, 2.5, "S");
+          // Faixa título gráfico
+          doc.setFillColor(...C.priL); doc.roundedRect(xg, rowY, gW, 7, 2.5, 0, "F");
+          doc.setFontSize(5); doc.setFont(undefined,"bold"); doc.setTextColor(...C.priD);
+          doc.text(cm.pdfTitle, xg+gW/2, rowY+5, {align:"center"});
+          try { doc.addImage(cv.toDataURL("image/png",1),"PNG",xg+1.5,imgY,gW-3,imgH,undefined,"FAST"); } catch(e){}
         });
-        y = rowY + gH + 14;
+        y = rowY + gH + 16;
       }
 
       // ══════════════════════════════════════════════════════════
-      // 5. EXTRATO POR CATEGORIA (tabela % global)
+      // 4. EXTRATO POR CATEGORIA
       // ══════════════════════════════════════════════════════════
       const catSaiOrd = Object.entries(mapacat).sort((a,b)=>b[1]-a[1]);
       const catEntOrd = Object.entries(catEntradas).sort((a,b)=>b[1]-a[1]);
 
       if (catSaiOrd.length>0 || catEntOrd.length>0) {
         doc.addPage(); y = 16;
-        secLabel("Extrato por Categoria");
+        secHeader("Extrato por Categoria",
+          `${catSaiOrd.length+catEntOrd.length} categorias`);
 
-        const half = (cW-5)/2;
-        const ROW  = 6.5;
+        const half  = (cW-5)/2;
+        const ROW   = 6.2;
 
-        function tblCat(xB, yB, titulo, corA, bgA, itens, total) {
+        function tblCat(xB, yB, titulo, corA, corAD, bgA, itens, total) {
           if (!itens.length) return yB;
-          const altBox = 8 + 7 + itens.length*ROW + 8;
+          const altBox = 8+7+itens.length*ROW+10;
           novaPag(altBox+4);
-          // Título
-          doc.setFillColor(...bgA); doc.setDrawColor(...corA); doc.setLineWidth(.2);
-          doc.roundedRect(xB, yB, half, 8, 2, 2, "F");
-          doc.setFontSize(6); doc.setFont(undefined,"bold"); doc.setTextColor(...corA);
+
+          // Cabeçalho da tabela
+          doc.setFillColor(...corA); doc.roundedRect(xB, yB, half, 8, 2, 2, "F");
+          doc.setFontSize(6); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
           doc.text(titulo, xB+half/2, yB+5.5, {align:"center"});
           yB += 9;
-          // Cabeçalho cols
-          doc.setFillColor(...corA); doc.roundedRect(xB, yB, half, 6.5, 1, 1, "F");
-          doc.setFontSize(5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
-          doc.text("CATEGORIA",  xB+2,        yB+4.5);
-          doc.text("VALOR",      xB+half-34,  yB+4.5);
-          doc.text("%",          xB+half-18,  yB+4.5);
-          doc.text("▮",          xB+half-2,   yB+4.5, {align:"right"});
-          yB += 7.5;
-          const barMax = 14;
+
+          // Sub-cabeçalho colunas
+          doc.setFillColor(...bgA); doc.roundedRect(xB, yB, half, 7, 0, 0, "F");
+          doc.setFontSize(5); doc.setFont(undefined,"bold"); doc.setTextColor(...corAD);
+          doc.text("CATEGORIA",  xB+2.5,       yB+4.8);
+          doc.text("VALOR",      xB+half-38,   yB+4.8);
+          doc.text("%",          xB+half-20,   yB+4.8);
+          doc.text("DIST.",      xB+half-1.5,  yB+4.8, {align:"right"});
+          yB += 8;
+
+          const barMax = 16;
           itens.forEach(([cat,val],i) => {
             novaPag(ROW+1);
-            if (i%2===0) { doc.setFillColor(...C.card); doc.rect(xB, yB-1, half, ROW, "F"); }
+            // Alternado + linha separadora
+            if (i%2===0){
+              doc.setFillColor(...C.card); doc.rect(xB, yB-1, half, ROW, "F");
+            }
+            if (i>0){
+              doc.setDrawColor(...C.sep); doc.setLineWidth(0.1);
+              doc.line(xB+2, yB-1, xB+half-2, yB-1);
+            }
             const p = total>0?(val/total*100):0;
             const bW = (p/100)*barMax;
-            doc.setFontSize(5.5); doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
-            doc.text(cat.substring(0,20), xB+2, yB+3.5);
+            // Rank badge para top 3
+            if (i<3){
+              const medals=["#F59E0B","#94A3B8","#CD7C54"];
+              doc.setFillColor(...hR(medals[i])); doc.circle(xB+1.5, yB+ROW/2-1, 1.5, "F");
+              doc.setFontSize(4.5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+              doc.text(String(i+1), xB+1.5, yB+ROW/2+0.3, {align:"center"});
+            }
+            doc.setFontSize(5.8); doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
+            doc.text(cat.substring(0,21), xB+4.5, yB+4);
             doc.setFont(undefined,"bold"); doc.setTextColor(...corA);
-            doc.text(fmtM(val), xB+half-34, yB+3.5);
+            doc.text(fmtM(val), xB+half-38, yB+4);
             doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-            doc.text(p.toFixed(1)+"%", xB+half-18, yB+3.5);
-            doc.setFillColor(225,228,238); doc.roundedRect(xB+half-barMax-2, yB+1, barMax, 2.8, .8,.8,"F");
-            if (bW>0) { doc.setFillColor(...corA); doc.roundedRect(xB+half-barMax-2, yB+1, bW, 2.8, .8,.8,"F"); }
+            doc.text(p.toFixed(1)+"%", xB+half-20, yB+4);
+            // Barra de distribuição
+            doc.setFillColor(...C.lg2); doc.roundedRect(xB+half-barMax-1.5, yB+1.5, barMax, 2.5, 1,1,"F");
+            if (bW>0) {
+              doc.setFillColor(...corA);
+              doc.roundedRect(xB+half-barMax-1.5, yB+1.5, bW, 2.5, 1,1,"F");
+            }
             yB += ROW;
           });
-          // Total
-          doc.setDrawColor(...corA); doc.setLineWidth(.25);
-          doc.line(xB+2, yB+1, xB+half-2, yB+1); yB+=4;
-          doc.setFontSize(6); doc.setFont(undefined,"bold"); doc.setTextColor(...corA);
-          doc.text("TOTAL", xB+2, yB+3);
-          doc.text(fmtM(total), xB+half-34, yB+3);
-          doc.text("100%", xB+half-18, yB+3);
-          return yB+8;
+
+          // Linha total
+          doc.setDrawColor(...corA); doc.setLineWidth(0.4);
+          doc.line(xB+2, yB+1.5, xB+half-2, yB+1.5); yB+=5;
+          doc.setFillColor(...bgA); doc.roundedRect(xB, yB, half, 7, 0, 2, "F");
+          doc.setFontSize(6.5); doc.setFont(undefined,"bold"); doc.setTextColor(...corA);
+          doc.text("TOTAL", xB+3, yB+5);
+          doc.text(fmtM(total), xB+half-38, yB+5);
+          doc.text("100%", xB+half-20, yB+5);
+          return yB+11;
         }
 
-        const yL = tblCat(M,        y, "SAÍDAS POR CATEGORIA",   C.bad, C.badL, catSaiOrd, totalSai);
-        const yR = tblCat(M+half+5, y, "ENTRADAS POR CATEGORIA", C.ok,  C.okL,  catEntOrd, totalEnt);
+        const yL = tblCat(M,        y, "SAÍDAS POR CATEGORIA",   C.bad, C.badD, C.badL, catSaiOrd, totalSai);
+        const yR = tblCat(M+half+5, y, "ENTRADAS POR CATEGORIA", C.ok,  C.okD,  C.okL,  catEntOrd, totalEnt);
         y = Math.max(yL, yR) + 6;
       }
 
       // ══════════════════════════════════════════════════════════
-      // 6. EXTRATO POR CPF / CNPJ
+      // 5. EXTRATO POR CPF / CNPJ
       // ══════════════════════════════════════════════════════════
       const gruposPDF = {};
       dadosRaw.forEach(l => {
-        const d = (l.doc||"").trim();
-        if (!d) return;
-        if (!gruposPDF[d]) gruposPDF[d]=[];
+        const d=(l.doc||"").trim();
+        if(!d) return;
+        if(!gruposPDF[d]) gruposPDF[d]=[];
         gruposPDF[d].push(l);
       });
       const docsListPDF = Object.keys(gruposPDF).sort();
 
-      if (docsListPDF.length>0) {
-        const CW2 = [7,18,14,38,28,56]; // #, Data, Tipo, Cat, Valor, Obs
+      if (docsListPDF.length > 0) {
+        const RH2 = 6;
+        // Larguras: #5 | Data16 | Tipo13 | Cat36 | Valor25 | Obs(restante)
+        const CW2 = [5,16,13,36,25,89]; // soma=184=cW
         const CX2 = CW2.reduce((a,w,i)=>{a.push(i===0?M:a[i-1]+CW2[i-1]);return a;},[]);
-        const RH2 = 6.5;
+
+        // CPFs pequenos (≤4 lanç.) tentam caber sem nova página forçada
+        // CPFs grandes sempre iniciam nova página
+        let primeiroGrupo = true;
 
         docsListPDF.forEach(cpfDoc => {
-          doc.addPage(); y = 16;
           const lancs = gruposPDF[cpfDoc].slice().sort((a,b)=>(a.data||"").localeCompare(b.data||""));
+          const altEstimada = 18+20+10+8+(lancs.length*RH2)+14;
+          const pequeno = lancs.length <= 4;
+
+          if (primeiroGrupo) {
+            doc.addPage(); y=16;
+            secHeader("Extrato por CPF / CNPJ", `${docsListPDF.length} CPF${docsListPDF.length!==1?"s":""} / CNPJ`);
+            primeiroGrupo = false;
+          } else if (!pequeno || y+altEstimada > H-FOOTER_H-10) {
+            doc.addPage(); y=16;
+          } else {
+            // Divisória entre CPFs pequenos na mesma página
+            y += 4;
+            doc.setDrawColor(...C.sep); doc.setLineWidth(0.3);
+            doc.line(M, y, W-M, y); y+=4;
+          }
+
           let dEnt=0, dSai=0;
-          lancs.forEach(l => {
-            const v=Number(l.valor||0);
-            if (ehEntrada(l.tipo)) dEnt+=v; else dSai+=v;
-          });
+          lancs.forEach(l=>{const v=Number(l.valor||0); if(ehEntrada(l.tipo))dEnt+=v; else dSai+=v;});
           const dRes=dEnt-dSai;
 
-          // Cabeçalho CPF
-          doc.setFillColor(...C.priD); doc.rect(0,y-2,W,14,"F");
-          doc.setFillColor(...C.pri);  doc.rect(0,y+9,W,3,"F");
+          // Cabeçalho CPF — estilo profissional
+          doc.setFillColor(...C.priD); doc.roundedRect(M, y, cW, 14, 2.5, 2.5, "F");
+          doc.setFillColor(...C.pri);  doc.roundedRect(M, y+10, cW, 4, 0, 2.5, "F");
+          // Ícone CPF
+          doc.setFillColor(...priMRgb); doc.circle(M+7, y+7, 5, "F");
+          doc.setFontSize(6); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+          doc.text("ID", M+7, y+8, {align:"center"});
           doc.setFontSize(10); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
-          doc.text(cpfDoc, M, y+7);
-          doc.setFontSize(6.5); doc.setFont(undefined,"normal"); doc.setTextColor(200,215,255);
-          doc.text(`${lancs.length} lançamento${lancs.length!==1?"s":""}  ·  ${fmtD(lancs[0]?.data)} a ${fmtD(lancs[lancs.length-1]?.data)}`, M, y+12);
+          doc.text(cpfDoc, M+16, y+8);
+          doc.setFontSize(6); doc.setFont(undefined,"normal"); doc.setTextColor(...lighten(priDRgb,.4));
+          doc.text(`${lancs.length} lançamento${lancs.length!==1?"s":""}  ·  ${fmtD(lancs[0]?.data)} a ${fmtD(lancs[lancs.length-1]?.data)}`, M+16, y+12);
           y += 18;
 
-          // KPIs compactos
+          // KPIs compactos inline (3 badges em linha)
           const kCW=(cW-6)/3;
-          [{l:"ENTRADAS",v:fmtM(dEnt),s:lancs.filter(l=>ehEntrada(l.tipo)).length+" lanç.",bg:C.okL,bo:C.okB,ac:C.ok,tx:C.ok},
-           {l:"SAÍDAS",  v:fmtM(dSai),s:lancs.filter(l=>ehSaida(l.tipo)).length+" lanç.", bg:C.badL,bo:C.badB,ac:C.bad,tx:C.bad},
-           {l:"RESULTADO",v:fmtM(dRes),s:(dRes>=0?"+":"")+(dEnt>0?(dRes/dEnt*100).toFixed(1):"0")+"% entradas",bg:C.priL,bo:C.priB,ac:C.pri,tx:dRes>=0?C.pri:C.bad}
+          [{l:"↑ ENTRADAS",v:fmtM(dEnt),bg:C.okL,bo:C.okB,ac:C.ok,tx:C.okD,inactive:dEnt===0},
+           {l:"↓ SAÍDAS",  v:fmtM(dSai),bg:C.badL,bo:C.badB,ac:C.bad,tx:C.badD,inactive:dSai===0},
+           {l:"= RESULTADO",v:fmtM(dRes),bg:dRes>=0?C.okL:C.badL,bo:dRes>=0?C.okB:C.badB,ac:dRes>=0?C.ok:C.bad,tx:dRes>=0?C.okD:C.badD,inactive:false}
           ].forEach((k,i)=>{
             const xk=M+i*(kCW+3);
-            doc.setFillColor(...k.bg); doc.roundedRect(xk,y,kCW,17,2.5,2.5,"F");
-            doc.setDrawColor(...k.bo); doc.setLineWidth(.2); doc.roundedRect(xk,y,kCW,17,2.5,2.5,"S");
-            doc.setFillColor(...k.ac); doc.roundedRect(xk,y,kCW,4.5,2.5,0,"F");
-            doc.setFontSize(5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
-            doc.text(k.l, xk+kCW/2, y+3.5, {align:"center"});
-            doc.setFontSize(8.5); doc.setFont(undefined,"bold"); doc.setTextColor(...k.tx);
-            doc.text(k.v, xk+kCW/2, y+11.5, {align:"center"});
-            doc.setFontSize(5.5); doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-            doc.text(k.s, xk+kCW/2, y+15.5, {align:"center"});
+            const bg = k.inactive ? C.lg : k.bg;
+            const ac = k.inactive ? C.sep : k.ac;
+            const tx = k.inactive ? C.gray : k.tx;
+            doc.setFillColor(...bg); doc.roundedRect(xk,y,kCW,15,2,2,"F");
+            doc.setDrawColor(...(k.inactive?C.sep:k.bo)); doc.setLineWidth(0.2); doc.roundedRect(xk,y,kCW,15,2,2,"S");
+            doc.setFillColor(...ac); doc.roundedRect(xk,y,kCW,4,2,0,"F");
+            doc.setFontSize(4.8); doc.setFont(undefined,"bold");
+            if(k.inactive) doc.setTextColor(...C.gray); else doc.setTextColor(255,255,255);
+            doc.text(k.l, xk+kCW/2, y+3.2, {align:"center"});
+            doc.setFontSize(k.inactive?7:8); doc.setFont(undefined,"bold"); doc.setTextColor(...tx);
+            doc.text(k.v, xk+kCW/2, y+11, {align:"center"});
           });
-          y += 22;
+          y += 19;
 
-          // Tabela de lançamentos
-          doc.setFillColor(...C.pri); doc.roundedRect(M,y,cW,6.5,1.5,1.5,"F");
-          doc.setFontSize(5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
-          doc.text("#",    CX2[0]+1,     y+4.5);
-          doc.text("DATA", CX2[1]+1,     y+4.5);
-          doc.text("TIPO", CX2[2]+1,     y+4.5);
-          doc.text("CATEGORIA", CX2[3]+1,y+4.5);
-          doc.text("VALOR", CX2[4]+CW2[4]-1.5, y+4.5, {align:"right"});
-          doc.text("OBSERVAÇÃO", CX2[5]+1,y+4.5);
-          y += 7.5;
+          // Cabeçalho tabela
+          doc.setFillColor(...C.pri); doc.roundedRect(M,y,cW,6,1.5,1.5,"F");
+          doc.setFontSize(4.8); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+          ["#","DATA","TIPO","CATEGORIA","VALOR","OBSERVAÇÃO"].forEach((t,i)=>{
+            const align = i===4?"right":"left";
+            const xpos  = i===4 ? CX2[4]+CW2[4]-1.5 : CX2[i]+1.5;
+            doc.text(t, xpos, y+4.2, {align});
+          });
+          y += 7;
 
           lancs.forEach((l,i)=>{
             novaPag(RH2+1);
-            if (i%2===0){doc.setFillColor(...C.card);doc.rect(M,y-1,cW,RH2,"F");}
-            doc.setDrawColor(...C.sep); doc.setLineWidth(0.1);
-            CX2.slice(1).forEach(x=>doc.line(x,y-1,x,y+RH2-1));
+            if(i%2===0){doc.setFillColor(...C.card);doc.rect(M,y-0.8,cW,RH2,"F");}
+            if(i>0){doc.setDrawColor(...C.sep);doc.setLineWidth(0.08);doc.line(M+1,y-0.8,M+cW-1,y-0.8);}
+            doc.setDrawColor(...C.lg2);doc.setLineWidth(0.08);
+            CX2.slice(1).forEach(x=>doc.line(x,y-0.8,x,y+RH2-0.8));
             const isE=ehEntrada(l.tipo);
-            doc.setFontSize(5.8);
-            doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-            doc.text(String(i+1), CX2[0]+1, y+4);
-            doc.setTextColor(...C.dark); doc.text(fmtD(l.data||""), CX2[1]+1, y+4);
-            doc.setFont(undefined,"bold"); doc.setTextColor(...(isE?C.ok:C.bad));
-            doc.text((l.tipo||"—").substring(0,8), CX2[2]+1, y+4);
+            doc.setFontSize(5.5);
+            doc.setFont(undefined,"normal"); doc.setTextColor(...C.grayL); doc.text(String(i+1),CX2[0]+1.5,y+3.8);
+            doc.setTextColor(...C.dark); doc.text(fmtD(l.data||""),CX2[1]+1.5,y+3.8);
+            doc.setFont(undefined,"bold"); doc.setTextColor(...(isE?C.okD:C.badD));
+            doc.text((l.tipo||"—").substring(0,7),CX2[2]+1.5,y+3.8);
             doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
-            doc.text((l.cat||"—").substring(0,22), CX2[3]+1, y+4);
+            doc.text((l.cat||"—").substring(0,22),CX2[3]+1.5,y+3.8);
             doc.setFont(undefined,"bold"); doc.setTextColor(...(isE?C.ok:C.bad));
-            doc.text(fmtM(l.valor), CX2[4]+CW2[4]-1.5, y+4, {align:"right"});
+            doc.text(fmtM(l.valor),CX2[4]+CW2[4]-1.5,y+3.8,{align:"right"});
             doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-            doc.text((l.obs||"—").substring(0,32), CX2[5]+1, y+4);
-            y += RH2;
+            doc.text((l.obs||"—").substring(0,44),CX2[5]+1.5,y+3.8);
+            y+=RH2;
           });
 
-          // Rodapé da tabela CPF
-          y += 2; novaPag(9);
-          doc.setFillColor(...C.priL); doc.setDrawColor(...C.priB); doc.setLineWidth(.2);
-          doc.roundedRect(M,y,cW,8,2,2,"FD");
-          doc.setFontSize(6); doc.setFont(undefined,"bold");
-          doc.setTextColor(...C.ok);  doc.text(`Entradas: ${fmtM(dEnt)}`, M+4, y+5.5);
-          doc.setTextColor(...C.bad); doc.text(`Saídas: ${fmtM(dSai)}`, M+60, y+5.5);
-          doc.setTextColor(...(dRes>=0?C.pri:C.bad)); doc.text(`Resultado: ${fmtM(dRes)}`, M+118, y+5.5);
-          y += 12;
+          // Rodapé mini da tabela CPF
+          y+=2; novaPag(8);
+          doc.setFillColor(...C.priL); doc.roundedRect(M,y,cW,7.5,1.5,1.5,"F");
+          doc.setDrawColor(...C.priB); doc.setLineWidth(0.2); doc.roundedRect(M,y,cW,7.5,1.5,1.5,"S");
+          doc.setFontSize(5.8); doc.setFont(undefined,"bold");
+          doc.setTextColor(...C.okD);  doc.text(`↑ ${fmtM(dEnt)}`, M+4, y+5.2);
+          doc.setTextColor(...C.badD); doc.text(`↓ ${fmtM(dSai)}`, M+65, y+5.2);
+          doc.setTextColor(...(dRes>=0?C.priD:C.badD)); doc.text(`= ${fmtM(dRes)}`, M+126, y+5.2);
+          y += 10;
         });
       }
 
       // ══════════════════════════════════════════════════════════
-      // 7. EXTRATO GERAL COMPLETO
+      // 6. EXTRATO GERAL
       // ══════════════════════════════════════════════════════════
-      doc.addPage(); y = 16;
-      secLabel("Extrato Geral de Lançamentos");
+      doc.addPage(); y=16;
+      secHeader("Extrato Geral de Lançamentos",
+        `${dadosRaw.length} lançamento${dadosRaw.length!==1?"s":""}`);
 
-      const CW3 = [7,18,26,14,34,26,37]; // #,Data,CPF,Tipo,Cat,Valor,Obs — soma=162=cW(182)? recalc
-      // cW = 182, soma CW3 = 7+18+26+14+34+26+37=162, falta 20 → redistribui
-      const CW3f= [7,18,28,14,36,26,53]; // soma = 182 ✓
-      const CX3 = CW3f.reduce((a,w,i)=>{a.push(i===0?M:a[i-1]+CW3f[i-1]);return a;},[]);
-      const RH3 = 6;
+      const RH3 = 5.8;
+      const CW3 = [5,16,26,13,34,24,66]; // soma=184=cW
+      const CX3 = CW3.reduce((a,w,i)=>{a.push(i===0?M:a[i-1]+CW3[i-1]);return a;},[]);
 
+      // Cabeçalho tabela
       doc.setFillColor(...C.pri); doc.roundedRect(M,y,cW,6.5,1.5,1.5,"F");
-      doc.setFontSize(5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
-      doc.text("#",          CX3[0]+1,         y+4.5);
-      doc.text("DATA",       CX3[1]+1,         y+4.5);
-      doc.text("CPF/CNPJ",   CX3[2]+1,         y+4.5);
-      doc.text("TIPO",       CX3[3]+1,         y+4.5);
-      doc.text("CATEGORIA",  CX3[4]+1,         y+4.5);
-      doc.text("VALOR",      CX3[5]+CW3f[5]-1, y+4.5, {align:"right"});
-      doc.text("OBSERVAÇÃO", CX3[6]+1,         y+4.5);
-      y += 7.5;
+      doc.setFontSize(4.8); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+      ["#","DATA","CPF/CNPJ","TIPO","CATEGORIA","VALOR","OBSERVAÇÃO"].forEach((t,i)=>{
+        const align = i===5?"right":"left";
+        const xpos  = i===5 ? CX3[5]+CW3[5]-1 : CX3[i]+1.5;
+        doc.text(t, xpos, y+4.5, {align});
+      });
+      y+=7.5;
 
-      const dadosPDF = [...dadosRaw].sort((a,b)=>(a.data||"").localeCompare(b.data||""));
+      const dadosPDF=[...dadosRaw].sort((a,b)=>(a.data||"").localeCompare(b.data||""));
       dadosPDF.forEach((l,idx)=>{
         novaPag(RH3+1);
-        if (idx%2===0){doc.setFillColor(...C.card);doc.rect(M,y-1,cW,RH3,"F");}
-        doc.setDrawColor(...C.sep); doc.setLineWidth(0.1);
-        CX3.slice(1).forEach(x=>doc.line(x,y-1,x,y+RH3-1));
+        if(idx%2===0){doc.setFillColor(...C.card);doc.rect(M,y-0.8,cW,RH3,"F");}
+        if(idx>0){doc.setDrawColor(...C.sep);doc.setLineWidth(0.08);doc.line(M+1,y-0.8,M+cW-1,y-0.8);}
+        doc.setDrawColor(...C.lg2);doc.setLineWidth(0.08);
+        CX3.slice(1).forEach(x=>doc.line(x,y-0.8,x,y+RH3-0.8));
         const isE=ehEntrada(l.tipo);
-        doc.setFontSize(5.5);
-        doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-        doc.text(String(idx+1), CX3[0]+1, y+4);
-        doc.setTextColor(...C.dark); doc.text(fmtD(l.data||""), CX3[1]+1, y+4);
-        doc.setTextColor(...C.gray); doc.text((l.doc||"—").substring(0,14), CX3[2]+1, y+4);
-        doc.setFont(undefined,"bold"); doc.setTextColor(...(isE?C.ok:C.bad));
-        doc.text((l.tipo||"—").substring(0,7), CX3[3]+1, y+4);
+        doc.setFontSize(5.3);
+        doc.setFont(undefined,"normal"); doc.setTextColor(...C.grayL); doc.text(String(idx+1),CX3[0]+1.5,y+3.8);
+        doc.setTextColor(...C.dark); doc.text(fmtD(l.data||""),CX3[1]+1.5,y+3.8);
+        doc.setTextColor(...C.gray); doc.text((l.doc||"—").substring(0,13),CX3[2]+1.5,y+3.8);
+        doc.setFont(undefined,"bold"); doc.setTextColor(...(isE?C.okD:C.badD));
+        doc.text((l.tipo||"—").substring(0,7),CX3[3]+1.5,y+3.8);
         doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
-        doc.text((l.cat||"—").substring(0,20), CX3[4]+1, y+4);
+        doc.text((l.cat||"—").substring(0,20),CX3[4]+1.5,y+3.8);
         doc.setFont(undefined,"bold"); doc.setTextColor(...(isE?C.ok:C.bad));
-        doc.text(fmtM(l.valor), CX3[5]+CW3f[5]-1, y+4, {align:"right"});
+        doc.text(fmtM(l.valor),CX3[5]+CW3[5]-1,y+3.8,{align:"right"});
         doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-        doc.text((l.obs||"—").substring(0,30), CX3[6]+1, y+4);
-        y += RH3;
+        doc.text((l.obs||"—").substring(0,38),CX3[6]+1.5,y+3.8);
+        y+=RH3;
       });
 
-      // Linha de total
-      y += 3; novaPag(11);
-      doc.setFillColor(...C.priD); doc.roundedRect(M,y,cW,10,2,2,"F");
+      // Linha de totais final — destaque profissional
+      y+=4; novaPag(13);
+      doc.setFillColor(...C.priD); doc.roundedRect(M,y,cW,12,2,2,"F");
+      doc.setFillColor(...priMRgb); doc.roundedRect(M,y,cW,12,2,2,"S");
       doc.setFontSize(6.5); doc.setFont(undefined,"bold");
-      doc.setTextColor(...C.okL);  doc.text(`↑ Entradas: ${fmtM(totalEnt)}`, M+4, y+4);
-      doc.setTextColor(...C.badL); doc.text(`↓ Saídas: ${fmtM(totalSai)}`, M+66, y+4);
-      doc.setTextColor(255,255,255); doc.text(`= Resultado: ${fmtM(resultado)}`, M+128, y+4);
-      doc.setFontSize(5.5); doc.setFont(undefined,"normal"); doc.setTextColor(...lighten(priDRgb,.4));
-      doc.text(`${dadosRaw.length} lançamentos`, M+4, y+8.5);
+      doc.setTextColor(...lighten(C.ok,.7)); doc.text(`↑ Entradas  ${fmtM(totalEnt)}`, M+5, y+5);
+      doc.setTextColor(...lighten(C.bad,.7)); doc.text(`↓ Saídas  ${fmtM(totalSai)}`, M+70, y+5);
+      const resTxt = `= Resultado  ${fmtM(resultado)}`;
+      doc.setTextColor(255,255,255); doc.text(resTxt, W-M-5-doc.getTextWidth(resTxt), y+5);
+      doc.setFontSize(5.2); doc.setFont(undefined,"normal"); doc.setTextColor(...lighten(priDRgb,.4));
+      doc.text(`${dadosRaw.length} lançamentos  ·  ${fmtD(datas[0])} a ${fmtD(datas[datas.length-1])}`, M+5, y+9.5);
 
       // ══════════════════════════════════════════════════════════
-      // RODAPÉ MINIMALISTA EM TODAS AS PÁGINAS
+      // RODAPÉ PROFISSIONAL EM TODAS AS PÁGINAS
       // ══════════════════════════════════════════════════════════
       const nPag = doc.internal.getNumberOfPages();
       for (let p=1; p<=nPag; p++) {
         doc.setPage(p);
-        // Linha fina do tema
-        doc.setFillColor(...C.pri); doc.rect(0, H-8, W, 0.6, "F");
-        // Fundo mínimo
-        doc.setFillColor(...C.lg); doc.rect(0, H-7.5, W, 7.5, "F");
+        // Fundo rodapé
+        doc.setFillColor(...C.lg); doc.rect(0, H-FOOTER_H, W, FOOTER_H, "F");
+        // Linha colorida no topo do rodapé
+        doc.setFillColor(...C.pri); doc.rect(0, H-FOOTER_H, W, 1, "F");
+        // Texto esquerda
         doc.setFontSize(5.5); doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-        doc.text("FluxoPro v14  ·  " + new Date().toLocaleDateString("pt-BR"), M, H-2.5);
-        doc.text((info.nome||perfil).substring(0,36) + "  ·  Página " + p + " de " + nPag, W-M, H-2.5, {align:"right"});
+        doc.text("FluxoPro v14  ·  " + new Date().toLocaleDateString("pt-BR"), M, H-2.8);
+        // Badge de página (lado direito)
+        const pagTxt = `${p} / ${nPag}`;
+        const bw = doc.getTextWidth(pagTxt) + 8;
+        doc.setFillColor(...C.pri); doc.roundedRect(W-M-bw, H-FOOTER_H+1.5, bw, 5, 2,2,"F");
+        doc.setFontSize(5.5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+        doc.text(pagTxt, W-M-bw/2, H-FOOTER_H+5, {align:"center"});
+        // Nome perfil
+        doc.setFontSize(5.5); doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
+        doc.text((info.nome||perfil).substring(0,40), W-M-bw-4, H-2.8, {align:"right"});
       }
 
       doc.save("fluxopro_" + perfil + "_" + Date.now() + ".pdf");
@@ -1548,6 +1670,7 @@ function exportPDF() {
     }
   }, 500);
 }
+
 
 
 /* ============================================================
