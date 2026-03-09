@@ -1078,598 +1078,514 @@ function exportPDF() {
     try {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF("p", "mm", "a4");
-      const W = 210, H = 297, M = 13, cW = W - M * 2;
+
+      // ── DIMENSÕES ─────────────────────────────────────────────
+      const W = 210, H = 297;
+      const ML = 16, MR = 16, MT = 0;   // margens
+      const cW = W - ML - MR;            // 178mm útil
       let y = 0;
 
-      // ── URL params ────────────────────────────────────────────
-      const urlP        = new URLSearchParams(window.location.search);
-      const pdfStyle    = urlP.get("style") || db.pdfConfig?.[perfil]?.style || "clean";
-      const showPeriodo = (urlP.get("periodo")||"1") !== "0";
-      const showQtd     = (urlP.get("qtd")   ||"1") !== "0";
+      // ── CORES ─────────────────────────────────────────────────
+      const urlP    = new URLSearchParams(window.location.search);
+      const pdfStyle= urlP.get("style") || db.pdfConfig?.[perfil]?.style || "clean";
+      const showMeta= (urlP.get("periodo")||"1")!=="0" || (urlP.get("qtd")||"1")!=="0";
 
-      // ── Cores ─────────────────────────────────────────────────
-      let themeHex = decodeURIComponent(urlP.get("color")||"") || "#4f46e5";
-      if (!themeHex.startsWith("#")) themeHex = "#4f46e5";
-      const hR      = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16));
-      const lighten = (rgb,f) => rgb.map(c => Math.round(c+(255-c)*f));
-      const darken  = (rgb,f) => rgb.map(c => Math.round(c*f));
-      const priRgb  = hR(themeHex);
-      const priDRgb = darken(priRgb,.62);
-      const priLRgb = lighten(priRgb,.90);
-      const priBRgb = lighten(priRgb,.58);
-      const priMRgb = lighten(priRgb,.45); // mid
+      let hex = decodeURIComponent(urlP.get("color")||"") || "#4f46e5";
+      if (!hex.startsWith("#")) hex = "#4f46e5";
 
-      const C = {
-        pri:priRgb, priL:priLRgb, priB:priBRgb, priD:priDRgb, priM:priMRgb,
-        ok:[5,150,105],   okL:[236,253,245],  okB:[110,231,183], okD:[3,105,74],
-        bad:[220,38,38],  badL:[254,242,242],  badB:[252,165,165], badD:[153,27,27],
-        warn:[217,119,6], warnL:[255,251,235], warnB:[253,211,77],
-        dark:[22,28,50],  darkM:[55,65,90],    gray:[120,128,148], grayL:[180,188,205],
-        lg:[242,244,250], lg2:[232,235,245],   card:[249,250,253], white:[255,255,255],
-        sep:[215,220,235]
+      const rgb  = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16));
+      const mix  = (c,w,t=255) => c.map(v => Math.round(v+(t-v)*w));
+      const dim  = (c,f) => c.map(v => Math.round(v*f));
+
+      const P    = rgb(hex);             // cor primária
+      const PL   = mix(P,.92);           // primária muito clara
+      const PM   = mix(P,.55);           // primária média
+      const PD   = dim(P,.60);           // primária escura
+
+      const G = {
+        ink:   [22, 27, 46],             // texto principal
+        sub:   [90, 98, 120],            // subtexto
+        mute:  [150,158,175],            // texto fraco
+        line:  [220,224,234],            // linhas/bordas
+        bg:    [247,248,251],            // fundo suave
+        card:  [252,253,255],            // fundo card
+        white: [255,255,255],
+        green: [5,150,105],
+        greenL:[236,253,245],
+        greenD:[3,100,72],
+        red:   [220,38,38],
+        redL:  [254,242,242],
+        redD:  [153,27,27],
       };
 
-      // ── Formatadores ──────────────────────────────────────────
-      const fmtM = v => "R$ " + Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
-      const fmtD = s => { if(!s)return"—"; const[a,m,d]=s.split("-"); return d?`${d}/${m}/${a}`:s; };
-      const pctS = (v,t) => t>0?(v/t*100).toFixed(1)+"%":"—";
+      // ── HELPERS ───────────────────────────────────────────────
+      const R  = v => "R$ "+Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+      const D  = s => { if(!s)return"--"; const[a,m,d]=s.split("-"); return d?`${d}/${m}/${a}`:s; };
+      const PCT= (v,t)=> t>0?(v/t*100).toFixed(1)+"%":"--";
+      const FH = 8;   // footer height
 
-      // ── Página / espaço ───────────────────────────────────────
-      const FOOTER_H = 9;
-      function novaPag(h) {
-        if (y + h > H - FOOTER_H - 4) { doc.addPage(); y = 16; }
+      function page() { doc.addPage(); y = MT+14; }
+      function fit(h) { if (y+h > H-FH-6) page(); }
+
+      // Linha horizontal sutil
+      function rule(x1, x2, yy, color=G.line, w=0.2) {
+        doc.setDrawColor(...color); doc.setLineWidth(w);
+        doc.line(x1, yy, x2, yy);
       }
 
-      // ── Separador de seção PROFISSIONAL ───────────────────────
-      // Badge colorido com título + contagem opcional
-      function secHeader(titulo, badge) {
-        novaPag(14);
-        // Linha horizontal fina antes da seção
-        if (y > 20) {
-          doc.setDrawColor(...C.sep); doc.setLineWidth(0.3);
-          doc.line(M, y-3, W-M, y-3);
-          y += 1;
+      // Label de seção: linha + texto
+      function sectionLabel(txt, sub) {
+        fit(14);
+        if (y > MT+20) { rule(ML, W-MR, y-4, G.line, 0.25); }
+        doc.setFillColor(...P); doc.rect(ML, y, 2, 8, "F");
+        doc.setFontSize(9); doc.setFont(undefined,"bold"); doc.setTextColor(...G.ink);
+        doc.text(txt, ML+6, y+6.2);
+        if (sub) {
+          doc.setFontSize(6); doc.setFont(undefined,"normal"); doc.setTextColor(...G.mute);
+          doc.text(sub, ML+6+doc.getTextWidth(txt)+3, y+6.2);
         }
-        // Barra vertical + título
-        doc.setFillColor(...C.priD); doc.roundedRect(M, y, 3, 9, 1, 1, "F");
-        doc.setFontSize(8.5); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark);
-        doc.text(titulo, M+6, y+6.8);
-        // Badge lateral se fornecido
-        if (badge) {
-          const bw = doc.getTextWidth(badge) + 6;
-          const bx = M + 6 + doc.getTextWidth(titulo) + 4;
-          doc.setFillColor(...C.priL); doc.roundedRect(bx, y+1.5, bw, 6, 3, 3, "F");
-          doc.setFontSize(5.5); doc.setFont(undefined,"bold"); doc.setTextColor(...C.pri);
-          doc.text(badge, bx+3, y+5.8);
-        }
-        y += 12;
-      }
-
-      // ── Linha divisória leve (intra-seção) ────────────────────
-      function divider() {
-        doc.setDrawColor(...C.lg2); doc.setLineWidth(0.2);
-        doc.line(M, y, W-M, y);
-        y += 3;
+        y += 13;
       }
 
       // ══════════════════════════════════════════════════════════
       // CABEÇALHO
       // ══════════════════════════════════════════════════════════
-      const nomePessoa = (info.nome || perfil).substring(0,44);
-      const subDoc     = info.doc || "";
-      const metaParts  = [];
-      if (showPeriodo && periodo !== "—") metaParts.push(periodo);
-      if (showQtd) metaParts.push(dadosRaw.length + " lançamentos");
-      const metaLine = metaParts.join("   ·   ");
+      const nome = (info.nome || perfil).substring(0,42);
+      const metaStr = [
+        (urlP.get("periodo")||"1")!=="0" && periodo!=="--" ? periodo : null,
+        (urlP.get("qtd")||"1")!=="0" ? `${dadosRaw.length} lancamentos` : null
+      ].filter(Boolean).join("   |   ");
 
       if (pdfStyle === "bold") {
-        doc.setFillColor(...C.pri);  doc.rect(0,0,W,50,"F");
-        doc.setFillColor(...C.priD); doc.rect(0,37,W,13,"F");
-        // Logo box
-        doc.setFillColor(255,255,255); doc.setGState(doc.GState({opacity:.14}));
-        doc.roundedRect(M,10,16,16,3,3,"F"); doc.setGState(doc.GState({opacity:1}));
-        doc.setFontSize(8); doc.setFont(undefined,"bold"); doc.setTextColor(...C.pri);
-        doc.text("Fx", M+3.8, 20.5);
-        doc.setFontSize(17); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
-        doc.text(nomePessoa, M+21, 20);
-        doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(...lighten(priRgb,.5));
-        doc.text([subDoc,"Relatório Financeiro"].filter(Boolean).join("   ·   "), M+21, 27);
-        if (metaLine) { doc.setFontSize(6.5); doc.setTextColor(210,225,255); doc.text(metaLine, M, 46); }
-        doc.setFontSize(5.5); doc.setTextColor(...lighten(priDRgb,.35)); doc.text("FluxoPro v14", W-M, 46, {align:"right"});
-        y = 60;
-
-      } else if (pdfStyle === "diagonal") {
-        doc.setFillColor(244,245,250); doc.rect(0,0,W,58,"F");
-        doc.setFillColor(...C.pri); doc.lines([[88,0],[72,54],[-72,0],[0,-54]],0,0,null,"F");
-        doc.setFillColor(...priLRgb); doc.lines([[26,0],[26,54],[-26,0],[0,-54]],77,0,null,"F");
-        doc.setFontSize(14); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255); doc.text("Fx",M+2,23);
-        doc.setFontSize(6); doc.setFont(undefined,"normal"); doc.setTextColor(...lighten(priRgb,.6));
-        doc.text("FluxoPro",M+2,30); doc.text("v14",M+2,35);
-        doc.setFontSize(16); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark); doc.text(nomePessoa,108,21);
-        doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-        doc.text([subDoc,"Relatório Financeiro"].filter(Boolean).join("   ·   "),108,29);
-        doc.setFillColor(...priLRgb); doc.rect(0,47,W,11,"F");
-        doc.setFillColor(...C.pri); doc.rect(0,47,W,0.7,"F");
-        if (metaLine) { doc.setFontSize(6.5); doc.setFont(undefined,"normal"); doc.setTextColor(...C.pri); doc.text(metaLine,M,54); }
-        doc.setFontSize(5.5); doc.setTextColor(...C.gray); doc.text("FluxoPro v14",W-M,54,{align:"right"});
-        y = 64;
+        doc.setFillColor(...P); doc.rect(0,0,W,52,"F");
+        doc.setFillColor(...PD); doc.rect(0,42,W,10,"F");
+        // logo
+        doc.setFillColor(255,255,255); doc.setGState(doc.GState({opacity:.12}));
+        doc.roundedRect(ML,11,15,15,3,3,"F"); doc.setGState(doc.GState({opacity:1}));
+        doc.setFontSize(7.5); doc.setFont(undefined,"bold"); doc.setTextColor(...P);
+        doc.text("Fx",ML+3.5,21);
+        // nome
+        doc.setFontSize(16); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+        doc.text(nome, ML+20, 21);
+        doc.setFontSize(6.5); doc.setFont(undefined,"normal"); doc.setTextColor(...mix(P,.5));
+        doc.text("Relatorio Financeiro", ML+20, 28);
+        if (metaStr) { doc.setFontSize(6); doc.setTextColor(200,220,255); doc.text(metaStr,ML,47); }
+        doc.setFontSize(5.5); doc.setTextColor(...mix(PD,.3)); doc.text("FluxoPro v14",W-MR,47,{align:"right"});
+        y = 62;
 
       } else if (pdfStyle === "dark") {
-        doc.setFillColor(15,23,42); doc.rect(0,0,W,56,"F");
-        doc.setFillColor(...C.pri); doc.rect(0,0,W,2.5,"F");
-        doc.setFillColor(...C.pri); doc.roundedRect(M,11,16,16,3,3,"F");
-        doc.setFontSize(8); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255); doc.text("Fx",M+3.8,21.5);
-        doc.setFontSize(17); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255); doc.text(nomePessoa,M+21,21);
-        doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(100,116,139);
-        doc.text([subDoc,"Relatório Financeiro"].filter(Boolean).join("   ·   "),M+21,29);
-        doc.setFillColor(...C.pri); doc.rect(0,42,W,0.7,"F");
-        doc.setFillColor(15,23,42); doc.rect(0,42.7,W,13.3,"F");
-        if (metaLine) { doc.setFontSize(6.5); doc.setTextColor(100,116,139); doc.text(metaLine,M,52); }
-        doc.setFontSize(5.5); doc.setTextColor(55,65,81); doc.text("FluxoPro v14",W-M,52,{align:"right"});
+        doc.setFillColor(14,20,38); doc.rect(0,0,W,52,"F");
+        doc.setFillColor(...P); doc.rect(0,0,W,2,"F");
+        doc.setFillColor(...P); doc.roundedRect(ML,11,15,15,3,3,"F");
+        doc.setFontSize(7.5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+        doc.text("Fx",ML+3.5,21);
+        doc.setFontSize(16); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+        doc.text(nome,ML+20,21);
+        doc.setFontSize(6.5); doc.setFont(undefined,"normal"); doc.setTextColor(90,105,130);
+        doc.text("Relatorio Financeiro",ML+20,28);
+        doc.setFillColor(...P); doc.rect(0,40,W,0.6,"F");
+        if (metaStr){ doc.setFontSize(6); doc.setTextColor(80,95,120); doc.text(metaStr,ML,48); }
+        doc.setFontSize(5.5); doc.setTextColor(50,60,80); doc.text("FluxoPro v14",W-MR,48,{align:"right"});
+        y = 62;
+
+      } else if (pdfStyle === "diagonal") {
+        doc.setFillColor(...G.bg); doc.rect(0,0,W,54,"F");
+        doc.setFillColor(...P); doc.lines([[80,0],[66,50],[-66,0],[0,-50]],0,0,null,"F");
+        doc.setFillColor(...PL); doc.lines([[22,0],[22,50],[-22,0],[0,-50]],72,0,null,"F");
+        doc.setFontSize(12); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255); doc.text("Fx",ML+2,21);
+        doc.setFontSize(5.8); doc.setFont(undefined,"normal"); doc.setTextColor(...mix(P,.6));
+        doc.text("FluxoPro",ML+2,28); doc.text("v14",ML+2,33);
+        doc.setFontSize(15); doc.setFont(undefined,"bold"); doc.setTextColor(...G.ink); doc.text(nome,105,20);
+        doc.setFontSize(6.5); doc.setFont(undefined,"normal"); doc.setTextColor(...G.sub);
+        doc.text("Relatorio Financeiro",105,27);
+        doc.setFillColor(...PL); doc.rect(0,44,W,10,"F");
+        doc.setFillColor(...P); doc.rect(0,44,W,0.6,"F");
+        if (metaStr){ doc.setFontSize(6); doc.setTextColor(...P); doc.text(metaStr,ML,50.5); }
+        doc.setFontSize(5.5); doc.setTextColor(...G.mute); doc.text("FluxoPro v14",W-MR,50.5,{align:"right"});
         y = 62;
 
       } else {
-        // CLEAN
-        doc.setFillColor(...C.lg); doc.rect(0,0,W,60,"F");
-        doc.setFillColor(...C.pri); doc.rect(0,0,W,2.5,"F");
-        doc.setFillColor(...C.pri); doc.roundedRect(M,12,16,16,2.5,2.5,"F");
-        doc.setFontSize(8.5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255); doc.text("Fx",M+3.8,22.5);
-        doc.setFontSize(18); doc.setFont(undefined,"bold"); doc.setTextColor(...C.dark); doc.text(nomePessoa,M+22,22);
-        doc.setFillColor(...C.pri); doc.rect(M+22,24.5,Math.min(doc.getTextWidth(nomePessoa),cW-22),1,"F");
-        doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-        doc.text([subDoc,"Relatório Financeiro"].filter(Boolean).join("   ·   "),M+22,31);
-        doc.setFillColor(...priLRgb); doc.rect(0,44,W,16,"F");
-        doc.setFillColor(...C.pri); doc.rect(0,44,W,0.7,"F");
-        if (metaLine) { doc.setFontSize(7); doc.setFont(undefined,"normal"); doc.setTextColor(...C.pri); doc.text(metaLine,M,54); }
-        doc.setFontSize(5.5); doc.setTextColor(...C.gray); doc.text("FluxoPro v14",W-M,54,{align:"right"});
-        y = 68;
+        // CLEAN — elegante, minimalista
+        doc.setFillColor(...G.bg); doc.rect(0,0,W,56,"F");
+        doc.setFillColor(...P); doc.rect(0,0,W,2,"F");
+        // Logo
+        doc.setFillColor(...P); doc.roundedRect(ML,12,14,14,2.5,2.5,"F");
+        doc.setFontSize(7); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+        doc.text("Fx",ML+3.5,21.5);
+        // Nome
+        doc.setFontSize(17); doc.setFont(undefined,"bold"); doc.setTextColor(...G.ink);
+        doc.text(nome, ML+19, 21.5);
+        // Linha acento sob nome
+        doc.setFillColor(...PM); doc.rect(ML+19, 23.5, Math.min(doc.getTextWidth(nome), cW-19), 0.8, "F");
+        doc.setFontSize(6.5); doc.setFont(undefined,"normal"); doc.setTextColor(...G.sub);
+        doc.text("Relatorio Financeiro", ML+19, 29);
+        // Faixa de meta
+        doc.setFillColor(...PL); doc.rect(0,42,W,14,"F");
+        doc.setFillColor(...P); doc.rect(0,42,W,0.6,"F");
+        if (metaStr) { doc.setFontSize(6.5); doc.setFont(undefined,"normal"); doc.setTextColor(...P); doc.text(metaStr,ML,51); }
+        doc.setFontSize(5.5); doc.setTextColor(...G.mute); doc.text("FluxoPro v14",W-MR,51,{align:"right"});
+        y = 64;
       }
 
       // ══════════════════════════════════════════════════════════
-      // 1. RELATÓRIO POR CATEGORIA — 3 boxes SEMPRE visíveis
+      // 1. PAINEL DE SALDOS — 3 cards leves
       // ══════════════════════════════════════════════════════════
-      const boxW3 = (cW - 6) / 3;
+      sectionLabel("Painel de Saldos");
 
-      function drawRelBox(xp, yp, titulo, corT, corTD, bg, border, items, total, fixH, inactive) {
-        // inactive = sem dados (entradas zeradas p.ex.)
-        const actualCor   = inactive ? C.gray    : corT;
-        const actualCorD  = inactive ? C.grayL   : corTD;
-        const actualBg    = inactive ? C.lg      : bg;
-        const actualBord  = inactive ? C.sep     : border;
+      const cardW = (cW-8)/3;
+      const cards = [
+        { label:"ENTRADAS", val:R(totalEnt), sub:`${qtdEnt} lancamento${qtdEnt!==1?"s":""}`,
+          accent:G.green, light:G.greenL, dark:G.greenD },
+        { label:"SAIDAS",   val:R(totalSai), sub:`${qtdSai} lancamento${qtdSai!==1?"s":""}`,
+          accent:G.red,   light:G.redL,   dark:G.redD },
+        { label:"RESULTADO", val:R(resultado), sub:PCT(resultado,totalEnt)+" sobre entradas",
+          accent:resultado>=0?G.green:G.red,
+          light: resultado>=0?G.greenL:G.redL,
+          dark:  resultado>=0?G.greenD:G.redD },
+      ];
 
-        doc.setFillColor(...actualBg);
-        doc.roundedRect(xp, yp, boxW3, fixH, 2.5, 2.5, "F");
-        doc.setDrawColor(...actualBord); doc.setLineWidth(0.25);
-        doc.roundedRect(xp, yp, boxW3, fixH, 2.5, 2.5, "S");
+      fit(28);
+      cards.forEach((c,i) => {
+        const x = ML + i*(cardW+4);
+        // Card fundo
+        doc.setFillColor(...c.light); doc.roundedRect(x,y,cardW,24,2.5,2.5,"F");
+        doc.setDrawColor(...c.accent); doc.setLineWidth(0.2); doc.roundedRect(x,y,cardW,24,2.5,2.5,"S");
+        // Barra topo
+        doc.setFillColor(...c.accent); doc.roundedRect(x,y,cardW,4.5,2.5,0,"F");
+        // Label
+        doc.setFontSize(5.5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+        doc.text(c.label, x+cardW/2, y+3.4, {align:"center"});
+        // Valor
+        doc.setFontSize(11); doc.setFont(undefined,"bold"); doc.setTextColor(...c.accent);
+        doc.text(c.val, x+cardW/2, y+14.5, {align:"center"});
+        // Sub
+        doc.setFontSize(5.5); doc.setFont(undefined,"normal"); doc.setTextColor(...G.mute);
+        doc.text(c.sub, x+cardW/2, y+20.5, {align:"center"});
+      });
+      y += 30;
 
-        // Faixa do título
-        doc.setFillColor(...(inactive ? C.lg2 : actualCor));
-        doc.roundedRect(xp, yp, boxW3, 8, 2.5, 0, "F");
-        doc.setFontSize(6); doc.setFont(undefined,"bold");
-        if (inactive) doc.setTextColor(...C.gray); else doc.setTextColor(255,255,255);
-        doc.text(titulo, xp + boxW3/2, yp+5.5, {align:"center"});
+      // ══════════════════════════════════════════════════════════
+      // 2. CATEGORIAS — tabela limpa
+      // ══════════════════════════════════════════════════════════
+      if (topEnt.length > 0 || topSai.length > 0) {
+        sectionLabel("Composicao por Categoria");
+        fit(10);
 
-        if (inactive) {
-          // Estado vazio elegante
-          doc.setFontSize(9); doc.setFont(undefined,"bold"); doc.setTextColor(...C.grayL);
-          doc.text("R$ 0,00", xp+boxW3/2, yp+fixH/2+3, {align:"center"});
-          doc.setFontSize(5.5); doc.setFont(undefined,"normal"); doc.setTextColor(...C.grayL);
-          doc.text("sem lançamentos", xp+boxW3/2, yp+fixH/2+8, {align:"center"});
-        } else {
-          let ry = yp + 14;
-          items.forEach(([k,v]) => {
-            doc.setFontSize(6); doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
-            doc.text(k.substring(0,22), xp+3.5, ry);
-            doc.setFont(undefined,"bold"); doc.setTextColor(...actualCor);
-            const vt = fmtM(Math.abs(v));
-            doc.text(vt, xp+boxW3-3.5 - doc.getTextWidth(vt), ry);
-            ry += 6.5;
+        const colW  = topEnt.length>0 && topSai.length>0 ? (cW-6)/2 : cW;
+        const ROW_C = 6;
+
+        function catTable(xB, yB, label, acC, ltC, items, total, tw) {
+          if (!items.length) return yB;
+
+          // Título da coluna
+          doc.setFontSize(6); doc.setFont(undefined,"bold"); doc.setTextColor(...acC);
+          doc.text(label, xB, yB+4.5);
+          doc.setFillColor(...acC); doc.rect(xB, yB+5.5, tw, 0.5, "F");
+          yB += 8;
+
+          // Header
+          doc.setFontSize(5); doc.setFont(undefined,"bold"); doc.setTextColor(...G.mute);
+          doc.text("CATEGORIA",    xB,       yB+3.5);
+          doc.text("VALOR",        xB+tw-44, yB+3.5);
+          doc.text("%",            xB+tw-22, yB+3.5);
+          doc.text("DISTR.",       xB+tw,    yB+3.5, {align:"right"});
+          rule(xB, xB+tw, yB+5, G.line, 0.2);
+          yB += 7;
+
+          const BAR = 16;
+          items.forEach(([cat,val],i) => {
+            fit(ROW_C+1);
+            if (i%2===0){ doc.setFillColor(...G.bg); doc.rect(xB,yB-0.8,tw,ROW_C,"F"); }
+            const p  = total>0 ? (val/total*100) : 0;
+            const bW = (p/100)*BAR;
+
+            doc.setFontSize(5.8); doc.setFont(undefined,"normal"); doc.setTextColor(...G.ink);
+            doc.text(cat.substring(0, tw>90?44:22), xB+0.5, yB+3.8);
+            doc.setFont(undefined,"bold"); doc.setTextColor(...acC);
+            doc.text(R(val), xB+tw-44, yB+3.8);
+            doc.setFont(undefined,"normal"); doc.setTextColor(...G.sub);
+            doc.text(p.toFixed(1)+"%", xB+tw-22, yB+3.8);
+            // barra
+            doc.setFillColor(...G.line); doc.roundedRect(xB+tw-BAR, yB+1.2, BAR, 2.5, 1,1,"F");
+            if (bW>0.5){ doc.setFillColor(...acC); doc.roundedRect(xB+tw-BAR, yB+1.2, bW, 2.5, 1,1,"F"); }
+            yB += ROW_C;
           });
-          // Linha + total
-          const lineY = yp + fixH - 10;
-          doc.setDrawColor(...actualBord); doc.setLineWidth(0.3);
-          doc.line(xp+3, lineY, xp+boxW3-3, lineY);
-          doc.setFontSize(7); doc.setFont(undefined,"bold"); doc.setTextColor(...actualCor);
-          const tt = fmtM(Math.abs(total));
-          doc.text("Total", xp+3.5, lineY+7);
-          doc.text(tt, xp+boxW3-3.5 - doc.getTextWidth(tt), lineY+7);
+
+          // Total
+          rule(xB, xB+tw, yB+1, acC, 0.3);
+          yB += 4;
+          doc.setFontSize(6.5); doc.setFont(undefined,"bold"); doc.setTextColor(...acC);
+          doc.text("Total", xB+0.5, yB+4);
+          doc.text(R(total), xB+tw-44, yB+4);
+          doc.text("100%", xB+tw-22, yB+4);
+          return yB+9;
+        }
+
+        if (topSai.length && topEnt.length) {
+          const yL = catTable(ML,           y, "SAIDAS", G.red,   G.redL,   topSai, totalSai, colW);
+          const yR = catTable(ML+colW+6,    y, "ENTRADAS", G.green, G.greenL, topEnt, totalEnt, colW);
+          y = Math.max(yL,yR)+4;
+        } else if (topSai.length) {
+          y = catTable(ML, y, "SAIDAS",   G.red,   G.redL,   topSai, totalSai, cW)+4;
+        } else {
+          y = catTable(ML, y, "ENTRADAS", G.green, G.greenL, topEnt, totalEnt, cW)+4;
         }
       }
 
-      const itensRes = [["Total entradas",totalEnt],["(–) Saídas",-totalSai],["Resultado",resultado]];
-      function relBoxH(items) { return 14 + items.length*6.5 + 12; }
-      const fixH = Math.max(relBoxH(topEnt), relBoxH(topSai), relBoxH(itensRes), 45);
-
-      secHeader("Relatório por Categoria",
-        `ENT ${fmtM(totalEnt)}  SAI ${fmtM(totalSai)}`);
-
-      drawRelBox(M,              y, "ENTRADAS (GANHOS)",  C.ok,  C.okD,  C.okL,  C.okB,  topEnt, totalEnt, fixH, totalEnt===0);
-      drawRelBox(M+boxW3+3,      y, "SAÍDAS (GASTOS)",    C.bad, C.badD, C.badL, C.badB, topSai, totalSai, fixH, totalSai===0);
-      drawRelBox(M+(boxW3+3)*2,  y, "RESULTADO LÍQUIDO",
-        resultado>=0?C.ok:C.bad, resultado>=0?C.okD:C.badD,
-        resultado>=0?C.okL:C.badL, resultado>=0?C.okB:C.badB,
-        itensRes, resultado, fixH, false);
-      y += fixH + 10;
-
       // ══════════════════════════════════════════════════════════
-      // 2. ANÁLISE DO PERÍODO
+      // 3. ANALISE DO PERIODO — texto compacto
       // ══════════════════════════════════════════════════════════
-      const tickMedE = qtdEnt>0 ? totalEnt/qtdEnt : 0;
-      const tickMedS = qtdSai>0 ? totalSai/qtdSai : 0;
-      const concG    = mapacat[maiorG] ? (mapacat[maiorG]/totalSai*100).toFixed(1) : 0;
-      const mesesU   = [...new Set(dadosRaw.map(l=>(l.data||"").substring(0,7)).filter(Boolean))].sort();
-      const nM       = mesesU.length;
-      const mmEnt    = nM>0?totalEnt/nM:0;
-      const mmSai    = nM>0?totalSai/nM:0;
-      const saude    = resultado>0?"(+) POSITIVA":resultado<0?"(-) NEGATIVA":"(=) NEUTRA";
-      const saudeCor = resultado>0?C.ok:resultado<0?C.bad:C.warn;
+      const mesesU = [...new Set(dadosRaw.map(l=>(l.data||"").substring(0,7)).filter(Boolean))].sort();
+      const nM     = mesesU.length;
+      const saudeTxt = resultado>0 ? "POSITIVA" : resultado<0 ? "NEGATIVA" : "NEUTRA";
+      const saudeCor = resultado>0 ? G.green : resultado<0 ? G.red : G.sub;
+      const mmSai    = nM>0 ? totalSai/nM : 0;
+      const tkSai    = qtdSai>0 ? totalSai/qtdSai : 0;
 
-      const txts = [
-        `Período: ${dadosRaw.length} lançamentos (${qtdEnt} entradas · ${qtdSai} saídas), de ${fmtD(datas[0])} a ${fmtD(datas[datas.length-1])}, em ${nM} ${nM===1?"mês":"meses"}.`,
-        totalEnt>0 ? `Entradas: ${fmtM(totalEnt)} | Média mensal ${fmtM(mmEnt)} | Ticket médio ${fmtM(tickMedE)}. Principal receita: "${maiorE}" (${fmtM(catEntradas[maiorE]||0)} — ${pctS(catEntradas[maiorE]||0,totalEnt)}).` : `Entradas: sem receitas registradas no período.`,
-        totalSai>0 ? `Saídas: ${fmtM(totalSai)} | Média mensal ${fmtM(mmSai)} | Ticket médio ${fmtM(tickMedS)}. Maior gasto: "${maiorG}" (${fmtM(mapacat[maiorG]||0)} — ${concG}%)${topSai[1]?`, seguido de "${topSai[1][0]}" (${fmtM(topSai[1][1]||0)})`:""}.` : `Saídas: sem gastos registrados no período.`,
-        `Resultado: ${fmtM(resultado)} | Margem ${pctS(resultado,totalEnt)} sobre entradas. Saúde financeira: ${saude}.`
-      ];
+      const linhas = [
+        `Periodo: ${dadosRaw.length} lancamentos (${qtdEnt} entradas / ${qtdSai} saidas) de ${D(datas[0])} a ${D(datas[datas.length-1])}, em ${nM} ${nM===1?"mes":"meses"}.`,
+        totalSai>0 ? `Saidas: ${R(totalSai)} | media mensal ${R(mmSai)} | ticket medio ${R(tkSai)}. Maior gasto: "${maiorG}" (${R(mapacat[maiorG]||0)} -- ${(mapacat[maiorG]||0)>0?((mapacat[maiorG]/totalSai)*100).toFixed(1):0}%)${topSai[1]?`, seguido de "${topSai[1][0]}" (${R(topSai[1][1]||0)})`:""}. ` : null,
+        totalEnt>0 ? `Entradas: ${R(totalEnt)} | principal receita: "${maiorE}" (${R(catEntradas[maiorE]||0)} -- ${PCT(catEntradas[maiorE]||0,totalEnt)}).` : null,
+        `Resultado: ${R(resultado)} | margem ${PCT(resultado,totalEnt)}. Saude financeira: ${saudeTxt}.`
+      ].filter(Boolean);
 
       doc.setFontSize(7);
       let analH = 10;
-      const splits = txts.map(t => { const s=doc.splitTextToSize(t,cW-14); analH+=s.length*4.6+4; return s; });
-      novaPag(analH+14);
-      secHeader("Análise do Período");
+      const analSplits = linhas.map(t=>{ const s=doc.splitTextToSize(t,cW-6); analH+=s.length*4.8+3; return s; });
+      fit(analH+14);
+      sectionLabel("Analise do Periodo");
 
-      // Card da análise com borda esquerda colorida
-      doc.setFillColor(...C.priL); doc.setDrawColor(...C.priB); doc.setLineWidth(0.2);
-      doc.roundedRect(M, y, cW, analH, 2.5, 2.5, "FD");
-      doc.setFillColor(...C.pri); doc.rect(M, y, 2.5, analH, "F"); // borda esquerda sólida
-      // Badge de saúde financeira
-      const sw = doc.getTextWidth(saude)+8;
-      doc.setFillColor(...saudeCor); doc.roundedRect(M+cW-sw-2, y+3, sw+2, 7, 3,3,"F");
+      // Card com borda esquerda colorida
+      doc.setFillColor(...PL); doc.roundedRect(ML,y,cW,analH,2,2,"F");
+      doc.setFillColor(...P); doc.rect(ML,y,2.5,analH,"F");
+      // badge saude
+      const bw = doc.getTextWidth(saudeTxt)+8;
+      doc.setFillColor(...saudeCor); doc.roundedRect(W-MR-bw, y+3, bw, 6.5, 2,2,"F");
       doc.setFontSize(5.5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
-      doc.text(saude, M+cW-sw/2-1, y+7.5, {align:"center"});
+      doc.text(saudeTxt, W-MR-bw/2, y+7.2, {align:"center"});
 
-      y += 7;
-      splits.forEach((lines, i) => {
-        novaPag(lines.length*4.6+6);
-        doc.setFontSize(6.8); doc.setFont(undefined, i===3?"bold":"normal");
-        if(i===3) doc.setTextColor(...saudeCor); else doc.setTextColor(...C.dark);
-        doc.text(lines, M+6, y);
-        y += lines.length*4.6+4;
+      y += 6;
+      analSplits.forEach((lines,i) => {
+        fit(lines.length*4.8+4);
+        doc.setFontSize(6.8); doc.setFont(undefined, i===analSplits.length-1?"bold":"normal");
+        if(i===analSplits.length-1) doc.setTextColor(...saudeCor); else doc.setTextColor(...G.ink);
+        doc.text(lines, ML+6, y);
+        y += lines.length*4.8+3;
       });
-      y += 5;
+      y += 6;
 
       // ══════════════════════════════════════════════════════════
-      // 3. GRÁFICOS (ativos)
+      // 4. GRAFICOS
       // ══════════════════════════════════════════════════════════
       if (activeCharts.length > 0) {
-        const perRow = Math.min(activeCharts.length, 3);
-        const gW = perRow===1?cW*.65:perRow===2?(cW-4)/2:(cW-8)/3;
-        const gH = 48;
-        // Estima espaço necessário para primeira fileira
-        novaPag(gH + 22);
-        secHeader("Resumo Visual — Gráficos", `${activeCharts.length} gráfico${activeCharts.length!==1?"s":""} ativo${activeCharts.length!==1?"s":""}`);
+        fit(20);
+        sectionLabel("Graficos", `${activeCharts.length} ativo${activeCharts.length!==1?"s":""}`);
 
+        const perRow = Math.min(activeCharts.length, 3);
+        const gW = perRow===1?cW*.60 : perRow===2?(cW-4)/2 : (cW-8)/3;
+        const gH = 46;
         let rowY = y;
-        activeCharts.forEach((cm, idx) => {
-          if (idx>0 && idx%3===0) {
-            y = rowY+gH+10; rowY=y;
-            novaPag(gH+14);
-          }
-          const xg = M + (idx%3)*(gW+4);
+
+        activeCharts.forEach((cm,idx) => {
+          if (idx>0 && idx%3===0){ y=rowY+gH+12; rowY=y; fit(gH+16); }
+          const xg = ML+(idx%3)*(gW+4);
           const cv = document.getElementById(cm.canvasId);
           if (!cv) return;
-          const ratio = cv.height&&cv.width?cv.height/cv.width:.65;
-          const imgH  = Math.min(gH, +(gW*ratio).toFixed(1));
-          const imgY  = rowY+8+(gH-imgH)/2;
-          // Card do gráfico com sombra simulada
-          doc.setFillColor(235,237,245); doc.roundedRect(xg+1, rowY+1, gW, gH+9, 2.5, 2.5, "F");
-          doc.setFillColor(250,251,254); doc.roundedRect(xg, rowY, gW, gH+8, 2.5, 2.5, "F");
-          doc.setDrawColor(...C.sep); doc.setLineWidth(0.15); doc.roundedRect(xg, rowY, gW, gH+8, 2.5, 2.5, "S");
-          // Faixa título gráfico
-          doc.setFillColor(...C.priL); doc.roundedRect(xg, rowY, gW, 7, 2.5, 0, "F");
-          doc.setFontSize(5); doc.setFont(undefined,"bold"); doc.setTextColor(...C.priD);
+          const ratio = cv.height&&cv.width ? cv.height/cv.width : .65;
+          const imgH  = Math.min(gH-6, +(gW*ratio).toFixed(1));
+          const imgY  = rowY+8+(gH-6-imgH)/2;
+
+          doc.setFillColor(...G.card); doc.roundedRect(xg,rowY,gW,gH,2,2,"F");
+          doc.setDrawColor(...G.line); doc.setLineWidth(0.2); doc.roundedRect(xg,rowY,gW,gH,2,2,"S");
+          doc.setFontSize(5); doc.setFont(undefined,"bold"); doc.setTextColor(...G.mute);
           doc.text(cm.pdfTitle, xg+gW/2, rowY+5, {align:"center"});
-          try { doc.addImage(cv.toDataURL("image/png",1),"PNG",xg+1.5,imgY,gW-3,imgH,undefined,"FAST"); } catch(e){}
+          try { doc.addImage(cv.toDataURL("image/png",1),"PNG",xg+2,imgY,gW-4,imgH,undefined,"FAST"); } catch(e){}
         });
-        y = rowY + gH + 16;
-      }
-
-      // ══════════════════════════════════════════════════════════
-      // 4. EXTRATO POR CATEGORIA
-      // ══════════════════════════════════════════════════════════
-      const catSaiOrd = Object.entries(mapacat).sort((a,b)=>b[1]-a[1]);
-      const catEntOrd = Object.entries(catEntradas).sort((a,b)=>b[1]-a[1]);
-
-      if (catSaiOrd.length>0 || catEntOrd.length>0) {
-        doc.addPage(); y = 16;
-        secHeader("Extrato por Categoria",
-          `${catSaiOrd.length+catEntOrd.length} categorias`);
-
-        const ROW = 6.2;
-
-        function tblCat(xB, yB, titulo, corA, corAD, bgA, itens, total, tblW) {
-          if (!itens.length) return yB;
-          novaPag(8+7+itens.length*ROW+18);
-          const valX   = xB+tblW-52;
-          const pctX   = xB+tblW-28;
-          const barMax = tblW > 100 ? 22 : 16;
-          const barX   = xB+tblW-barMax-1.5;
-
-          // Cabeçalho colorido
-          doc.setFillColor(...corA); doc.roundedRect(xB, yB, tblW, 8, 2, 2, "F");
-          doc.setFontSize(6.5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
-          doc.text(titulo, xB+tblW/2, yB+5.8, {align:"center"});
-          yB += 9;
-
-          // Sub-cabeçalho colunas
-          doc.setFillColor(...bgA); doc.roundedRect(xB, yB, tblW, 7, 0, 0, "F");
-          doc.setFontSize(5); doc.setFont(undefined,"bold"); doc.setTextColor(...corAD);
-          doc.text("CATEGORIA", xB+5.5,     yB+4.8);
-          doc.text("VALOR",     valX,        yB+4.8);
-          doc.text("%",         pctX,        yB+4.8);
-          doc.text("DIST.",     xB+tblW-1.5,yB+4.8, {align:"right"});
-          yB += 8;
-
-          itens.forEach(([cat,val],i) => {
-            novaPag(ROW+1);
-            if (i%2===0){ doc.setFillColor(...C.card); doc.rect(xB, yB-1, tblW, ROW, "F"); }
-            if (i>0){ doc.setDrawColor(...C.sep); doc.setLineWidth(0.1); doc.line(xB+2, yB-1, xB+tblW-2, yB-1); }
-            const p  = total>0?(val/total*100):0;
-            const bW = (p/100)*barMax;
-            // Rank badge top 3
-            if (i<3){
-              const medals=["#F59E0B","#94A3B8","#CD7C54"];
-              doc.setFillColor(...hR(medals[i])); doc.circle(xB+2, yB+ROW/2-0.8, 1.6, "F");
-              doc.setFontSize(4.5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
-              doc.text(String(i+1), xB+2, yB+ROW/2+0.5, {align:"center"});
-            }
-            const maxCat = tblW > 100 ? 50 : 22;
-            doc.setFontSize(5.8); doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
-            doc.text(cat.substring(0,maxCat), xB+5.5, yB+4);
-            doc.setFont(undefined,"bold"); doc.setTextColor(...corA);
-            doc.text(fmtM(val), valX, yB+4);
-            doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-            doc.text(p.toFixed(1)+"%", pctX, yB+4);
-            doc.setFillColor(...C.lg2); doc.roundedRect(barX, yB+1.5, barMax, 2.5, 1,1,"F");
-            if (bW>0){ doc.setFillColor(...corA); doc.roundedRect(barX, yB+1.5, bW, 2.5, 1,1,"F"); }
-            yB += ROW;
-          });
-
-          // Linha total
-          doc.setDrawColor(...corA); doc.setLineWidth(0.4);
-          doc.line(xB+2, yB+1.5, xB+tblW-2, yB+1.5); yB+=5;
-          doc.setFillColor(...bgA); doc.roundedRect(xB, yB, tblW, 7, 0, 2, "F");
-          doc.setFontSize(6.5); doc.setFont(undefined,"bold"); doc.setTextColor(...corA);
-          doc.text("TOTAL", xB+5.5, yB+5);
-          doc.text(fmtM(total), valX, yB+5);
-          doc.text("100%", pctX, yB+5);
-          return yB+11;
-        }
-
-        const hasSai = catSaiOrd.length > 0;
-        const hasEnt = catEntOrd.length > 0;
-        if (hasSai && hasEnt) {
-          const half2 = (cW-5)/2;
-          const yL = tblCat(M,         y, "SAIDAS POR CATEGORIA",   C.bad, C.badD, C.badL, catSaiOrd, totalSai, half2);
-          const yR = tblCat(M+half2+5, y, "ENTRADAS POR CATEGORIA", C.ok,  C.okD,  C.okL,  catEntOrd, totalEnt, half2);
-          y = Math.max(yL, yR) + 6;
-        } else if (hasSai) {
-          y = tblCat(M, y, "SAIDAS POR CATEGORIA",   C.bad, C.badD, C.badL, catSaiOrd, totalSai, cW) + 6;
-        } else if (hasEnt) {
-          y = tblCat(M, y, "ENTRADAS POR CATEGORIA", C.ok,  C.okD,  C.okL,  catEntOrd, totalEnt, cW) + 6;
-        }
+        y = rowY+gH+10;
       }
 
       // ══════════════════════════════════════════════════════════
       // 5. EXTRATO POR CPF / CNPJ
       // ══════════════════════════════════════════════════════════
-      const gruposPDF = {};
+      const grupos = {};
       dadosRaw.forEach(l => {
-        const d=(l.doc||"").trim();
-        if(!d) return;
-        if(!gruposPDF[d]) gruposPDF[d]=[];
-        gruposPDF[d].push(l);
+        const d=(l.doc||"").trim(); if(!d) return;
+        if(!grupos[d]) grupos[d]=[]; grupos[d].push(l);
       });
-      const docsListPDF = Object.keys(gruposPDF).sort();
+      const cpfList = Object.keys(grupos).sort();
 
-      if (docsListPDF.length > 0) {
-        const RH2 = 6;
-        // Larguras: #5 | Data16 | Tipo13 | Cat36 | Valor25 | Obs(restante)
-        const CW2 = [5,16,13,36,25,89]; // soma=184=cW
-        const CX2 = CW2.reduce((a,w,i)=>{a.push(i===0?M:a[i-1]+CW2[i-1]);return a;},[]);
+      if (cpfList.length > 0) {
+        page();
+        sectionLabel("Extrato por CPF / CNPJ", `${cpfList.length} documento${cpfList.length!==1?"s":""}`);
 
-        // CPFs pequenos (≤4 lanç.) tentam caber sem nova página forçada
-        // CPFs grandes sempre iniciam nova página
-        let primeiroGrupo = true;
+        const RH = 5.8;
+        // cols: # | Data | Tipo | Cat | Valor | Obs
+        const CW = [5,17,13,38,26,79]; // =178
+        const CX = CW.reduce((a,w,i)=>{a.push(i===0?ML:a[i-1]+CW[i-1]);return a;},[]);
 
-        docsListPDF.forEach(cpfDoc => {
-          const lancs = gruposPDF[cpfDoc].slice().sort((a,b)=>(a.data||"").localeCompare(b.data||""));
-          const altEstimada = 18+20+10+8+(lancs.length*RH2)+14;
-          const pequeno = lancs.length <= 4;
+        cpfList.forEach((cpf,gi) => {
+          const items = grupos[cpf].slice().sort((a,b)=>(a.data||"").localeCompare(b.data||""));
+          const altNeeded = 22+18+8+items.length*RH+12;
+          const pequeno = items.length<=5;
 
-          if (primeiroGrupo) {
-            doc.addPage(); y=16;
-            secHeader("Extrato por CPF / CNPJ", `${docsListPDF.length} CPF${docsListPDF.length!==1?"s":""} / CNPJ`);
-            primeiroGrupo = false;
-          } else if (!pequeno || y+altEstimada > H-FOOTER_H-10) {
-            doc.addPage(); y=16;
-          } else {
-            // Divisória entre CPFs pequenos na mesma página
-            y += 4;
-            doc.setDrawColor(...C.sep); doc.setLineWidth(0.3);
-            doc.line(M, y, W-M, y); y+=4;
+          if (gi>0) {
+            if (!pequeno || y+altNeeded > H-FH-12) { page(); }
+            else { y+=4; rule(ML,W-MR,y,G.line,0.3); y+=5; }
           }
 
-          let dEnt=0, dSai=0;
-          lancs.forEach(l=>{const v=Number(l.valor||0); if(ehEntrada(l.tipo))dEnt+=v; else dSai+=v;});
-          const dRes=dEnt-dSai;
+          let eT=0, sT=0;
+          items.forEach(l=>{ const v=Number(l.valor||0); if(ehEntrada(l.tipo))eT+=v; else sT+=v; });
+          const rT=eT-sT;
 
-          // Cabeçalho CPF — estilo profissional
-          doc.setFillColor(...C.priD); doc.roundedRect(M, y, cW, 14, 2.5, 2.5, "F");
-          doc.setFillColor(...C.pri);  doc.roundedRect(M, y+10, cW, 4, 0, 2.5, "F");
-          // Ícone CPF
-          doc.setFillColor(...priMRgb); doc.circle(M+7, y+7, 5, "F");
-          doc.setFontSize(6); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
-          doc.text("ID", M+7, y+8, {align:"center"});
-          doc.setFontSize(10); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
-          doc.text(cpfDoc, M+16, y+8);
-          doc.setFontSize(6); doc.setFont(undefined,"normal"); doc.setTextColor(...lighten(priDRgb,.4));
-          doc.text(`${lancs.length} lançamento${lancs.length!==1?"s":""}  ·  ${fmtD(lancs[0]?.data)} a ${fmtD(lancs[lancs.length-1]?.data)}`, M+16, y+12);
-          y += 18;
+          // Cabeçalho CPF — limpo
+          fit(22);
+          doc.setFillColor(...PL); doc.roundedRect(ML,y,cW,18,2,2,"F");
+          doc.setFillColor(...P); doc.rect(ML,y,3,18,"F");
+          doc.setFontSize(9); doc.setFont(undefined,"bold"); doc.setTextColor(...G.ink);
+          doc.text(cpf, ML+7, y+7);
+          doc.setFontSize(6); doc.setFont(undefined,"normal"); doc.setTextColor(...G.sub);
+          doc.text(`${items.length} lancamento${items.length!==1?"s":""}  |  ${D(items[0]?.data)} a ${D(items[items.length-1]?.data)}`, ML+7, y+13);
+          // KPIs inline à direita
+          const kx = W-MR-90;
+          doc.setFontSize(5.5); doc.setFont(undefined,"normal"); doc.setTextColor(...G.mute);
+          doc.text("Entradas", kx,    y+6); doc.text("Saidas",   kx+33, y+6); doc.text("Resultado", kx+66, y+6);
+          doc.setFontSize(7); doc.setFont(undefined,"bold");
+          doc.setTextColor(...G.greenD); doc.text(R(eT), kx,    y+13);
+          doc.setTextColor(...G.redD);   doc.text(R(sT), kx+33, y+13);
+          doc.setTextColor(...(rT>=0?G.greenD:G.redD)); doc.text(R(rT), kx+66, y+13);
+          y += 22;
 
-          // KPIs compactos inline (3 badges em linha)
-          const kCW=(cW-6)/3;
-          [{l:"ENTRADAS", v:fmtM(dEnt),bg:C.okL,bo:C.okB,ac:C.ok,tx:C.okD,inactive:dEnt===0},
-           {l:"SAIDAS",   v:fmtM(dSai),bg:C.badL,bo:C.badB,ac:C.bad,tx:C.badD,inactive:dSai===0},
-           {l:"RESULTADO",v:fmtM(dRes),bg:dRes>=0?C.okL:C.badL,bo:dRes>=0?C.okB:C.badB,ac:dRes>=0?C.ok:C.bad,tx:dRes>=0?C.okD:C.badD,inactive:false}
-          ].forEach((k,i)=>{
-            const xk=M+i*(kCW+3);
-            const bg = k.inactive ? C.lg : k.bg;
-            const ac = k.inactive ? C.sep : k.ac;
-            const tx = k.inactive ? C.gray : k.tx;
-            doc.setFillColor(...bg); doc.roundedRect(xk,y,kCW,15,2,2,"F");
-            doc.setDrawColor(...(k.inactive?C.sep:k.bo)); doc.setLineWidth(0.2); doc.roundedRect(xk,y,kCW,15,2,2,"S");
-            doc.setFillColor(...ac); doc.roundedRect(xk,y,kCW,4,2,0,"F");
-            doc.setFontSize(4.8); doc.setFont(undefined,"bold");
-            if(k.inactive) doc.setTextColor(...C.gray); else doc.setTextColor(255,255,255);
-            doc.text(k.l, xk+kCW/2, y+3.2, {align:"center"});
-            doc.setFontSize(k.inactive?7:8); doc.setFont(undefined,"bold"); doc.setTextColor(...tx);
-            doc.text(k.v, xk+kCW/2, y+11, {align:"center"});
+          // Tabela lançamentos
+          fit(8);
+          doc.setFillColor(...G.ink); doc.roundedRect(ML,y,cW,6.5,1.5,1.5,"F");
+          doc.setFontSize(5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+          ["#","DATA","TIPO","CATEGORIA","VALOR","OBSERVACAO"].forEach((t,i)=>{
+            const a = i===4?"right":"left";
+            const x = i===4 ? CX[4]+CW[4]-1 : CX[i]+1.5;
+            doc.text(t,x,y+4.5,{align:a});
           });
-          y += 19;
+          y+=7.5;
 
-          // Cabeçalho tabela
-          doc.setFillColor(...C.pri); doc.roundedRect(M,y,cW,6,1.5,1.5,"F");
-          doc.setFontSize(4.8); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
-          ["#","DATA","TIPO","CATEGORIA","VALOR","OBSERVAÇÃO"].forEach((t,i)=>{
-            const align = i===4?"right":"left";
-            const xpos  = i===4 ? CX2[4]+CW2[4]-1.5 : CX2[i]+1.5;
-            doc.text(t, xpos, y+4.2, {align});
-          });
-          y += 7;
-
-          lancs.forEach((l,i)=>{
-            novaPag(RH2+1);
-            if(i%2===0){doc.setFillColor(...C.card);doc.rect(M,y-0.8,cW,RH2,"F");}
-            if(i>0){doc.setDrawColor(...C.sep);doc.setLineWidth(0.08);doc.line(M+1,y-0.8,M+cW-1,y-0.8);}
-            doc.setDrawColor(...C.lg2);doc.setLineWidth(0.08);
-            CX2.slice(1).forEach(x=>doc.line(x,y-0.8,x,y+RH2-0.8));
+          items.forEach((l,i)=>{
+            fit(RH+1);
+            if(i%2===0){doc.setFillColor(...G.bg);doc.rect(ML,y-0.8,cW,RH,"F");}
+            rule(ML,ML+cW, y-0.8, G.line, 0.08);
+            doc.setDrawColor(...G.line); doc.setLineWidth(0.08);
+            CX.slice(1).forEach(x=>doc.line(x,y-0.8,x,y+RH-0.8));
             const isE=ehEntrada(l.tipo);
             doc.setFontSize(5.5);
-            doc.setFont(undefined,"normal"); doc.setTextColor(...C.grayL); doc.text(String(i+1),CX2[0]+1.5,y+3.8);
-            doc.setTextColor(...C.dark); doc.text(fmtD(l.data||""),CX2[1]+1.5,y+3.8);
-            doc.setFont(undefined,"bold"); doc.setTextColor(...(isE?C.okD:C.badD));
-            doc.text((l.tipo||"—").substring(0,7),CX2[2]+1.5,y+3.8);
-            doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
-            doc.text((l.cat||"—").substring(0,22),CX2[3]+1.5,y+3.8);
-            doc.setFont(undefined,"bold"); doc.setTextColor(...(isE?C.ok:C.bad));
-            doc.text(fmtM(l.valor),CX2[4]+CW2[4]-1.5,y+3.8,{align:"right"});
-            doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-            doc.text((l.obs||"—").substring(0,44),CX2[5]+1.5,y+3.8);
-            y+=RH2;
+            doc.setFont(undefined,"normal"); doc.setTextColor(...G.mute); doc.text(String(i+1),CX[0]+1.5,y+3.8);
+            doc.setTextColor(...G.ink); doc.text(D(l.data||""),CX[1]+1.5,y+3.8);
+            doc.setFont(undefined,"bold"); (() => { if(isE) doc.setTextColor(...G.greenD); else doc.setTextColor(...G.redD); })();
+            doc.text((l.tipo||"--").substring(0,7),CX[2]+1.5,y+3.8);
+            doc.setFont(undefined,"normal"); doc.setTextColor(...G.ink);
+            doc.text((l.cat||"--").substring(0,22),CX[3]+1.5,y+3.8);
+            doc.setFont(undefined,"bold"); (() => { if(isE) doc.setTextColor(...G.green); else doc.setTextColor(...G.red); })();
+            doc.text(R(l.valor),CX[4]+CW[4]-1,y+3.8,{align:"right"});
+            doc.setFont(undefined,"normal"); doc.setTextColor(...G.sub);
+            doc.text((l.obs||"--").substring(0,44),CX[5]+1.5,y+3.8);
+            y+=RH;
           });
 
-          // Rodapé mini da tabela CPF
-          y+=2; novaPag(8);
-          doc.setFillColor(...C.priL); doc.roundedRect(M,y,cW,7.5,1.5,1.5,"F");
-          doc.setDrawColor(...C.priB); doc.setLineWidth(0.2); doc.roundedRect(M,y,cW,7.5,1.5,1.5,"S");
-          doc.setFontSize(5.8); doc.setFont(undefined,"bold");
-          doc.setTextColor(...C.okD);  doc.text(`ENT: ${fmtM(dEnt)}`, M+4, y+5.2);
-          doc.setTextColor(...C.badD); doc.text(`SAI: ${fmtM(dSai)}`, M+65, y+5.2);
-          doc.setTextColor(...(dRes>=0?C.priD:C.badD)); doc.text(`= ${fmtM(dRes)}`, M+126, y+5.2);
-          y += 10;
+          // Totalizador mini
+          y+=2; fit(8);
+          doc.setFillColor(...PL); doc.roundedRect(ML,y,cW,7,1.5,1.5,"F");
+          doc.setFontSize(6); doc.setFont(undefined,"bold");
+          doc.setTextColor(...G.greenD); doc.text(`Entradas: ${R(eT)}`,ML+4,y+5);
+          doc.setTextColor(...G.redD);   doc.text(`Saidas: ${R(sT)}`,ML+68,y+5);
+          (() => { if(rT>=0) doc.setTextColor(...G.greenD); else doc.setTextColor(...G.redD); })(); doc.text(`Resultado: ${R(rT)}`,ML+130,y+5);
+          y+=11;
         });
       }
 
       // ══════════════════════════════════════════════════════════
       // 6. EXTRATO GERAL
       // ══════════════════════════════════════════════════════════
-      doc.addPage(); y=16;
-      secHeader("Extrato Geral de Lançamentos",
-        `${dadosRaw.length} lançamento${dadosRaw.length!==1?"s":""}`);
+      page();
+      sectionLabel("Extrato Geral", `${dadosRaw.length} lancamento${dadosRaw.length!==1?"s":""}`);
 
-      const RH3 = 5.8;
-      const CW3 = [5,16,26,13,34,24,66]; // soma=184=cW
-      const CX3 = CW3.reduce((a,w,i)=>{a.push(i===0?M:a[i-1]+CW3[i-1]);return a;},[]);
+      const RH2 = 5.8;
+      const CW2 = [5,17,26,13,34,25,58]; // =178
+      const CX2 = CW2.reduce((a,w,i)=>{a.push(i===0?ML:a[i-1]+CW2[i-1]);return a;},[]);
 
-      // Cabeçalho tabela
-      doc.setFillColor(...C.pri); doc.roundedRect(M,y,cW,6.5,1.5,1.5,"F");
-      doc.setFontSize(4.8); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
-      ["#","DATA","CPF/CNPJ","TIPO","CATEGORIA","VALOR","OBSERVAÇÃO"].forEach((t,i)=>{
-        const align = i===5?"right":"left";
-        const xpos  = i===5 ? CX3[5]+CW3[5]-1 : CX3[i]+1.5;
-        doc.text(t, xpos, y+4.5, {align});
+      fit(8);
+      doc.setFillColor(...G.ink); doc.roundedRect(ML,y,cW,6.5,1.5,1.5,"F");
+      doc.setFontSize(5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+      ["#","DATA","CPF/CNPJ","TIPO","CATEGORIA","VALOR","OBSERVACAO"].forEach((t,i)=>{
+        const a=i===5?"right":"left";
+        const x=i===5?CX2[5]+CW2[5]-1:CX2[i]+1.5;
+        doc.text(t,x,y+4.5,{align:a});
       });
       y+=7.5;
 
-      const dadosPDF=[...dadosRaw].sort((a,b)=>(a.data||"").localeCompare(b.data||""));
-      dadosPDF.forEach((l,idx)=>{
-        novaPag(RH3+1);
-        if(idx%2===0){doc.setFillColor(...C.card);doc.rect(M,y-0.8,cW,RH3,"F");}
-        if(idx>0){doc.setDrawColor(...C.sep);doc.setLineWidth(0.08);doc.line(M+1,y-0.8,M+cW-1,y-0.8);}
-        doc.setDrawColor(...C.lg2);doc.setLineWidth(0.08);
-        CX3.slice(1).forEach(x=>doc.line(x,y-0.8,x,y+RH3-0.8));
+      const sorted=[...dadosRaw].sort((a,b)=>(a.data||"").localeCompare(b.data||""));
+      sorted.forEach((l,i)=>{
+        fit(RH2+1);
+        if(i%2===0){doc.setFillColor(...G.bg);doc.rect(ML,y-0.8,cW,RH2,"F");}
+        rule(ML,ML+cW,y-0.8,G.line,0.08);
+        doc.setDrawColor(...G.line); doc.setLineWidth(0.08);
+        CX2.slice(1).forEach(x=>doc.line(x,y-0.8,x,y+RH2-0.8));
         const isE=ehEntrada(l.tipo);
-        doc.setFontSize(5.3);
-        doc.setFont(undefined,"normal"); doc.setTextColor(...C.grayL); doc.text(String(idx+1),CX3[0]+1.5,y+3.8);
-        doc.setTextColor(...C.dark); doc.text(fmtD(l.data||""),CX3[1]+1.5,y+3.8);
-        doc.setTextColor(...C.gray); doc.text((l.doc||"—").substring(0,13),CX3[2]+1.5,y+3.8);
-        doc.setFont(undefined,"bold"); doc.setTextColor(...(isE?C.okD:C.badD));
-        doc.text((l.tipo||"—").substring(0,7),CX3[3]+1.5,y+3.8);
-        doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
-        doc.text((l.cat||"—").substring(0,20),CX3[4]+1.5,y+3.8);
-        doc.setFont(undefined,"bold"); doc.setTextColor(...(isE?C.ok:C.bad));
-        doc.text(fmtM(l.valor),CX3[5]+CW3[5]-1,y+3.8,{align:"right"});
-        doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-        doc.text((l.obs||"—").substring(0,38),CX3[6]+1.5,y+3.8);
-        y+=RH3;
+        doc.setFontSize(5.5);
+        doc.setFont(undefined,"normal"); doc.setTextColor(...G.mute); doc.text(String(i+1),CX2[0]+1.5,y+3.8);
+        doc.setTextColor(...G.ink); doc.text(D(l.data||""),CX2[1]+1.5,y+3.8);
+        doc.setTextColor(...G.sub); doc.text((l.doc||"--").substring(0,13),CX2[2]+1.5,y+3.8);
+        doc.setFont(undefined,"bold"); (() => { if(isE) doc.setTextColor(...G.greenD); else doc.setTextColor(...G.redD); })();
+        doc.text((l.tipo||"--").substring(0,7),CX2[3]+1.5,y+3.8);
+        doc.setFont(undefined,"normal"); doc.setTextColor(...G.ink);
+        doc.text((l.cat||"--").substring(0,20),CX2[4]+1.5,y+3.8);
+        doc.setFont(undefined,"bold"); (() => { if(isE) doc.setTextColor(...G.green); else doc.setTextColor(...G.red); })();
+        doc.text(R(l.valor),CX2[5]+CW2[5]-1,y+3.8,{align:"right"});
+        doc.setFont(undefined,"normal"); doc.setTextColor(...G.sub);
+        doc.text((l.obs||"--").substring(0,32),CX2[6]+1.5,y+3.8);
+        y+=RH2;
       });
 
-      // Linha de totais final — destaque profissional
-      y+=4; novaPag(13);
-      doc.setFillColor(...C.priD); doc.roundedRect(M,y,cW,12,2,2,"F");
-      doc.setFillColor(...priMRgb); doc.roundedRect(M,y,cW,12,2,2,"S");
-      doc.setFontSize(6.5); doc.setFont(undefined,"bold");
-      doc.setTextColor(...lighten(C.ok,.7)); doc.text(`Entradas: ${fmtM(totalEnt)}`, M+5, y+5);
-      doc.setTextColor(...lighten(C.bad,.7)); doc.text(`Saidas: ${fmtM(totalSai)}`, M+70, y+5);
-      const resTxt = `= Resultado  ${fmtM(resultado)}`;
-      doc.setTextColor(255,255,255); doc.text(resTxt, W-M-5-doc.getTextWidth(resTxt), y+5);
-      doc.setFontSize(5.2); doc.setFont(undefined,"normal"); doc.setTextColor(...lighten(priDRgb,.4));
-      doc.text(`${dadosRaw.length} lançamentos  ·  ${fmtD(datas[0])} a ${fmtD(datas[datas.length-1])}`, M+5, y+9.5);
+      // Totalizador final elegante
+      y+=4; fit(14);
+      doc.setFillColor(...G.ink); doc.roundedRect(ML,y,cW,12,2,2,"F");
+      doc.setFontSize(7); doc.setFont(undefined,"bold");
+      doc.setTextColor(...mix(G.green,.6)); doc.text(`Entradas: ${R(totalEnt)}`,ML+6,y+5);
+      doc.setTextColor(...mix(G.red,.6));   doc.text(`Saidas: ${R(totalSai)}`,ML+74,y+5);
+      doc.setTextColor(255,255,255);
+      const rTxt=`Resultado: ${R(resultado)}`;
+      doc.text(rTxt, W-MR-5-doc.getTextWidth(rTxt), y+5);
+      doc.setFontSize(5.5); doc.setFont(undefined,"normal"); doc.setTextColor(...mix(PD,.4));
+      doc.text(`${dadosRaw.length} lancamentos  |  ${D(datas[0])} a ${D(datas[datas.length-1])}`,ML+6,y+9.5);
 
       // ══════════════════════════════════════════════════════════
-      // RODAPÉ PROFISSIONAL EM TODAS AS PÁGINAS
+      // RODAPE — minimalista em todas as páginas
       // ══════════════════════════════════════════════════════════
-      const nPag = doc.internal.getNumberOfPages();
-      for (let p=1; p<=nPag; p++) {
+      const nPag=doc.internal.getNumberOfPages();
+      for(let p=1;p<=nPag;p++){
         doc.setPage(p);
+        // Linha fina
+        doc.setFillColor(...G.line); doc.rect(0,H-FH-0.5,W,0.5,"F");
         // Fundo rodapé
-        doc.setFillColor(...C.lg); doc.rect(0, H-FOOTER_H, W, FOOTER_H, "F");
-        // Linha colorida no topo do rodapé
-        doc.setFillColor(...C.pri); doc.rect(0, H-FOOTER_H, W, 1, "F");
-        // Texto esquerda
-        doc.setFontSize(5.5); doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-        doc.text("FluxoPro v14  ·  " + new Date().toLocaleDateString("pt-BR"), M, H-2.8);
-        // Badge de página (lado direito)
-        const pagTxt = `${p} / ${nPag}`;
-        const bw = doc.getTextWidth(pagTxt) + 8;
-        doc.setFillColor(...C.pri); doc.roundedRect(W-M-bw, H-FOOTER_H+1.5, bw, 5, 2,2,"F");
-        doc.setFontSize(5.5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
-        doc.text(pagTxt, W-M-bw/2, H-FOOTER_H+5, {align:"center"});
-        // Nome perfil
-        doc.setFontSize(5.5); doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-        doc.text((info.nome||perfil).substring(0,40), W-M-bw-4, H-2.8, {align:"right"});
+        doc.setFillColor(...G.bg); doc.rect(0,H-FH,W,FH,"F");
+        // Acento esquerdo
+        doc.setFillColor(...P); doc.rect(0,H-FH,3,FH,"F");
+        // Texto
+        doc.setFontSize(5.5); doc.setFont(undefined,"normal"); doc.setTextColor(...G.mute);
+        doc.text("FluxoPro v14  |  "+new Date().toLocaleDateString("pt-BR"),ML,H-2.5);
+        doc.text((info.nome||perfil).substring(0,38),W/2,H-2.5,{align:"center"});
+        // Paginação
+        doc.setFontSize(5.5); doc.setFont(undefined,"bold"); doc.setTextColor(...P);
+        doc.text(`${p} / ${nPag}`,W-MR,H-2.5,{align:"right"});
       }
 
-      doc.save("fluxopro_" + perfil + "_" + Date.now() + ".pdf");
+      doc.save("fluxopro_"+perfil+"_"+Date.now()+".pdf");
       loading.classList.remove("show");
 
-    } catch(e) {
-      console.error("Erro PDF:", e);
+    } catch(e){
+      console.error(e);
       loading.classList.remove("show");
-      alert("Erro ao gerar PDF: " + e.message);
+      alert("Erro ao gerar PDF: "+e.message);
     }
   }, 500);
 }
+
+
 
 
 
