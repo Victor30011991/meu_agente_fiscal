@@ -1281,7 +1281,7 @@ function exportPDF() {
       const fixH = Math.max(relBoxH(topEnt), relBoxH(topSai), relBoxH(itensRes), 45);
 
       secHeader("Relatório por Categoria",
-        `↑ ${fmtM(totalEnt)}  ↓ ${fmtM(totalSai)}`);
+        `ENT ${fmtM(totalEnt)}  SAI ${fmtM(totalSai)}`);
 
       drawRelBox(M,              y, "ENTRADAS (GANHOS)",  C.ok,  C.okD,  C.okL,  C.okB,  topEnt, totalEnt, fixH, totalEnt===0);
       drawRelBox(M+boxW3+3,      y, "SAÍDAS (GASTOS)",    C.bad, C.badD, C.badL, C.badB, topSai, totalSai, fixH, totalSai===0);
@@ -1301,7 +1301,7 @@ function exportPDF() {
       const nM       = mesesU.length;
       const mmEnt    = nM>0?totalEnt/nM:0;
       const mmSai    = nM>0?totalSai/nM:0;
-      const saude    = resultado>0?"✓ POSITIVA":resultado<0?"⚠ NEGATIVA":"= NEUTRA";
+      const saude    = resultado>0?"(+) POSITIVA":resultado<0?"(-) NEGATIVA":"(=) NEUTRA";
       const saudeCor = resultado>0?C.ok:resultado<0?C.bad:C.warn;
 
       const txts = [
@@ -1384,78 +1384,79 @@ function exportPDF() {
         secHeader("Extrato por Categoria",
           `${catSaiOrd.length+catEntOrd.length} categorias`);
 
-        const half  = (cW-5)/2;
-        const ROW   = 6.2;
+        const ROW = 6.2;
 
-        function tblCat(xB, yB, titulo, corA, corAD, bgA, itens, total) {
+        function tblCat(xB, yB, titulo, corA, corAD, bgA, itens, total, tblW) {
           if (!itens.length) return yB;
-          const altBox = 8+7+itens.length*ROW+10;
-          novaPag(altBox+4);
+          novaPag(8+7+itens.length*ROW+18);
+          const valX   = xB+tblW-52;
+          const pctX   = xB+tblW-28;
+          const barMax = tblW > 100 ? 22 : 16;
+          const barX   = xB+tblW-barMax-1.5;
 
-          // Cabeçalho da tabela
-          doc.setFillColor(...corA); doc.roundedRect(xB, yB, half, 8, 2, 2, "F");
-          doc.setFontSize(6); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
-          doc.text(titulo, xB+half/2, yB+5.5, {align:"center"});
+          // Cabeçalho colorido
+          doc.setFillColor(...corA); doc.roundedRect(xB, yB, tblW, 8, 2, 2, "F");
+          doc.setFontSize(6.5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
+          doc.text(titulo, xB+tblW/2, yB+5.8, {align:"center"});
           yB += 9;
 
           // Sub-cabeçalho colunas
-          doc.setFillColor(...bgA); doc.roundedRect(xB, yB, half, 7, 0, 0, "F");
+          doc.setFillColor(...bgA); doc.roundedRect(xB, yB, tblW, 7, 0, 0, "F");
           doc.setFontSize(5); doc.setFont(undefined,"bold"); doc.setTextColor(...corAD);
-          doc.text("CATEGORIA",  xB+2.5,       yB+4.8);
-          doc.text("VALOR",      xB+half-38,   yB+4.8);
-          doc.text("%",          xB+half-20,   yB+4.8);
-          doc.text("DIST.",      xB+half-1.5,  yB+4.8, {align:"right"});
+          doc.text("CATEGORIA", xB+5.5,     yB+4.8);
+          doc.text("VALOR",     valX,        yB+4.8);
+          doc.text("%",         pctX,        yB+4.8);
+          doc.text("DIST.",     xB+tblW-1.5,yB+4.8, {align:"right"});
           yB += 8;
 
-          const barMax = 16;
           itens.forEach(([cat,val],i) => {
             novaPag(ROW+1);
-            // Alternado + linha separadora
-            if (i%2===0){
-              doc.setFillColor(...C.card); doc.rect(xB, yB-1, half, ROW, "F");
-            }
-            if (i>0){
-              doc.setDrawColor(...C.sep); doc.setLineWidth(0.1);
-              doc.line(xB+2, yB-1, xB+half-2, yB-1);
-            }
-            const p = total>0?(val/total*100):0;
+            if (i%2===0){ doc.setFillColor(...C.card); doc.rect(xB, yB-1, tblW, ROW, "F"); }
+            if (i>0){ doc.setDrawColor(...C.sep); doc.setLineWidth(0.1); doc.line(xB+2, yB-1, xB+tblW-2, yB-1); }
+            const p  = total>0?(val/total*100):0;
             const bW = (p/100)*barMax;
-            // Rank badge para top 3
+            // Rank badge top 3
             if (i<3){
               const medals=["#F59E0B","#94A3B8","#CD7C54"];
-              doc.setFillColor(...hR(medals[i])); doc.circle(xB+1.5, yB+ROW/2-1, 1.5, "F");
+              doc.setFillColor(...hR(medals[i])); doc.circle(xB+2, yB+ROW/2-0.8, 1.6, "F");
               doc.setFontSize(4.5); doc.setFont(undefined,"bold"); doc.setTextColor(255,255,255);
-              doc.text(String(i+1), xB+1.5, yB+ROW/2+0.3, {align:"center"});
+              doc.text(String(i+1), xB+2, yB+ROW/2+0.5, {align:"center"});
             }
+            const maxCat = tblW > 100 ? 50 : 22;
             doc.setFontSize(5.8); doc.setFont(undefined,"normal"); doc.setTextColor(...C.dark);
-            doc.text(cat.substring(0,21), xB+4.5, yB+4);
+            doc.text(cat.substring(0,maxCat), xB+5.5, yB+4);
             doc.setFont(undefined,"bold"); doc.setTextColor(...corA);
-            doc.text(fmtM(val), xB+half-38, yB+4);
+            doc.text(fmtM(val), valX, yB+4);
             doc.setFont(undefined,"normal"); doc.setTextColor(...C.gray);
-            doc.text(p.toFixed(1)+"%", xB+half-20, yB+4);
-            // Barra de distribuição
-            doc.setFillColor(...C.lg2); doc.roundedRect(xB+half-barMax-1.5, yB+1.5, barMax, 2.5, 1,1,"F");
-            if (bW>0) {
-              doc.setFillColor(...corA);
-              doc.roundedRect(xB+half-barMax-1.5, yB+1.5, bW, 2.5, 1,1,"F");
-            }
+            doc.text(p.toFixed(1)+"%", pctX, yB+4);
+            doc.setFillColor(...C.lg2); doc.roundedRect(barX, yB+1.5, barMax, 2.5, 1,1,"F");
+            if (bW>0){ doc.setFillColor(...corA); doc.roundedRect(barX, yB+1.5, bW, 2.5, 1,1,"F"); }
             yB += ROW;
           });
 
           // Linha total
           doc.setDrawColor(...corA); doc.setLineWidth(0.4);
-          doc.line(xB+2, yB+1.5, xB+half-2, yB+1.5); yB+=5;
-          doc.setFillColor(...bgA); doc.roundedRect(xB, yB, half, 7, 0, 2, "F");
+          doc.line(xB+2, yB+1.5, xB+tblW-2, yB+1.5); yB+=5;
+          doc.setFillColor(...bgA); doc.roundedRect(xB, yB, tblW, 7, 0, 2, "F");
           doc.setFontSize(6.5); doc.setFont(undefined,"bold"); doc.setTextColor(...corA);
-          doc.text("TOTAL", xB+3, yB+5);
-          doc.text(fmtM(total), xB+half-38, yB+5);
-          doc.text("100%", xB+half-20, yB+5);
+          doc.text("TOTAL", xB+5.5, yB+5);
+          doc.text(fmtM(total), valX, yB+5);
+          doc.text("100%", pctX, yB+5);
           return yB+11;
         }
 
-        const yL = tblCat(M,        y, "SAÍDAS POR CATEGORIA",   C.bad, C.badD, C.badL, catSaiOrd, totalSai);
-        const yR = tblCat(M+half+5, y, "ENTRADAS POR CATEGORIA", C.ok,  C.okD,  C.okL,  catEntOrd, totalEnt);
-        y = Math.max(yL, yR) + 6;
+        const hasSai = catSaiOrd.length > 0;
+        const hasEnt = catEntOrd.length > 0;
+        if (hasSai && hasEnt) {
+          const half2 = (cW-5)/2;
+          const yL = tblCat(M,         y, "SAIDAS POR CATEGORIA",   C.bad, C.badD, C.badL, catSaiOrd, totalSai, half2);
+          const yR = tblCat(M+half2+5, y, "ENTRADAS POR CATEGORIA", C.ok,  C.okD,  C.okL,  catEntOrd, totalEnt, half2);
+          y = Math.max(yL, yR) + 6;
+        } else if (hasSai) {
+          y = tblCat(M, y, "SAIDAS POR CATEGORIA",   C.bad, C.badD, C.badL, catSaiOrd, totalSai, cW) + 6;
+        } else if (hasEnt) {
+          y = tblCat(M, y, "ENTRADAS POR CATEGORIA", C.ok,  C.okD,  C.okL,  catEntOrd, totalEnt, cW) + 6;
+        }
       }
 
       // ══════════════════════════════════════════════════════════
@@ -1517,9 +1518,9 @@ function exportPDF() {
 
           // KPIs compactos inline (3 badges em linha)
           const kCW=(cW-6)/3;
-          [{l:"↑ ENTRADAS",v:fmtM(dEnt),bg:C.okL,bo:C.okB,ac:C.ok,tx:C.okD,inactive:dEnt===0},
-           {l:"↓ SAÍDAS",  v:fmtM(dSai),bg:C.badL,bo:C.badB,ac:C.bad,tx:C.badD,inactive:dSai===0},
-           {l:"= RESULTADO",v:fmtM(dRes),bg:dRes>=0?C.okL:C.badL,bo:dRes>=0?C.okB:C.badB,ac:dRes>=0?C.ok:C.bad,tx:dRes>=0?C.okD:C.badD,inactive:false}
+          [{l:"ENTRADAS", v:fmtM(dEnt),bg:C.okL,bo:C.okB,ac:C.ok,tx:C.okD,inactive:dEnt===0},
+           {l:"SAIDAS",   v:fmtM(dSai),bg:C.badL,bo:C.badB,ac:C.bad,tx:C.badD,inactive:dSai===0},
+           {l:"RESULTADO",v:fmtM(dRes),bg:dRes>=0?C.okL:C.badL,bo:dRes>=0?C.okB:C.badB,ac:dRes>=0?C.ok:C.bad,tx:dRes>=0?C.okD:C.badD,inactive:false}
           ].forEach((k,i)=>{
             const xk=M+i*(kCW+3);
             const bg = k.inactive ? C.lg : k.bg;
@@ -1572,8 +1573,8 @@ function exportPDF() {
           doc.setFillColor(...C.priL); doc.roundedRect(M,y,cW,7.5,1.5,1.5,"F");
           doc.setDrawColor(...C.priB); doc.setLineWidth(0.2); doc.roundedRect(M,y,cW,7.5,1.5,1.5,"S");
           doc.setFontSize(5.8); doc.setFont(undefined,"bold");
-          doc.setTextColor(...C.okD);  doc.text(`↑ ${fmtM(dEnt)}`, M+4, y+5.2);
-          doc.setTextColor(...C.badD); doc.text(`↓ ${fmtM(dSai)}`, M+65, y+5.2);
+          doc.setTextColor(...C.okD);  doc.text(`ENT: ${fmtM(dEnt)}`, M+4, y+5.2);
+          doc.setTextColor(...C.badD); doc.text(`SAI: ${fmtM(dSai)}`, M+65, y+5.2);
           doc.setTextColor(...(dRes>=0?C.priD:C.badD)); doc.text(`= ${fmtM(dRes)}`, M+126, y+5.2);
           y += 10;
         });
@@ -1628,8 +1629,8 @@ function exportPDF() {
       doc.setFillColor(...C.priD); doc.roundedRect(M,y,cW,12,2,2,"F");
       doc.setFillColor(...priMRgb); doc.roundedRect(M,y,cW,12,2,2,"S");
       doc.setFontSize(6.5); doc.setFont(undefined,"bold");
-      doc.setTextColor(...lighten(C.ok,.7)); doc.text(`↑ Entradas  ${fmtM(totalEnt)}`, M+5, y+5);
-      doc.setTextColor(...lighten(C.bad,.7)); doc.text(`↓ Saídas  ${fmtM(totalSai)}`, M+70, y+5);
+      doc.setTextColor(...lighten(C.ok,.7)); doc.text(`Entradas: ${fmtM(totalEnt)}`, M+5, y+5);
+      doc.setTextColor(...lighten(C.bad,.7)); doc.text(`Saidas: ${fmtM(totalSai)}`, M+70, y+5);
       const resTxt = `= Resultado  ${fmtM(resultado)}`;
       doc.setTextColor(255,255,255); doc.text(resTxt, W-M-5-doc.getTextWidth(resTxt), y+5);
       doc.setFontSize(5.2); doc.setFont(undefined,"normal"); doc.setTextColor(...lighten(priDRgb,.4));
