@@ -1679,15 +1679,11 @@ function exportPDF() {
 renderTabela();
 renderCpfTables();
 
-// Se veio com mode=excel, dispara exportação automaticamente
+// Auto-dispara Excel se vier com mode=excel
 (function(){
   const p = new URLSearchParams(window.location.search);
   if (p.get("mode") === "excel") {
-    // Aguarda charts renderizarem antes de exportar
     setTimeout(() => { try { exportExcel(); } catch(e){ console.error(e); } }, 800);
-  } else if (p.get("mode") === "pdf") {
-    // Aguarda charts renderizarem antes de gerar o PDF
-    setTimeout(() => { try { exportPDF(); } catch(e){ console.error(e); } }, 1200);
   }
 })();
 
