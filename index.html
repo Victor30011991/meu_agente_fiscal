@@ -2008,7 +2008,6 @@ document.getElementById("expPdf").addEventListener("click",()=>{
   const cfg=(db.pdfConfig||{})[db.active]||{};
   const hex=getComputedStyle(document.documentElement).getPropertyValue("--primary").trim()||"#4f46e5";
   const params=new URLSearchParams({
-    mode: "pdf",
     style: cfg.style||"clean",
     color: encodeURIComponent(hex),
     periodo: cfg.periodo!==false?"1":"0",
