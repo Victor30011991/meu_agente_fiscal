@@ -1246,7 +1246,6 @@ function exportPDF() {
         doc.setFillColor(...(inactive ? C.lg2 : actualCor));
         doc.roundedRect(xp, yp, boxW3, 8, 2.5, 0, "F");
         doc.setFontSize(6); doc.setFont(undefined,"bold");
-        doc.setTextColor(inactive ? C.gray : [255,255,255]);
         if (inactive) doc.setTextColor(...C.gray); else doc.setTextColor(255,255,255);
         doc.text(titulo, xp + boxW3/2, yp+5.5, {align:"center"});
 
